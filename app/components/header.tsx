@@ -1,13 +1,13 @@
 "use client"
 
 import './style.css'
+import usePageRouter from "@/hooks/CommonRouter";
 import React from 'react';
-import { useRouter } from 'next/navigation'
-
 
 export default function Header() {
-    const router = useRouter()
 
+    const { handleRoute } = usePageRouter();
+  
     return(
         <header className="header">
             <div className="container-flex">
@@ -23,11 +23,11 @@ export default function Header() {
                             <img src="/icon/bell_c.png" alt="알림" />
                             <span>3</span>
                         </div>
-                        <div className='schedule'>
+                        <div className='schedule' onClick={() => handleRoute("schedule")}>
                             <img src="/icon/calendar_c.png" alt="스케줄" />
                             <span>3</span>
                         </div>
-                        <div className='lacation'>
+                        <div className='lacation' onClick={() => handleRoute("robot")}>
                             <img src="/icon/map.png" alt="로봇위치" />
                         </div>
                     </div>
@@ -35,7 +35,7 @@ export default function Header() {
                         <span>2025-10-31</span>
                         <span>PM 01:36</span>
                     </div>
-                    <div className='admin'>
+                    <div className='admin' onClick={() => handleRoute("admin")}>
                         <div className='admin-img'>
                             <img src="/icon/user.png" alt="사용자" />
                         </div>

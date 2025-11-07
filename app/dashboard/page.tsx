@@ -2,15 +2,20 @@
 
 import './style.css';
 import React from 'react';
-import { useState, useEffect } from 'react';
+import axios from "axios";
+import { useState, useEffect, useRef } from 'react';
+import usePageRouter from "@/hooks/CommonRouter";
 import CameraModal from './CameraModal';
-import RemoteModal from '../robot/RemoteModal';
+import RemoteModal from '../robots/RemoteModal';
 
 export default function DashboardPage() {
+
+    const { handleRoute } = usePageRouter();
 
     const [cameraIsModalOpen, setCameraIsModalOpen] = useState(false);
     const [mapIsModalOpen, setMapIsModalOpen] = useState(false);
     const [scale, setScale] = useState(1);
+    
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [cameraTabActiveIndex, setCameraTabActiveIndex] = useState<number>(0);
     const [mapTabActiveIndex, setMapTabActiveIndex] = useState<number | null>(0);
@@ -18,10 +23,11 @@ export default function DashboardPage() {
     const [floorActiveIndex, setFloorActiveIndex] = useState<number>(0);
     const [robotCurrentImage, setRobotCurrentImage] = useState<string>("0");
 
-    const viewItems = [
-      { label: "Main Camera" },
-      { label: "Sub Camera" },
-    ];
+    // 실시간 카메라
+    const [webrtcUrl, setWebrtcUrl] = useState<string | undefined>(undefined);
+    const [activeCam, setActiveCam] = useState<string>('my_camera01');
+    const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
+
 
    
     const optionItems = [
@@ -29,78 +35,168 @@ export default function DashboardPage() {
       { icon: "zoom_out", label: "Zoom Out", action: "out" }
     ];
 
+    const [translate, setTranslate] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+
+    const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
+
+    // 래퍼 크기와 이미지(비변환) 크기를 이용해 허용 범위 계산
+    const clampTranslate = (nx: number, ny: number) => {
+      const wrap = wrapperRef.current;
+      const img = imgRef.current;
+      if (!wrap || !img) return { x: nx, y: ny };
+
+      const wrapW = wrap.clientWidth;
+      const wrapH = wrap.clientHeight;
+
+      // transform 적용 전의 레이아웃 크기(이미지 스타일 width:100% 가정)
+      const baseW = img.clientWidth;
+      const baseH = img.clientHeight;
+
+      // 실제 화면에 보이는 크기(스케일 반영)
+      const scaledW = baseW * scale;
+      const scaledH = baseH * scale;
+
+      // 중앙 기준(transformOrigin: center)에서 허용 가능한 최대 오프셋
+      const maxOffsetX = Math.max(0, (scaledW - wrapW) / 2);
+      const maxOffsetY = Math.max(0, (scaledH - wrapH) / 2);
+
+      const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+
+      return {
+        x: clamp(nx, -maxOffsetX, maxOffsetX),
+        y: clamp(ny, -maxOffsetY, maxOffsetY),
+      };
+    };
+
+    // 확대/축소 핸들러 (매개변수가 문자열일 수도 있음)
     const handleZoom = (action: string) => {
-      setMapTabActiveIndex(optionItems.findIndex(item => item.action === action));
-    
-      // 확대/축소 단계 (최대 3배, 최소 1배 이하 불가)
-      setScale(prev => {
-        let newScale = prev;
-    
-        if (action === 'in') {
-          newScale = Math.min(prev + 0.2, 3); // 최대 3배까지
-        } else if (action === 'out') {
-          newScale = Math.max(prev - 0.2, 1); // 원본 크기 이하로 축소 불가
-        } else if (action === 'reset') {
-          newScale = 1; // 원래 크기로 복원
-        }
-    
-        return newScale;
+      // 1️⃣ 허용된 값인지 검사 (Type Guard)
+      if (action !== "in" && action !== "out" && action !== "reset") {
+        console.warn(`⚠️ 알 수 없는 zoom action: ${action}`);
+        return; // 잘못된 값이면 그냥 무시
+      }
+
+      // 2️⃣ 정상 동작 로직
+      setScale((prev) => {
+        if (action === "in") return Math.min(prev + 0.2, 3);
+        if (action === "out") return Math.max(prev - 0.2, 1);
+        // action === "reset"
+        setTranslate?.({ x: 0, y: 0 }); // 필요하면 팬 위치 초기화
+        return 1;
       });
     };
 
-  // 🔹 탭이 변경될 때 확대/축소 초기화
-  // ✅ 층 탭(mapTabActiveIndex) 변경 시 확대 상태 초기화
-  useEffect(() => {
-    setScale(1);
-    setMapTabActiveIndex(null);
-  }, [floorActiveIndex]);
+    // 🔴 확대 상태이며, 클릭 지점이 "이미지 표시 영역" 안일 때만 팬 시작
+    const onMouseDown = (e: React.MouseEvent) => {
+      if (scale <= 1) return;
 
+      const img = imgRef.current;
+      if (!img) return;
+
+      // 현재 화면에 보이는 이미지 경계(스케일 포함)
+      const rect = img.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top  && e.clientY <= rect.bottom;
+
+      if (!inside) return; // 이미지 밖이면 드래그 시작 금지
+
+      setIsPanning(true);
+      panStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        tx: translate.x,
+        ty: translate.y,
+      };
+    };
+
+    const onMouseMove = (e: React.MouseEvent) => {
+      if (!isPanning || !panStartRef.current) return;
+      const { x, y, tx, ty } = panStartRef.current;
+      const dx = e.clientX - x;
+      const dy = e.clientY - y;
+
+      const next = clampTranslate(tx + dx, ty + dy);
+      setTranslate(next);
+    };
+
+    const endPan = () => {
+      setIsPanning(false);
+      panStartRef.current = null;
+    };
+
+    // 스케일이 변할 때 현재 translate가 허용 범위를 벗어나지 않도록 보정
+    useEffect(() => {
+      setTranslate(prev => clampTranslate(prev.x, prev.y));
+    }, [scale]);
+
+    // 층 선택 탭이 변경될 때 확대/축소 초기화
+    useEffect(() => {
+      setScale(1);
+      setMapTabActiveIndex(null);
+    }, [floorActiveIndex]);
+    
     const robotTabs = [
       { label: "Robot 1" },
       { label: "Robot 2" },
       { label: "Robot 3" }
     ];
 
+    const apiBase = process.env.NEXT_PUBLIC_API_URL;
+    
 
-    // 로봇별 카메라 이미지 데이터
-    const robotImages = [
-      {
-        name: 'Robot A',
-        cameras: [
-          "/images/camera_sample.png",
-          '/images/robotA_main.png',
-          '/images/robotA_sub.png',
-        ],
-      },
-      {
-        name: 'Robot B',
-        cameras: [
-          "/images/camera_sample.png",
-          '/images/robotB_main.png',
-          '/images/robotB_sub.png',
-        ],
-      },
-      {
-        name: 'Robot C',
-        cameras: [
-          "/images/camera_sample.png",
-          '/images/robotC_main.png',
-          '/images/robotC_sub.png',
-        ],
-      },
+    // ✅ 카메라 선택 및 연결 함수
+    // const selectCamera = async (cam: string) => {
+    //   try {
+    //       setActiveCam(cam);
+        
+    //       // axios.get 사용
+    //       const res = await axios.get(`${apiBase}/camera/${cam}`);
+        
+    //       // axios는 200이 아닐 경우 자동으로 catch로 이동함
+    //       const data = res.data;
+        
+    //       setWebrtcUrl(data.webrtc_url);
+    //       console.log(`[INFO] ${cam} 연결 성공: ${data.webrtc_url}`);
+        
+    //       setRetryCount(0); // 성공 시 재시도 카운터 리셋
+    //     } catch (error: any) {
+    //       console.error(`[ERROR] ${cam} 연결 실패 (${retryCount + 1}회):`, error);
+        
+    //       // 실패 시 3초 뒤 재시도 (최대 5회)
+    //       if (retryCount < 5) {
+    //         setRetryCount((prev) => prev + 1);
+    //         setTimeout(() => selectCamera(cam), 3000);
+    //       } else {
+    //         console.warn(`[WARN] ${cam} 연결 재시도 중단`);
+    //       }
+    //     }
+    // };
+
+    const cameras = [
+      { id: "my_camera01", label: "Main Camera" },
+      { id: "my_camera02", label: "Sub Camera" },
     ];
 
+    // ✅ 페이지 로드시 기본 카메라(my_camera01) 자동 송출
+    // useEffect(() => {
+    //   selectCamera('my_camera01');
+    // }, [cameraTabActiveIndex]);
+
+
     // 로봇 변경 시 이미지 업데이트
-    useEffect(() => {
-      setRobotCurrentImage(robotImages[robotActiveIndex].cameras[cameraTabActiveIndex]);
-    }, [robotActiveIndex, cameraTabActiveIndex]);
+    // useEffect(() => {
+    //   setRobotCurrentImage(robotImages[robotActiveIndex].cameras[cameraTabActiveIndex]);
+    // }, [robotActiveIndex, cameraTabActiveIndex]);
 
     // 카메라 탭 클릭 핸들러
-    const handleCameraTab = (idx: number) => {
+    const handleCameraTab = (idx: number, camId: string) => {
       setCameraTabActiveIndex(idx);
-      setRobotCurrentImage(robotImages[robotActiveIndex].cameras[idx]);
+      // selectCamera(camId);
     };
-
 
     const floorTabs = [
       { label: "B2" },
@@ -116,24 +212,21 @@ export default function DashboardPage() {
       "/images/map_view_1.png",
       "/images/map_view_2.png"
     ];
-
     
     // 현재 선택된 로봇 이미지
     const mapCurrentImage = floorImages[floorActiveIndex];
 
     // 아이콘 매핑 객체
     const icons = {
-      robot: (status: string) => {
-        switch (status) {
-          case "robot1":
-            return "/icon/robot_icon(1).png";
-          case "이동":
-            return "/icon/robot_icon(2).png";
-          case "작업중":
-            return "/icon/robot_icon(3).png";
-          default:
-            return "/icon/robot_default.png";
-        }
+      robot: (index: number) => {
+        const robotIcons = [
+          "/icon/robot_icon(1).png",
+          "/icon/robot_icon(2).png",
+          "/icon/robot_icon(3).png"
+        ];
+    
+        // index가 범위를 초과하면 default 아이콘 반환
+        return robotIcons[index];
       },
       battery: (battery: number, isCharging?: boolean) => {
         // ✅ 충전 중일 때 아이콘 최우선
@@ -182,6 +275,7 @@ export default function DashboardPage() {
     type TabKey = 'total' | 'schedule' | 'emergency' | 'robot';
 
     interface Notice {
+      no: number;
       type: NoticeType;
       content: string;
     }
@@ -198,14 +292,14 @@ export default function DashboardPage() {
 
     const notices: NoticesMap = {
       total: [
-        { type: 'Notice', content: '병원 경영시스템에서 받아는 시스템결함 전파 공지입니다.' },
-        { type: 'Schedule', content: '병원 방역 일정 공지 - 11,27일 병원 1동, 2동 전체 방역 예정입니다.' },
-        { type: 'Emerg', content: '병원 2022 병원 A23 환자(홍길동) 환자에 투약 긴급 차량' },
-        { type: 'Robot', content: 'Robot 1 로봇에서 이상 점검, Robot 2 2F 병원 환자에게 분실 중' }
+        { no: 1, type: 'Notice', content: '병원 경영시스템에서 받아는 시스템결함 전파 공지입니다.' },
+        { no: 2, type: 'Schedule', content: '병원 방역 일정 공지 - 11,27일 병원 1동, 2동 전체 방역 예정입니다.' },
+        { no: 3, type: 'Emerg', content: '병원 2022 병원 A23 환자(홍길동) 환자에 투약 긴급 차량' },
+        { no: 4, type: 'Robot', content: 'Robot 1 로봇에서 이상 점검, Robot 2 2F 병원 환자에게 분실 중' }
       ],
-      schedule: [{ type: 'Schedule', content: '병원 방역 일정 공지 - 11,27일 병원 1동, 2동 전체 방역 예정입니다.' }],
-      emergency: [{ type: 'Emerg', content: '병원 2022 병원 A23 환자(홍길동) 환자에 투약 긴급 차량' }],
-      robot: [{ type: 'Robot', content: 'Robot 1 로봇에서 이상 점검, Robot 2 2F 병원 환자에게 분실 중' }],
+      schedule: [{ no: 2, type: 'Schedule', content: '병원 방역 일정 공지 - 11,27일 병원 1동, 2동 전체 방역 예정입니다.' }],
+      emergency: [{ no: 3, type: 'Emerg', content: '병원 2022 병원 A23 환자(홍길동) 환자에 투약 긴급 차량' }],
+      robot: [{ no: 4, type: 'Robot', content: 'Robot 1 로봇에서 이상 점검, Robot 2 2F 병원 환자에게 분실 중' }],
     };
 
     // 상태도 TabKey로
@@ -220,6 +314,7 @@ export default function DashboardPage() {
   
 
    return (
+
       <div className='container-grid'>
 
         {/* Robot Real-time Camera */}
@@ -236,11 +331,12 @@ export default function DashboardPage() {
           <div className='middle-div'>
             <div className='view-div'>
               <div className='view-box'>
-                <img src={robotCurrentImage} alt="sample" />  
+                {/* <img src={robotCurrentImage} alt="sample" />   */}
+                <iframe src={webrtcUrl} allow="autoplay; fullscreen" className="vedio-box"/>
               </div>
               <div className='view-button'>
-                {viewItems.map((item, idx) => (
-                  <button type='button' key={idx} className={`${cameraTabActiveIndex === idx ? "active" : ""}`}  onClick={() => handleCameraTab(idx)} aria-pressed={cameraTabActiveIndex === idx}>{item.label}</button>
+                {cameras.map((cam, idx) => (
+                  <button type='button' key={idx} className={`${cameraTabActiveIndex === idx ? "active" : ""}`}  onClick={() => handleCameraTab(idx, cam.id)} aria-pressed={cameraTabActiveIndex === idx}>{cam.label}</button>
                 ))}
               </div>
             </div>
@@ -274,8 +370,35 @@ export default function DashboardPage() {
           </div>
           <div className='middle-div'>
             <div className='view-div'>
-              <div className='view-box'>
-                <img src={mapCurrentImage} alt="sample" style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: "transform 0.3s ease", }} /> 
+              {/* <div className='view-box'> */}
+              <div
+  ref={wrapperRef}
+  className="view-box"
+  style={{
+    overflow: "hidden",
+    userSelect: "none",
+    touchAction: "none",
+    cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",
+  }}
+  onMouseDown={onMouseDown}
+  onMouseMove={onMouseMove}
+  onMouseUp={endPan}
+  onMouseLeave={endPan}
+>
+                {/* <img src={mapCurrentImage} alt="sample" style={{ transform: `scale(${scale})`, transformOrigin: "center center", transition: "transform 0.3s ease", }} />  */}
+                <img
+    ref={imgRef}
+    src={mapCurrentImage}
+    alt="map"
+    draggable={false}
+    style={{
+      transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+      transformOrigin: "center center",
+      transition: isPanning ? "none" : "transform 120ms ease"
+      // 이미지 자신이 마우스 이벤트를 가로채지 않게 하려면 다음 줄을 켜도 됩니다
+      // pointerEvents: "none",
+    }}
+  />
               </div>
               <div className='map-button'>
                 {optionItems.map((item, idx) => (
@@ -314,7 +437,7 @@ export default function DashboardPage() {
                 </div>
                 <p>Robot Status</p>
               </div>
-              <button type='button'>+</button>
+              <button type='button' onClick={() => handleRoute("robot")}>+</button>
           </div>
           <table>
             <thead>
@@ -328,7 +451,7 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {robotRows.map((r, idx) => (
-                  <tr key={r.no}>
+                  <tr key={r.no} onClick={() => handleRoute("robot")}>
                     <td>
                       <div className={`robot_status_icon_div robot-color-${idx + 1}`}>
                         <img src={`/icon/robot_location(${idx + 1}).png`} alt={`robot_location`}/>
@@ -376,7 +499,7 @@ export default function DashboardPage() {
                 </div>
                 <p>Notice & Alert</p>
               </div>
-              <button type='button'>+</button>
+              <button type='button' onClick={() => handleRoute("setting")}>+</button>
           </div>
           <div className="tab-buttons">
             {tabs.map(tab => (
@@ -391,7 +514,7 @@ export default function DashboardPage() {
             const slug = toTypeSlug(notice.type); // 'notice' | 'schedule' | 'emerg' | 'robot'
             
             return (
-              <div key={index} className="notice-item">
+              <div key={index} onClick={() => handleRoute("setting")} className="notice-item">
                 <span className={`badge badge--${slug}`}>{notice.type}</span>
                 <p className="content">{notice.content}</p>
               </div>

@@ -10,13 +10,13 @@ export default function Sidebar() {
 
     const menuItems = [
       { path: "/dashboard", icon: "main", label: "Main Home" },
-      { path: "/robot", icon: "robot", label: "Robot Mgmt" },
-      { path: "/data", icon: "data", label: "Data Mgmt" },
-      { path: "/schedule", icon: "schedule", label: "Schedule Mgmt" },
+      { path: "/robots", icon: "robot", label: "Robot Mgmt" },
+      { path: "/data-management", icon: "data", label: "Data Mgmt" },
+      { path: "/schedules", icon: "schedule", label: "Schedule Mgmt" },
     ];
   
     const bottomItems = [
-      { path: "/setting", icon: "setting", label: "Setting" },
+      { path: "/settings", icon: "setting", label: "Setting" },
       { path: "/", icon: "log_out", label: "Log out" },
     ];
 
