@@ -1,0 +1,159 @@
+.header {
+    padding: 12px 16px;
+    width: 100%;
+    background-color: #202334;
+    height: 80px;
+    color: #FFFFFF;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+}
+
+/* header 스타일 */
+.header_txt {
+    height: 80px;
+    width: 100vw; /* 가로는 화면 전체 */
+    background: #111;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+
+.alarm-icon {
+    display: flex;
+    gap: 20px;
+}
+
+.alarm-icon div {
+    width: auto;
+    height: 40px;
+    cursor: pointer;
+}
+
+.admin-img {
+    width: 30px;
+    height: 30px;
+}
+
+.logo-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+}
+
+.logo-img img, 
+.alarm-icon div img,
+.admin-img img {
+    height: 100%;
+}
+
+.alarm, .schedule {
+    position: relative;
+}
+
+.alarm span,
+.schedule span {
+    position: absolute;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.alarm span {
+    top: 0;
+    right: 4px;
+}
+
+.schedule span {
+    bottom: 0px;
+    right: 4px;
+}
+
+.new-time {
+    margin-left: 30px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: 25px;
+}
+
+.admin {
+    width: 180px;
+    height: 45px;
+    line-height: 45px;
+    background-color: #fff;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #202334;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.container-flex {
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lr-div-flex {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.sidebar {
+    width: 240px;
+    height: 800px;
+    font-size: 15px;
+    background-color: #202334;
+    color: #FFFFFF;
+    position: fixed;
+    top: 95px;
+    left: 0;
+    padding: 16px 0;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
+    z-index: 10;
+    border-radius: 0 13px 13px 0;
+}
+
+ol {
+    width: 100%;
+    list-style: none;
+    padding: 0;
+}
+
+ol li {
+    padding: 12px 0 12px 30px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+li div {
+    width: 30px;
+    height: 30px;
+    margin-right: 15px;
+}
+
+li div img {
+    height: 100%;
+}
+
+ol li:hover, ol li:active {
+    background-color: #ffffff;
+    color: #202334;
+}
