@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import styles from './robotList.module.css';
+import styles from './RobotList.module.css';
 import Pagination from "@/app/components/pagination";
 import type { RobotRowData } from '@/app/type';
 import { RobotCrudBtn } from "@/app/components/button";
