@@ -1,0 +1,266 @@
+.mb20 {
+  margin-bottom: 20px;
+}
+
+.mt50 {
+  margin-top: 50px;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+/* 모달 css */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55); /* 어둡고 투명한 레이어 */
+  backdrop-filter: blur(8px); 
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  width: 80vw;
+  height: 85vh;
+  background: #1a1d2e;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  padding: 25px;
+}
+
+.modalTopDiv {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  display: flex;
+  align-items: center;
+}
+
+.modalTitle img {
+  width: 40px;
+  margin-right: 15px;
+}
+
+.modalTitle span {
+  font-size: 25px;
+}
+
+.closeBtn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    color: white;
+    background: transparent;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.CameraView {
+  margin-top: 20px;
+  position: relative;
+  height: 100%;
+}
+
+.customSelectBox {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 150px;
+}
+
+.CameraView .video-box {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+}
+
+.topRightPostion {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.topRightIcon {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  gap: 20px;
+  justify-content: center;
+}
+
+.videoStatusCustom button {
+  width: 59px;
+  height: 30px;
+}
+
+.robotStatus {
+  display: flex;
+  align-items: center;
+}
+
+.robotStatus img {
+  width: 22px;
+  margin-right: 10px;
+}
+
+.middlePosition {
+  position: absolute;
+  bottom: 230px;
+  right: 30px;
+}
+
+.floorFlex {
+  display: flex;
+  width: 340px;
+  gap: 5px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.floorGrid div {
+  width: calc(100% / 6);
+  line-height: 30px;
+  border: 1px solid #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.floorGrid div:hover {
+  background: #d95a59;
+}
+
+.bottomPosition {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+}
+
+.bottomFlex {
+  display: flex;
+  justify-content: center;
+  gap: 45px;
+  width: 100%;
+}
+
+.modeBox {
+  width: 20%;
+}
+
+.viewBtn {
+  width: 15%;
+}
+
+.viewBox {
+  width: 23%;
+  height: 200px;
+  border-radius: 15px;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.viewBox iframe {
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+}
+
+.viewExchangeBtn {
+  width: 33px;
+  height: 33px;
+  border: 1px solid #fff;
+  padding: 7px;
+  border-radius: 6px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
+
+.viewExchangeBtn img {
+  width: 100%;
+}
+
+.standSitBtn,
+.speedBtn,
+.camBtn,
+.zoomBtn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.standSitBtn div,
+.speedBtn div,
+.camBtn div,
+.zoomBtn div {
+  height: 28px;
+  border: 1px solid #fff;
+  line-height: 28px;
+  text-align: center;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.standSitBtn div:hover,
+.speedBtn div:hover,
+.camBtn div:hover,
+.zoomBtn div:hover {
+  background: #808291;
+}
+
+.standSitBtn div,
+.camBtn div,
+.zoomBtn div {
+  width: 48%;
+}
+
+.speedBtn div {
+  width: 30%;
+}
+
+.powerBtn {
+  width: 10%;
+}
+
+.powerImg {
+  width: 60px;
+  height: 60px;
+  border-radius: 50px;
+  background: #79b883;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fff;
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.powerImg:hover,
+.powerImg:focus {
+  background: #a12a3d;
+}
+
+.powerBtn img {
+  height: 33px;
+}

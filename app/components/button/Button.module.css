@@ -1,0 +1,508 @@
+.robot-chk-btn button.active,
+.floor-btn button.active {
+  background-color: rgba(255, 255, 255);
+  color: #202334;
+}
+
+.robot-chk-btn button,
+.floor-btn button {
+  padding: 5px 15px;
+  border: 1px solid #fff;
+  background-color: #292D43;
+  color: #BFBFBF;
+  font-size: 13px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.robot-chk-btn button:hover,
+.robot-chk-btn button:active,
+.floor-btn button:hover,
+.floor-btn button:active {
+  background-color: #fff;
+  color: #202334;
+}
+
+.view-div {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.view-box {
+  width: 100%;
+  height: 100%;
+  background-color: #d6d6d6;
+  color: #222;
+}
+
+.viewBtn,
+.map-button {
+  position: absolute;
+  display: flex;
+  bottom: 15px;
+  right: 15px;
+}
+
+.viewBtn .camerabtn {
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  width: 110px;
+  height: 35px;
+  background: rgba(247, 247, 247, 0.8);
+  border: 1px solid #909198;
+  color: rgb(53, 57, 80);
+  cursor: pointer;
+  margin-left: 10px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.viewBtn .camerabtn.active,
+.viewBtn .camerabtn:hover,
+.viewBtn .camerabtn:focus,
+.viewBtn .camerabtn:active {
+  background: rgba(125, 127, 142, 0.8);
+  border: 1px solid #5c5c6d;
+  color: #ffffff;
+}
+
+.viewBtn .camerabtn img {
+  width: 20px;
+}
+
+.zoom-icon {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-left: 10px; 
+  width: 110px;
+  height: 35px;
+  font-size: 14px;
+  background: rgba(247, 247, 247, 0.8);
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.zoom-icon:hover {
+  background: rgba(54, 63, 94, 0.8);
+  color: #fff;
+}
+
+.remote-icon,
+.path-icon {
+  width: auto;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.zoom-icon div {
+  width: auto;
+  height: 15px;
+  margin-right: 8px;
+}
+
+.zoom-icon img,
+.remote-icon img,
+.path-icon img {
+  height: 100%;
+}
+
+
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 2px solid #4B618B;
+  position: relative;
+}
+
+.tab-buttons .tab-btn {
+  width: 100px;
+  height: 37px;
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 10px 10px 0 0;
+  background-color: transparent;
+  border: none;
+  color: #9DADCB;
+  cursor: pointer;
+
+  border-top: 1px solid #4B618B;
+  border-left: 1px solid #4B618B;
+  border-right: 1px solid #4B618B;
+  border-bottom: none;    
+}
+
+.tab-buttons .tab-btn.active {
+  position: relative;
+  border: 1px solid #4B618B;
+  border-bottom: none;
+  z-index: 1;
+  color: #fff;
+}
+
+.tab-buttons .tab-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: #292D43;
+}
+
+.seletWrapper {
+  position: relative;
+}
+
+.selete {
+  width: 100%;
+  background: #33384c; 
+  border: 1px solid #8a96ac;
+  padding:5px 14px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 13px;
+  height: 33px;
+}
+
+.selete img {
+  height: 40%;
+}
+
+.seletbox {
+  width: 100%;
+  height: 200px;
+  padding: 14px;
+  background: #202334;
+  border-radius: 5px;
+  position: absolute;
+  top: 45px;
+  cursor: pointer;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.seletbox div,
+.modalSeletbox div {
+  width: 100%;
+  height: 35px;
+  line-height: 35px;
+  padding: 0 10px;
+  color: #fff; 
+}
+
+.seletbox div:hover,
+.modalSeletbox div:hover {
+  background: #d2d3d7;
+  border-radius: 4px;
+  width: 100%;
+  height: 35px;
+  padding: 0 10px;
+  line-height: 35px;
+  color: #16192c;
+}
+
+/* 모달 - 로봇 셀렉트 */
+
+.modalSeletWrapper {
+  position: absolute;
+  width: 12%;
+  top: 20px;
+  left: 20px;
+}
+
+.modalSelect {
+  width: 100%;
+  height: 40px;
+  padding: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 1px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalSelect img {
+  height: 10px;
+}
+
+.modalSeletbox {
+  width: 100%;
+  height: 200px;
+  padding: 8px;
+  background: transparent;
+  border: 1px solid #fff;
+  border-radius: 5px;
+  position: absolute;
+  top: 50px;
+  cursor: pointer;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.seletbox::-webkit-scrollbar,
+.modalSeletbox::-webkit-scrollbar {
+  width: 4px;
+}
+.seletbox::-webkit-scrollbar-thumb,
+.modalSeletbox::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+.seletbox::-webkit-scrollbar-track
+.modalSeletbox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.remote-div,
+.path-div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 170px;
+  padding: 2px 15px;
+  background-color: #454d72;
+  border-radius: 5px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.path-div {
+  font-size: 13px;
+  margin-left: 5px;
+}
+
+.remote-icon,
+.path-icon {
+  width: auto;
+  height: 20px;
+  margin-right: 15px;
+}
+
+
+.videoStatusBox {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  gap: 10px;
+}
+
+.videoStatusBtn {
+  width: 100%;
+  height: 100%;
+  border-radius: 50px;
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.videoStatusBtn.active {
+  background: #d95a59;
+}
+
+.roundIcon {
+  border-radius: 50px;
+  background-color: #ffffff;
+  width: 10px;
+  height: 10px;
+}
+
+.remotePad {
+  position: relative;
+}
+
+.remotePad .padImg {
+  width: 250px;
+  height: 200px;
+}
+
+.PadControlKey {
+  position: absolute;
+  top: 10%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.padIconGrid {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.topIcon,
+.middleIcon,
+.bottomIcon,
+.returnIcon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.topIcon div,
+.bottomIcon div {
+  width: 55px;
+  height: 55px;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.middleIcon .leftBtn,
+.middleIcon .stopBox,
+.middleIcon .rightBtn {
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.returnIcon {
+  width: 38px;
+  height: 38px;
+}
+
+.stopBox,
+.stopInerBox {
+  flex-direction: column;
+  border: 1px solid #fff;
+  border-radius: 50px;
+  justify-content: center;
+}
+
+.stopInerBox {
+  width: 46px;
+  height: 46px;
+  background: #c85152;
+  display: flex;
+  align-items: center;
+}
+
+.stopInerBox:hover {
+  background: #cc3032;
+}
+
+.stopText {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+}
+
+.topIcon img,
+.bottomIcon img {
+  height: 10px;
+}
+
+.middleIcon img,
+.returnIcon img {
+  height: 18px;
+}
+
+
+.upBtn {
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #fff;
+  border-radius: 10px 10px 0 0;
+  padding-top: 10px;
+}
+
+.leftBtn {
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  border-radius: 10px 0 0 10px;
+  padding-left: 10px;
+}
+
+.rightBtn {
+  border-top: 1px solid #fff;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  border-radius: 0 10px 10px 0;
+  padding-right: 10px;
+  justify-content: flex-end;
+}
+
+.bottomBtn {
+  border-left: 1px solid #fff;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  border-radius: 0 0 10px 10px;
+  padding-bottom: 10px;
+  align-items: flex-end;
+}
+
+.leftre {
+  position: absolute;
+  bottom: 40px;
+  left: 25px;
+  cursor: pointer;
+}
+
+.rightre {
+  position: absolute;
+  bottom: 40px;
+  right: 25px;
+  cursor: pointer;
+}
+
+.returnIcon {
+  border: 1px solid #fff;
+  border-radius: 50px;
+}
+
+.upBtn:hover,
+.leftBtn:hover,
+.rightBtn:hover,
+.bottomBtn:hover,
+.leftre:hover,
+.rightre:hover {
+  background: #808291;
+}
+
+
+/* 로봇관리 - 로봇 CRUD 버튼 */
+
+.robotCrudBox {
+  width: 230px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  padding: 3px 10px;
+  align-items: center;
+  gap: 5px;
+  background: #196189;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #e1fbfa;
+}
+
+.robotCrudBtn img {
+  height: 10px;
+}
+
+
+.plusBtn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 30px;
+}

@@ -1,0 +1,81 @@
+.topPosition {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+}
+
+.topPosition h1 {
+    margin: 0;
+    font-weight: 500;
+}
+
+.robotCount {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid #bec2db;
+    border-radius: 50px;
+    width: 430px;
+    height: 30px;
+    font-size: 13px;
+}
+
+.countItem div {
+    display: inline-block;
+}
+
+.totalNumber {
+    margin-left: 5px;
+    color: #ea7f81;
+}
+
+.itemNumber {
+    margin-left: 5px;
+    color: #b1e4ff;
+}
+
+.middlePosition {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.RobotStatusList {
+    width: 64%;
+}
+
+.RobotStatusTopPosition {
+    display: flex;
+    justify-content: space-between;
+}
+
+.RobotSearch {
+    display: flex;
+    gap: 10px;
+}
+
+.cameraMapView {
+    width: 34%;
+}
+
+.RobotStatusList,
+.cameraMapView {
+    background: #282d43;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.RobotStatusList h2,
+.cameraMapView h2 {
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    color: #92d4f4;
+}
+
+.ModalOpenBox {
+    display: flex;
+    justify-content: space-between;
+}
