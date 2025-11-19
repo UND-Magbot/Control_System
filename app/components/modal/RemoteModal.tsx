@@ -20,7 +20,7 @@ export default function RemoteModal({
   selectedRobots,
   robots,
   video
-}: ModalProps){
+}: ModalProps) {
 
   // const apiBase = process.env.NEXT_PUBLIC_API_URL;
 
@@ -32,9 +32,9 @@ export default function RemoteModal({
   const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
 
-  const cameraSample = "/images/camera_sample.png" 
-  const mapSample = "/images/map_sample.png" 
-    
+  const cameraSample = "/images/camera_sample.png"
+  const mapSample = "/images/map_sample.png"
+
 
   // props(selectedRobots)가 바뀌면 모달 내부 selectedRobot도 갱신
   useEffect(() => {
@@ -59,42 +59,67 @@ export default function RemoteModal({
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    
+
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden'; // 스크롤 방지
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
-  
+
   if (!isOpen) return null;
 
   const standHandle = (event: React.MouseEvent<HTMLDivElement>) => {
-      console.log("standHandle 클릭됨!", event);
+    console.log("standHandle 클릭됨!", event);
+    fetch("http://localhost:8000/robot/stand", {
+      method: "POST",
+    }).then(() => {
+      console.log("요청 완료");
+    });
   };
 
   const sitHandle = (event: React.MouseEvent<HTMLDivElement>) => {
-      console.log("sitHandle 클릭됨!", event);
+    console.log("sitHandle 클릭됨!", event);
+    fetch("http://localhost:8000/robot/sit", {
+      method: "POST",
+    }).then(() => {
+      console.log("요청 완료");
+    });
   };
 
   const slowHandle = (event: React.MouseEvent<HTMLDivElement>) => {
-      console.log("slowHandle 클릭됨!", event);
+    console.log("slowHandle 클릭됨!", event);
+    fetch("http://localhost:8000/robot/slow", {
+      method: "POST",
+    }).then(() => {
+      console.log("요청 완료");
+    });
   };
 
   const normalHandle = (event: React.MouseEvent<HTMLDivElement>) => {
-      console.log("normalHandle 클릭됨!", event);
+    console.log("normalHandle 클릭됨!", event);
+    fetch("http://localhost:8000/robot/normal", {
+      method: "POST",
+    }).then(() => {
+      console.log("요청 완료");
+    });
   };
 
   const fastHandle = (event: React.MouseEvent<HTMLDivElement>) => {
-      console.log("fastHandle 클릭됨!", event);
+    console.log("fastHandle 클릭됨!", event);
+    fetch("http://localhost:8000/robot/fast", {
+      method: "POST",
+    }).then(() => {
+      console.log("요청 완료");
+    });
   };
 
   const defaultRobotName = selectedRobot?.no || "Robot 1";
-  
+
   return (
 
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -108,19 +133,19 @@ export default function RemoteModal({
         </div>
         <div className={styles.CameraView}>
           <div className={styles.topPosition}>
-            <ModalRobotSelect selectedLabel={defaultRobotName} robots={robots} activeIndex={robotActiveIndex} onSelect={handleRobotSelect}/>
-            
-            
+            <ModalRobotSelect selectedLabel={defaultRobotName} robots={robots} activeIndex={robotActiveIndex} onSelect={handleRobotSelect} />
+
+
             <div className={styles.topRightPostion}>
               <div className={styles.topRightIcon}>
-                
+
                 <VideoStatus className={styles.videoStatusCustom} video={video} />
-                
+
                 <div className={styles.robotStatus}>
                   <img src="/icon/status_w.png" alt="network" />
                   <div>Online</div>
                 </div>
-                
+
                 <div className={styles.robotStatus}>
                   <img src="/icon/battery_full_w.png" alt="battery_full" />
                   <div>89%</div>
@@ -130,8 +155,8 @@ export default function RemoteModal({
             </div>
           </div>
           {!isSwapped ? (
-            <iframe src={cameraSample} allow="autoplay; fullscreen" className={styles["video-box"]} /> 
-            ) : ( 
+            <iframe src={cameraSample} allow="autoplay; fullscreen" className={styles["video-box"]} />
+          ) : (
             <iframe src={mapSample} allow="autoplay; fullscreen" className={styles["video-box"]} />
           )}
           <div className={styles.middlePosition}>
@@ -148,7 +173,7 @@ export default function RemoteModal({
           </div>
           <div className={styles.bottomPosition}>
             <div className={styles.bottomFlex}>
-              <RemotePad/>
+              <RemotePad />
               <div className={`${styles.modeBox} ${styles.mt50}`}>
                 <div className={styles.mb20}>MODE</div>
                 <div className={`${styles.standSitBtn} ${styles.mb20}`}>
@@ -161,7 +186,7 @@ export default function RemoteModal({
                   <div onClick={fastHandle}>Fast</div>
                 </div>
               </div>
-              
+
               <div className={`${styles.powerBtn} ${styles.mt50}`}>
                 <div className={`${styles.mb20} ${styles.textCenter}`}>POWER</div>
                 <div className={styles.powerImg}><img src="/icon/power-w.png" alt="power" /></div>
@@ -192,8 +217,8 @@ export default function RemoteModal({
               </div>
             </div>
           </div>
-          
-        </div>        
+
+        </div>
       </div>
     </div>
   );

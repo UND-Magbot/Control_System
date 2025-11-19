@@ -163,23 +163,48 @@ export default function RemoteModal({
     if (!isOpen) return null;
 
     const standHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+        fetch("http://localhost:8000/robot/stand", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
         console.log("standHandle 클릭됨!", event);
     };
 
     const sitHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("sitHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/sit", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const slowHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("slowHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/slow", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const normalHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("normalHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/nomal", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const fastHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("fastHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/fast", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const defaultRobotName = selectedRobot?.no || "Robot 1";

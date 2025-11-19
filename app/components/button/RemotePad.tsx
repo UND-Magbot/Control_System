@@ -14,30 +14,66 @@ export default function RemotePad({
 
     const upHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("upHandle 클릭됨!", event);
+
+        fetch("http://localhost:8000/robot/up", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
     
     const leftHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("leftHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/left", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const stopHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("stopHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/stop", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
     
     const rightHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("rightHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/right", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
     
     const downHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("downHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/down", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const leftTurnHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("leftTurnHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/leftTurn", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
     const rightTurnHandle = (event: React.MouseEvent<HTMLDivElement>) => {
         console.log("rightTurnHandle 클릭됨!", event);
+        fetch("http://localhost:8000/robot/rightTurn", {
+            method: "POST",
+            }).then(() => {
+                console.log("요청 완료");
+        });
     };
 
 
