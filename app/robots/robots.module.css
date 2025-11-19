@@ -47,16 +47,6 @@
     width: 64%;
 }
 
-.RobotStatusTopPosition {
-    display: flex;
-    justify-content: space-between;
-}
-
-.RobotSearch {
-    display: flex;
-    gap: 10px;
-}
-
 .cameraMapView {
     width: 34%;
 }

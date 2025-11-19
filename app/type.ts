@@ -30,3 +30,8 @@ export type RobotRowData = {
     power: 'On' | 'Off';
     mark: 'Yes' | 'No';
 };
+
+export type BatteryItem = {
+    id: number;
+    label: string;
+}

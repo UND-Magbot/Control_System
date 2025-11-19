@@ -31,6 +31,9 @@ export default function RemoteModal({
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
   const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
+
+  const cameraSample = "/images/camera_sample.png" 
+  const mapSample = "/images/map_sample.png" 
     
 
   // props(selectedRobots)가 바뀌면 모달 내부 selectedRobot도 갱신
@@ -70,6 +73,26 @@ export default function RemoteModal({
   
   if (!isOpen) return null;
 
+  const standHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+      console.log("standHandle 클릭됨!", event);
+  };
+
+  const sitHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+      console.log("sitHandle 클릭됨!", event);
+  };
+
+  const slowHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+      console.log("slowHandle 클릭됨!", event);
+  };
+
+  const normalHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+      console.log("normalHandle 클릭됨!", event);
+  };
+
+  const fastHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+      console.log("fastHandle 클릭됨!", event);
+  };
+
   const defaultRobotName = selectedRobot?.no || "Robot 1";
   
   return (
@@ -106,10 +129,10 @@ export default function RemoteModal({
               </div>
             </div>
           </div>
-          {!isSwapped ? ( 
-            <iframe src={webrtcUrl} allow="autoplay; fullscreen" className={styles["video-box"]} /> 
+          {!isSwapped ? (
+            <iframe src={cameraSample} allow="autoplay; fullscreen" className={styles["video-box"]} /> 
             ) : ( 
-            <iframe src={webrtcUrl} allow="autoplay; fullscreen" className={styles["video-box"]} />
+            <iframe src={mapSample} allow="autoplay; fullscreen" className={styles["video-box"]} />
           )}
           <div className={styles.middlePosition}>
             <div className={styles.floorFlex}>
@@ -129,13 +152,13 @@ export default function RemoteModal({
               <div className={`${styles.modeBox} ${styles.mt50}`}>
                 <div className={styles.mb20}>MODE</div>
                 <div className={`${styles.standSitBtn} ${styles.mb20}`}>
-                  <div>Stand</div>
-                  <div>Sit</div>
+                  <div onClick={standHandle}>Stand</div>
+                  <div onClick={sitHandle}>Sit</div>
                 </div>
                 <div className={styles.speedBtn}>
-                  <div>Slow</div>
-                  <div>Normal</div>
-                  <div>Fast</div>
+                  <div onClick={slowHandle}>Slow</div>
+                  <div onClick={normalHandle}>Normal</div>
+                  <div onClick={fastHandle}>Fast</div>
                 </div>
               </div>
               
@@ -160,10 +183,10 @@ export default function RemoteModal({
                 {!isSwapped ? (
                   // 서브(기본 PiP)
                   // <iframe src={webrtcUrl} allow="autoplay; fullscreen" />
-                  <iframe src="/images/map_sample.png" allow="autoplay; fullscreen" />
+                  <iframe src={mapSample} allow="autoplay; fullscreen" />
                 ) : (
                   // 메인이 서브 위치로 이동
-                  <iframe src={webrtcUrl} allow="autoplay; fullscreen" />
+                  <iframe src={cameraSample} allow="autoplay; fullscreen" />
                 )}
                 <div className={styles.viewExchangeBtn} onClick={() => setIsSwapped(prev => !prev)}><img src="/icon/view-change.png" alt="view-change" /></div>
               </div>

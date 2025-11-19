@@ -2,31 +2,27 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import styles from './SelectBox.module.css';
+import type { BatteryItem } from '@/app/type';
 
-interface BatteryItem {
-    id: number;
-    label: string;
-}
-    
-    
-interface BatterySelectBoxProps {
+  
+type BatterySelectBoxProps = {
+    battery: BatteryItem[];
     className?: string;
-    activeIndex?: number;
-    onSelect?: (index: number, item: BatteryItem) => void;
+    activeIndex: number;
+    selectBattery: BatteryItem | null;
+    onSelect: (index: number, battery: BatteryItem) => void;
 }
 
-export default function BatterySelectBox({ className = "", activeIndex = 0, onSelect }: BatterySelectBoxProps) {
-
+export default function BatterySelectBox({
+  battery,
+  selectBattery,
+  activeIndex,
+  className,
+  onSelect
+}: BatterySelectBoxProps) {
 
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  const BatteryData: BatteryItem[] = [
-    { id: 1, label: "50% ~ 100%" },
-    { id: 2, label: "1% ~ 49%" },
-    { id: 3, label: "0%" },
-    { id: 4, label: "Charging" }
-];
 
 
   useEffect(() => {
@@ -46,12 +42,14 @@ export default function BatterySelectBox({ className = "", activeIndex = 0, onSe
     };
   }, []);
 
+
+
   return (
 
     <div className={`${styles.seletWrapper} ${className ?? ""}`}>
       <div ref={wrapperRef} className={styles.selete} 
         onClick={() => setIsOpen(!isOpen)}>
-        <span>배터리 상태</span>
+        <span>{selectBattery?.label ?? "배터리 상태"}</span>
         {isOpen ? (
           <img src="/icon/arrow_up.png" alt="arrow_up" />
         ) : (
@@ -60,11 +58,11 @@ export default function BatterySelectBox({ className = "", activeIndex = 0, onSe
       </div> 
       {isOpen && (
         <div className={styles.seletbox}>
-            {BatteryData.map((item, idx) => (
+            {battery.map((item, idx) => (
                 <div
                     key={item.id}
                     className={activeIndex === idx ? styles["active"] : ""}
-                    onClick={() => onSelect && onSelect(idx, item)}
+                    onClick={() => { onSelect(idx, item); setIsOpen(false); }}
                 >
                 {item.label}
             </div>

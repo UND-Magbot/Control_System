@@ -2,7 +2,7 @@
 
 import styles from './Modal.module.css';
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState,  useRef, useEffect } from 'react';
 import type { RobotRowData, Video } from '@/app/type';
 import { VideoStatus, RemotePad, ModalRobotSelect } from '@/app/components/button';
 
@@ -28,13 +28,21 @@ export default function RemoteModal({
     const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
     const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
     const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
+    const [isSwapped, setIsSwapped] = useState(false);
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+    const [scale, setScale] = useState(1);
+    const [translate, setTranslate] = useState({ x: 0, y: 0 });
+    const [isPanning, setIsPanning] = useState(false);
+
+    const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
+
+    const cameraSample = "/images/camera_sample.png" 
+    const mapSample = "/images/map_sample.png" 
     
     // const apiBase = process.env.NEXT_PUBLIC_API_URL;
-
-  // const videos = [
-  //   { id: '1' , label:'AR' },
-  //   { id: '2' , label:'MR' }
-  // ]
 
   // props(selectedRobots)가 바뀌면 모달 내부 selectedRobot도 갱신
   useEffect(() => {
@@ -53,7 +61,87 @@ export default function RemoteModal({
     // setRobotCurrentImage( ... ); // 나중에 로봇별 카메라 이미지 연동 시 여기서 처리
     console.log("선택된 로봇:", robot.id, robot.no);
   };
-
+      // 래퍼 크기와 이미지(비변환) 크기를 이용해 허용 범위 계산
+      const clampTranslate = (nx: number, ny: number) => {
+        const wrap = wrapperRef.current;
+        const img = imgRef.current;
+        if (!wrap || !img) return { x: nx, y: ny };
+  
+        const wrapW = wrap.clientWidth;
+        const wrapH = wrap.clientHeight;
+  
+        // transform 적용 전의 레이아웃 크기(이미지 스타일 width:100% 가정)
+        const baseW = img.clientWidth;
+        const baseH = img.clientHeight;
+  
+        // 실제 화면에 보이는 크기(스케일 반영)
+        const scaledW = baseW * scale;
+        const scaledH = baseH * scale;
+  
+        // 중앙 기준(transformOrigin: center)에서 허용 가능한 최대 오프셋
+        const maxOffsetX = Math.max(0, (scaledW - wrapW) / 2);
+        const maxOffsetY = Math.max(0, (scaledH - wrapH) / 2);
+  
+        const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+  
+        return {
+          x: clamp(nx, -maxOffsetX, maxOffsetX),
+          y: clamp(ny, -maxOffsetY, maxOffsetY),
+        };
+      };
+  
+      // 🔴 확대 상태이며, 클릭 지점이 "이미지 표시 영역" 안일 때만 팬 시작
+      const onMouseDown = (e: React.MouseEvent) => {
+        if (scale <= 1) return;
+  
+        const img = imgRef.current;
+        if (!img) return;
+  
+        // 현재 화면에 보이는 이미지 경계(스케일 포함)
+        const rect = img.getBoundingClientRect();
+        const inside =
+          e.clientX >= rect.left && e.clientX <= rect.right &&
+          e.clientY >= rect.top  && e.clientY <= rect.bottom;
+  
+        if (!inside) return; // 이미지 밖이면 드래그 시작 금지
+  
+        setIsPanning(true);
+        panStartRef.current = {
+          x: e.clientX,
+          y: e.clientY,
+          tx: translate.x,
+          ty: translate.y,
+        };
+      };
+  
+      const handleZoomFromChild = (action: string) => {
+        setScale(prev => {
+          if (action === "in") return Math.min(prev + 0.2, 3);
+          if (action === "out") return Math.max(prev - 0.2, 1);
+          return 1;
+        });
+      };
+  
+      const onMouseMove = (e: React.MouseEvent) => {
+        if (!isPanning || !panStartRef.current) return;
+        const { x, y, tx, ty } = panStartRef.current;
+        const dx = e.clientX - x;
+        const dy = e.clientY - y;
+  
+        const next = clampTranslate(tx + dx, ty + dy);
+        setTranslate(next);
+      };
+  
+      const endPan = () => {
+        setIsPanning(false);
+        panStartRef.current = null;
+      };
+  
+      // 스케일이 변할 때 현재 translate가 허용 범위를 벗어나지 않도록 보정
+      useEffect(() => {
+        setTranslate(prev => clampTranslate(prev.x, prev.y));
+      }, [scale]);
+  
 
     // ESC 키로 모달 닫기
     useEffect(() => {
@@ -73,6 +161,26 @@ export default function RemoteModal({
     }, [isOpen, onClose]);
     
     if (!isOpen) return null;
+
+    const standHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+        console.log("standHandle 클릭됨!", event);
+    };
+
+    const sitHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+        console.log("sitHandle 클릭됨!", event);
+    };
+
+    const slowHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+        console.log("slowHandle 클릭됨!", event);
+    };
+
+    const normalHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+        console.log("normalHandle 클릭됨!", event);
+    };
+
+    const fastHandle = (event: React.MouseEvent<HTMLDivElement>) => {
+        console.log("fastHandle 클릭됨!", event);
+    };
 
     const defaultRobotName = selectedRobot?.no || "Robot 1";
 
@@ -110,9 +218,11 @@ export default function RemoteModal({
               </div>
             </div>
           </div>
-
-          <iframe src={webrtcUrl} allow="autoplay; fullscreen" className={styles["video-box"]} />
-
+          {!isSwapped ? (
+            <iframe src={mapSample} allow="autoplay; fullscreen" className={styles["video-box"]} /> 
+            ) : ( 
+            <iframe src={cameraSample} allow="autoplay; fullscreen" className={styles["video-box"]} />
+          )}
           <div className={styles.middlePosition}>
             <div className={styles.floorFlex}>
               <div>7F</div>
@@ -153,14 +263,21 @@ export default function RemoteModal({
                   <div>Cam2</div>
                 </div>
                 <div className={styles.zoomBtn}>
-                  <div>Zoom In</div>
-                  <div>Zoom Out</div>
+                  <div onClick={() => handleZoomFromChild("in")} >Zoom In</div>
+                  <div onClick={() => handleZoomFromChild("out")}>Zoom Out</div>
                 </div>
               </div>
 
               <div className={styles.viewBox}>
-                {/* <iframe src="" frameborder="0"></iframe> */}
-                <div className={styles.viewExchangeBtn}><img src="/icon/view-change.png" alt="view-change" /></div>
+                {!isSwapped ? (
+                    // 서브(기본 PiP)
+                    // <iframe src={webrtcUrl} allow="autoplay; fullscreen" />
+                    <iframe src={cameraSample} allow="autoplay; fullscreen" />
+                  ) : (
+                    // 메인이 서브 위치로 이동
+                    <iframe src={mapSample} allow="autoplay; fullscreen" />
+                  )}
+                <div className={styles.viewExchangeBtn} onClick={() => setIsSwapped(prev => !prev)}><img src="/icon/view-change.png" alt="view-change" /></div>
               </div>
             </div>
           </div>

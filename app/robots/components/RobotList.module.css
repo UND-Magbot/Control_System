@@ -1,3 +1,13 @@
+.RobotStatusTopPosition {
+  display: flex;
+  justify-content: space-between;
+}
+
+.RobotSearch {
+  display: flex;
+  gap: 10px;
+}
+
 .status {
     width: 100%;
     border-collapse: collapse;
