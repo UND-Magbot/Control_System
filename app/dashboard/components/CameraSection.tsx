@@ -26,7 +26,7 @@ export default function CameraSection({cameras, robots, video}:CombinedProps) {
   const [activeCam, setActiveCam] = useState<number>(1);
   const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
 
-
+  const [cameraStream, setCameraStream] = useState("http://localhost:8000/Video/1");
   const handleCameraTab = (idx: number, cam: Camera) => {
     setCameraTabActiveIndex(idx);
   
@@ -34,6 +34,11 @@ export default function CameraSection({cameras, robots, video}:CombinedProps) {
     // setWebrtcUrl(cam.webrtcUrl);
   
     console.log("선택된 카메라:", cam.id, cam.webrtcUrl);
+
+    const url = `http://localhost:8000/Video/${cam.id}`;
+
+    console.log("카메라 변경 →", url);
+    setCameraStream(url);
   };
 
   // 로봇 선택 핸들러
@@ -60,8 +65,9 @@ export default function CameraSection({cameras, robots, video}:CombinedProps) {
       <div className={styles["middle-div"]}>
         <div className={styles["view-div"]}>
           <div className={styles.robotName}>{defaultRobotName}</div>
-          <iframe src={webrtcUrl} allow="autoplay; fullscreen" className={styles["video-box"]} />
-
+          <div className={styles.cameraWrapper}>
+            <img src={cameraStream} className={styles.cameraImg} />
+          </div>
           {/* 카메라 선택 탭 */}
           <CameraSelector cameras={cameras} activeIndex={cameraTabActiveIndex} onSelect={handleCameraTab} />
         </div>

@@ -27,7 +27,7 @@ export default function DashboardPage() {
     const [webrtcUrl, setWebrtcUrl] = useState<string | undefined>(undefined);
     const [activeCam, setActiveCam] = useState<string>('my_camera01');
     const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
-
+    const [cameraStream, setCameraStream] = useState("http://localhost:8000/Video/1");
 
    
     const optionItems = [
@@ -332,7 +332,7 @@ export default function DashboardPage() {
             <div className='view-div'>
               <div className='view-box'>
                 {/* <img src={robotCurrentImage} alt="sample" />   */}
-                <iframe src={webrtcUrl} allow="autoplay; fullscreen" className="video-box"/>
+                <iframe src={cameraStream} allow="autoplay; fullscreen; " className="video-box"/>
               </div>
               <div className='view-button'>
                 {cameras.map((cam, idx) => (
