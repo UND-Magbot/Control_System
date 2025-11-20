@@ -6,7 +6,7 @@ import axios from "axios";
 import { useState, useEffect, useRef } from 'react';
 import usePageRouter from "@/app/hooks/CommonRouter";
 import CameraModal from '../components/modal/RobotPathModal';
-import RemoteModal from '../components/modal/RemoteModal';
+import RemoteModal from '../components/modal/RemoteMapModal';
 
 export default function DashboardPage() {
 

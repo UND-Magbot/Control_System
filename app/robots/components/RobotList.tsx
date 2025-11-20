@@ -3,76 +3,42 @@
 import React, { useState, useMemo } from 'react';
 import styles from './RobotList.module.css';
 import Pagination from "@/app/components/pagination";
-import type { RobotRowData, BatteryItem } from '@/app/type';
-import { RobotCrudBtn } from "@/app/components/button";
+import type { RobotRowData, BatteryItem, Camera, Floor, Video } from '@/app/type';
+import { RobotCrudBtn, RemoteBtn, RobotPathBtn } from "@/app/components/button";
 import BatterySelectBox from './BatterySelectBox';
 import NetworkSelectBox from './NetworkSelectBox';
+import CameraViews from './CameraView';
+import MapView from './MapView';
 import PowerSelectBox from './PowerSelectBox';
 import LocationSelectBox from './LocationSelectBox';
 
 const PAGE_SIZE = 10;
 
 interface RobotStatusListProps {
-  robotRows: RobotRowData[];
+  cameras: Camera[];
+  robots: RobotRowData[];
+  floors: Floor[];
+  video: Video[];
 }
 
-export default function RobotStatusList({ robotRows }:RobotStatusListProps) {
+export default function RobotStatusList({ cameras, robots, floors, video }:RobotStatusListProps) {
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
   const [batterySelectIndex, setBatterySelectIndex] = useState<BatteryItem | null>(null);
   const [batteryActiveIndex, setBatteryActiveIndex] = useState<number>(0);
 
-  const BatteryData: BatteryItem[] = [
-    { id: 1, label: "76% ~ 100%" },
-    { id: 2, label: "51% ~ 75%" },
-    { id: 3, label: "26% ~ 50%" },
-    { id: 4, label: "1% ~ 25%" },
-    { id: 5, label: "0%" },
-    { id: 6, label: "Charging" }
-];
+  // 🔥 여기 추가: 선택된 로봇 id (또는 전체 데이터)
+  const [selectedRobotId, setSelectedRobotId] = useState<number | null>(null);
+  // 필요하면 전체 데이터도 같이 보관
+  const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
 
-const selectedBattery = batterySelectIndex;
-
-  const handleBatterySelect = (idx: number, battery: BatteryItem) => {
-    setBatteryActiveIndex(idx);  // 강조 표시
-    setBatterySelectIndex(battery);   // 필터 기준 + 라벨 표시용
-    setCurrentPage(1);
-    console.log("선택된 배터리:", battery.id, battery.label);
-  };
   
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredRows = useMemo(() => {
-    if (!batterySelectIndex) return robotRows;
-  
-    const label = batterySelectIndex.label;
-  
-    if (label === "76% ~ 100%") {
-      return robotRows.filter(r => r.battery >= 76 && r.battery <= 100);
-    }
-    if (label === "51% ~ 75%") {
-      return robotRows.filter(r => r.battery >= 51 && r.battery <= 75);
-    }
-    if (label === "26% ~ 50%") {
-      return robotRows.filter(r => r.battery >= 26 && r.battery <= 50);
-    }
-    if (label === "1% ~ 25%") {
-      return robotRows.filter(r => r.battery >= 1 && r.battery <= 25);
-    }
-    if (label === "0%") {
-      return robotRows.filter(r => r.battery === 0);
-    }
-    if (label === "Charging") {
-      return robotRows.filter(r => r.isCharging);
-    }
-  
-    return robotRows;
-  }, [robotRows, batterySelectIndex]);
-
-  const totalItems = robotRows.length;
+  const totalItems = robots.length;
   const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const currentItems = robotRows.slice(startIndex, startIndex + PAGE_SIZE);
+  const currentItems = robots.slice(startIndex, startIndex + PAGE_SIZE);
 
   const robotInfoIcons = {
     info: (index: number) => {
@@ -117,85 +83,109 @@ const selectedBattery = batterySelectIndex;
     }
   };
 
+  // ✅ Location 클릭 시 실행되는 핸들러
+  const handleLocationClick = (idx: number, robot: RobotRowData) => {
+    setRobotActiveIndex(idx);       // row 하이라이트 줄 때 사용 가능
+    setSelectedRobotId(robot.id);   // 카메라 / 맵에서 쓸 핵심 값
+    setSelectedRobot(robot);        // 필요하면 전체 정보도 내려줌
+
+    console.log("선택된 로봇 (Location 클릭):", robot.id, robot.no);
+  };
+
   return (
     <>
-    <div className={styles.RobotStatusTopPosition}>
-        <h2>Robot List</h2>
-        <div className={styles.RobotSearch}>
-            <BatterySelectBox battery={BatteryData} activeIndex={batteryActiveIndex} selectBattery={selectedBattery} onSelect={handleBatterySelect}/>
-            <NetworkSelectBox />
-            <PowerSelectBox />
-            <LocationSelectBox />
-        </div>
-    </div>
-    <table className={styles.status}>
-        <thead>
-            <tr>
-                <th>Robot No</th>
-                <th>Robot Info</th>
-                <th>Battery</th>
-                <th>Network</th>
-                <th>Power</th>
-                <th>Mark</th>
-                <th>Location</th>
+    <div className={styles.RobotStatusList}>
+      <div className={styles.RobotStatusTopPosition}>
+          <h2>Robot List</h2>
+          <div className={styles.RobotSearch}>
+              <BatterySelectBox/>
+              <NetworkSelectBox />
+              <PowerSelectBox />
+              <LocationSelectBox />
+          </div>
+      </div>
+      <table className={styles.status}>
+          <thead>
+              <tr>
+                  <th>Robot No</th>
+                  <th>Robot Info</th>
+                  <th>Battery</th>
+                  <th>Network</th>
+                  <th>Power</th>
+                  <th>Mark</th>
+                  <th>Location</th>
+              </tr>
+          </thead>
+          <tbody>
+          {currentItems.map((r, idx) => (
+              <tr key={r.no}>
+              <td>
+                  <div>
+                  {r.no}
+                  </div>
+              </td>
+              <td>
+                  <div className={`${styles.robot_status_icon_div}`}>
+                    <img src={robotInfoIcons.info(idx)} alt={`robot_icon`} />
+                    <div className={styles["info-box"]}>View Info</div>
+                  </div>
+              </td>
+              <td>
+                  <div className={styles["robot_status_icon_div"]}>
+                  <img src={robotInfoIcons.battery(r.battery, r.isCharging)} alt="battery" />
+                  {r.battery}%
+                  </div>
+              </td>
+              <td>
+                  <div className={styles["robot_status_icon_div"]}>
+                  <img src={robotInfoIcons.network(r.network)} alt="network" />
+                  {r.network}
+                  </div>
+              </td>
+              <td>
+                  <div className={styles["robot_status_icon_div"]}>
+                  <img src={robotInfoIcons.power(r.power)} alt="power" />
+                  {r.power}
+                  </div>
+              </td>
+              <td>
+                  <div className={styles["robot_status_icon_div"]}>
+                  <img src={robotInfoIcons.mark(idx)} alt="mark" />
+                  {r.mark}
+                  </div>
+              </td>
+              <td>
+                  <div className={`${styles["robot_status_icon_div"]} ${styles.viewMap}`} onClick={() => { handleLocationClick(idx, r) }}>
+                    <div>View Map</div>
+                    <div>→</div>
+                  </div>
+              </td>
             </tr>
-        </thead>
-        <tbody>
-        {currentItems.map((r, idx) => (
-            <tr key={r.no}>
-            <td>
-                <div>
-                {r.no}
-                </div>
-            </td>
-            <td>
-                <div className={`${styles.robot_status_icon_div}`}>
-                  <img src={robotInfoIcons.info(idx)} alt={`robot_icon`} />
-                  <div className={styles["info-box"]}>View Info</div>
-                </div>
-            </td>
-            <td>
-                <div className={styles["robot_status_icon_div"]}>
-                <img src={robotInfoIcons.battery(r.battery, r.isCharging)} alt="battery" />
-                {r.battery}%
-                </div>
-            </td>
-            <td>
-                <div className={styles["robot_status_icon_div"]}>
-                <img src={robotInfoIcons.network(r.network)} alt="network" />
-                {r.network}
-                </div>
-            </td>
-            <td>
-                <div className={styles["robot_status_icon_div"]}>
-                <img src={robotInfoIcons.power(r.power)} alt="power" />
-                {r.power}
-                </div>
-            </td>
-            <td>
-                <div className={styles["robot_status_icon_div"]}>
-                <img src={robotInfoIcons.mark(idx)} alt="mark" />
-                {r.mark}
-                </div>
-            </td>
-            <td>
-                <div className={`${styles["robot_status_icon_div"]} ${styles.viewMap}`}>
-                  <div>View Map</div>
-                  <div>→</div>
-                </div>
-            </td>
-          </tr>
-        ))}
-        </tbody>
-        </table>
-        <div className={styles.bottomPosition}>
-          <div className={styles.RobotCrudBtnPosition}>
-            <RobotCrudBtn />
+          ))}
+          </tbody>
+          </table>
+          <div className={styles.bottomPosition}>
+            <div className={styles.RobotCrudBtnPosition}>
+              <RobotCrudBtn />
+            </div>
+            <div className={styles.pagenationPosition}>
+              <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={setCurrentPage} pageSize={PAGE_SIZE} blockSize={5} />
+            </div>
           </div>
-          <div className={styles.pagenationPosition}>
-            <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={setCurrentPage} pageSize={PAGE_SIZE} blockSize={5} />
-          </div>
-        </div>
+          <div></div>
+    </div>
+
+    <div className={styles.cameraMapView}>
+        <h2>Location Map & Real-time Camera</h2>
+        <MapView selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots} floors={floors} video={video} cameras={cameras} />
+        <br />
+        <CameraViews selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots} floors={floors} video={video} cameras={cameras} />
+        <br />
+        <div className={styles.modalOpenBox}>
+            <RemoteBtn selectedRobots={selectedRobot} robots={robots} video={video} cameras={cameras} />
+            <RobotPathBtn selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras} />
+        </div>        
+    </div>
     </>
   );
 }

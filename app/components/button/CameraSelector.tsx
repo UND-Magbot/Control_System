@@ -7,7 +7,7 @@ import styles from './Button.module.css';
 type CameraSelectorProps = {
   cameras: Camera[];
   activeIndex: number;                         // 현재 선택된 카메라 index (부모가 관리)
-  onSelect: (index: number, camId: number) => void; // 클릭 시 부모에 알려줄 콜백
+  onSelect: (index: number, camId: Camera) => void; // 클릭 시 부모에 알려줄 콜백
 };
 
 export default function CameraSelector({
@@ -22,7 +22,7 @@ export default function CameraSelector({
       {cameras.map((cam, idx) => (
         <button key={cam.id} type="button"
           className={`${styles.camerabtn} ${activeIndex === idx ? styles["active"] : ""}`}
-          onClick={() => onSelect(idx, cam.id)}
+          onClick={() => onSelect(idx, cam)}
           aria-pressed={activeIndex === idx}
           onMouseEnter={() => setHoveredIndex(idx)}
           onMouseLeave={() => setHoveredIndex(null)}

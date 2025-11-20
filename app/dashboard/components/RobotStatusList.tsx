@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import type { RobotRowData } from '@/app/type';
-import usePageRouter from "@/app/hooks/CommonRouter";
 import styles from './RobotStatusList.module.css';
 
 interface RobotStatusListProps {
@@ -12,7 +11,6 @@ interface RobotStatusListProps {
 export default function RobotStatusList({robotRows}:RobotStatusListProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
-  const { handleRoute } = usePageRouter();
 
   const robotInfoIcons = {
     info: (index: number) => {
@@ -65,7 +63,7 @@ export default function RobotStatusList({robotRows}:RobotStatusListProps) {
         </thead>
         <tbody>
         {robotRows.slice(0, 4).map((r, idx) => (
-            <tr key={r.no} onClick={() => handleRoute("robot")}>
+            <tr key={r.no}>
             <td>
                 <div>
                 {r.no}

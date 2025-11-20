@@ -1,13 +1,18 @@
 import styles from './robots.module.css';
 import RobotList from './components/RobotList';
-import CameraView from './components/CameraView';
-import MapView from './components/MapView';
 import RobotInfo from "@/app/lib/robotInfo";
-import { RemoteBtn, RobotPathBtn } from '@/app/components/button';
+import Floors from '@/app/lib/floorInfo';
+import VideoStatus from '@/app/lib/videoStatus';
+import cameraView from "@/app/lib/cameraView";
 
 export default async function Page() {
 
-    const robots = await RobotInfo();
+    const [robots, cameras, floors, videoStatus] = await Promise.all([
+        RobotInfo(),
+        cameraView(),
+        Floors(),
+        VideoStatus(),
+      ]);
 
     return (
         <>
@@ -42,21 +47,7 @@ export default async function Page() {
                 </div>
             </div>
             <div className={styles.middlePosition}>
-                <div className={styles.RobotStatusList}>
-                    <RobotList robotRows={robots} />
-                    <div></div>
-                </div>
-                <div className={styles.cameraMapView}>
-                    <h2>Location Map & Real-time Camera</h2>
-                    <MapView />
-                    <br />
-                    <CameraView />
-                    <br />
-                    <div className={styles.ModalOpenBox}>
-                        {/* <RemoteBtn selectedRobots={selectedRobot} robots={robots} video={video} /> */}
-                        {/* <RobotPathBtn /> */}
-                    </div>
-                </div>
+                <RobotList robots={robots} cameras={cameras} floors={floors} video={videoStatus} />
             </div>
         </>
     )

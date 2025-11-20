@@ -30,6 +30,7 @@ export default function RemoteModal({
     const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
     const [isSwapped, setIsSwapped] = useState(false);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [cameraTabActiveIndex, setCameraTabActiveIndex] = useState<number>(0);
 
     const [scale, setScale] = useState(1);
     const [translate, setTranslate] = useState({ x: 0, y: 0 });
@@ -143,22 +144,43 @@ export default function RemoteModal({
       }, [scale]);
   
 
-    // ESC 키로 모달 닫기
-    useEffect(() => {
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      
-      if (isOpen) {
-        document.addEventListener('keydown', handleEscape);
-        document.body.style.overflow = 'hidden'; // 스크롤 방지
+  // 공통 닫기 + 초기화 함수
+  const handleClose = () => {
+    // 확대/이동 상태 초기화
+    setScale(1);
+    setTranslate({ x: 0, y: 0 });
+    setIsPanning(false);
+
+    // 스왑 / 탭 등 초기화
+    setIsSwapped(false);
+    setCameraTabActiveIndex(0);
+    // setMapTabActiveIndex(null);
+    // setFloorActiveIndex(0);
+
+    // 로봇 선택값 초기화 (모달 오픈 시점 기준)
+    setSelectedRobot(selectedRobots);
+
+    onClose();
+  };
+
+  // ESC 키로 모달 닫기 + 상태 초기화
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
       }
-      
-      return () => {
-        document.removeEventListener('keydown', handleEscape);
-        document.body.style.overflow = 'unset';
-      };
-    }, [isOpen, onClose]);
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, handleClose]);
     
     if (!isOpen) return null;
 
@@ -218,9 +240,9 @@ export default function RemoteModal({
             <img src="/icon/robot_control_w.png" alt="robot_control" />
             <span>Remote Control (Real-time Camera & Location Map)</span>
           </div>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={handleClose}>✕</button>
         </div>
-        <div className={styles.CameraView}>
+        <div className={styles.cameraView}>
           <div className={styles.topPosition}>
           <ModalRobotSelect selectedLabel={defaultRobotName} robots={robots} activeIndex={robotActiveIndex} onSelect={handleRobotSelect}/>
             
@@ -243,11 +265,15 @@ export default function RemoteModal({
               </div>
             </div>
           </div>
-          {!isSwapped ? (
-            <iframe src={mapSample} allow="autoplay; fullscreen" className={styles["video-box"]} /> 
-            ) : ( 
-            <iframe src={cameraSample} allow="autoplay; fullscreen" className={styles["video-box"]} />
-          )}
+          <div className={styles["video-box"]} style={{ overflow: "hidden", width: "100%", aspectRatio: "16/9" }}>
+            <div ref={wrapperRef} style={{ overflow: "hidden", userSelect: "none", touchAction: "none", cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",}} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={endPan} onMouseLeave={endPan}>
+              {!isSwapped ? (
+                <img ref={imgRef} src={mapSample} draggable={false} style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", transition: isPanning ? "none" : "transform 120ms ease", objectFit: "cover", width:"100%"}}/> 
+                ) : ( 
+                <img ref={imgRef} src={cameraSample} draggable={false} style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", transition: isPanning ? "none" : "transform 120ms ease", objectFit: "cover", width:"100%"}}/>
+              )}
+            </div>
+          </div>
           <div className={styles.middlePosition}>
             <div className={styles.floorFlex}>
               <div>7F</div>
@@ -293,14 +319,14 @@ export default function RemoteModal({
                 </div>
               </div>
 
-              <div className={styles.viewBox}>
+              <div className={styles.viewBox} style={{ overflow: "hidden"}}>
                 {!isSwapped ? (
                     // 서브(기본 PiP)
                     // <iframe src={webrtcUrl} allow="autoplay; fullscreen" />
-                    <iframe src={cameraSample} allow="autoplay; fullscreen" />
+                    <img src={cameraSample} style={{width:"100%", height:"100%", objectFit: "cover"}} />
                   ) : (
                     // 메인이 서브 위치로 이동
-                    <iframe src={mapSample} allow="autoplay; fullscreen" />
+                    <img src={mapSample} style={{width: "100%", height: "100%", objectFit: "cover"}} />
                   )}
                 <div className={styles.viewExchangeBtn} onClick={() => setIsSwapped(prev => !prev)}><img src="/icon/view-change.png" alt="view-change" /></div>
               </div>

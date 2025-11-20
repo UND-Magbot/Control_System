@@ -27,17 +27,16 @@ export default function CameraSection({cameras, robots, video}:CombinedProps) {
   const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
 
 
-  // ✅ 카메라 리스트
-  const cameraInfo = cameras;
-
-  // ✅ 카메라 탭 클릭 핸들러
-  const handleCameraTab = (idx: number, camId: number) => {
+  const handleCameraTab = (idx: number, cam: Camera) => {
     setCameraTabActiveIndex(idx);
-    setActiveCam(camId);
-    // selectCamera(camId); // 나중에 axios 연결 다시 살릴 때 여기서 호출
+  
+    // 🔥 선택된 카메라의 WebRTC URL 업데이트
+    // setWebrtcUrl(cam.webrtcUrl);
+  
+    console.log("선택된 카메라:", cam.id, cam.webrtcUrl);
   };
 
-  // ✅ 로봇 선택 핸들러
+  // 로봇 선택 핸들러
   const handleRobotSelect = (idx: number, robots: RobotRowData) => {
     setRobotActiveIndex(idx);
     setSelectedRobot(robots);
@@ -69,7 +68,7 @@ export default function CameraSection({cameras, robots, video}:CombinedProps) {
       </div>
       <div className={styles["bottom-div"]}>
         <RobotSelectBox robots={robots} activeIndex={robotActiveIndex} onSelect={handleRobotSelect} className={styles.customSelectBox} />
-        <RemoteBtn selectedRobots={selectedRobot} robots={robots} video={video} />
+        <RemoteBtn selectedRobots={selectedRobot} robots={robots} video={video} cameras={cameras} />
       </div>
     </>
   );

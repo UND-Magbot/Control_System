@@ -3,16 +3,17 @@
 import React from 'react';
 import { useState } from 'react';
 import styles from './Button.module.css';
-import type { RobotRowData, Video } from '@/app/type';
-import RemoteModal from "../modal/RemoteModal";
+import type { RobotRowData, Video, Camera } from '@/app/type';
+import RemoteMapModal from "../modal/RemoteMapModal";
 
 type RemoteBtnProps = {
   robots: RobotRowData[];
   selectedRobots: RobotRowData | null;
   video: Video[]
+  cameras: Camera[]
 }
 
-export default function RemoteBtn({selectedRobots, robots, video } : RemoteBtnProps) {
+export default function RemoteBtn({selectedRobots, robots, video, cameras } : RemoteBtnProps) {
 
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
 
@@ -32,7 +33,7 @@ export default function RemoteBtn({selectedRobots, robots, video } : RemoteBtnPr
           </div>
           <div>Remote Control</div>
       </button>
-      <RemoteModal isOpen={remoteModalOpen} onClose={() => setRemoteModalOpen(false)} selectedRobots={selectedRobots} robots={robots} video={video}/>
+      <RemoteMapModal isOpen={remoteModalOpen} onClose={() => setRemoteModalOpen(false)} selectedRobots={selectedRobots} robots={robots} video={video} camera={cameras} primaryView="camera"/>
     </>
   )
 } 

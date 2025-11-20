@@ -17,6 +17,7 @@ export type Robot = {
 export type Camera = { 
     id: number;
     label: string;
+    webrtcUrl: string;
 };
 
 

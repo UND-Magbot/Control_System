@@ -3,7 +3,7 @@
 import styles from './MapSection.module.css';
 import { ZoomControl, FloorSelectBox, RobotPathBtn, PlusBtn } from "@/app/components/button";
 import { useState, useEffect, useRef } from 'react';
-import type { Floor, RobotRowData, Video } from '@/app/type'
+import type { Floor, RobotRowData, Video, Camera } from '@/app/type'
 
 import React from 'react';
 
@@ -11,10 +11,11 @@ type FloorSelectBoxProps = {
   floors: Floor[];
   robots: RobotRowData[];
   video: Video[];
+  cameras: Camera[];
 };
 
 
-export default function MapSection({ floors, robots, video }:FloorSelectBoxProps) {
+export default function MapSection({ floors, robots, video, cameras }:FloorSelectBoxProps) {
 
     const [mapTabActiveIndex, setMapTabActiveIndex] = useState<number | null>(0);
     const [floorActiveIndex, setFloorActiveIndex] = useState<number>(2);
@@ -25,7 +26,6 @@ export default function MapSection({ floors, robots, video }:FloorSelectBoxProps
     const handleFloorSelect = (idx: number, floors: Floor) => {
       setFloorActiveIndex(idx);
       setSelectedFloor(floors);
-      // setRobotCurrentImage( ... ); // 나중에 로봇별 카메라 이미지 연동 시 여기서 처리
       console.log("선택된 층:", floors.id, floors.label);
     };
 
@@ -167,7 +167,7 @@ export default function MapSection({ floors, robots, video }:FloorSelectBoxProps
       </div>
       <div className={styles["bottom-div"]}>
         <FloorSelectBox floors={floors} activeIndex={floorActiveIndex} onSelect={handleFloorSelect} className={styles.customSelectBox} />
-        <RobotPathBtn selectedRobots={selectedRobot} robots={robots} video={video} />
+        <RobotPathBtn selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras} />
       </div>
     </>
    );

@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import styles from './Button.module.css';
-import RemoteModal from "../modal/RemoteModal";
+import RemoteModal from "../modal/RemoteMapModal";
 import type { RobotRowData, Video } from '@/app/type';
 import RobotPath from "../modal/RobotPathModal";
 

@@ -34,8 +34,9 @@
 }
 
 .modalContent {
-  width: 80vw;
-  height: 85vh;
+  width: 70vw;
+  /* height: 85vh; */
+  height: auto;
   background: #1a1d2e;
   border-radius: 16px;
   display: flex;
@@ -56,6 +57,7 @@
   align-items: center;
 }
 
+
 .modalTitle img {
   width: 40px;
   margin-right: 15px;
@@ -75,9 +77,10 @@
     cursor: pointer;
 }
 
-.CameraView {
+.cameraView {
   margin-top: 20px;
   position: relative;
+  width: 100%;
   height: 100%;
 }
 
@@ -88,16 +91,18 @@
   width: 150px;
 }
 
-.CameraView .video-box {
+.cameraView .video-box {
   width: 100%;
   height: 100%;
   border-radius: 15px;
+  border: 1px solid #fff;
 }
 
 .topRightPostion {
   position: absolute;
   top: 20px;
   right: 20px;
+  z-index: 10;
 }
 
 .topRightIcon {
@@ -125,16 +130,39 @@
 
 .middlePosition {
   position: absolute;
-  bottom: 230px;
-  right: 30px;
+  bottom: 235px;
+  right: 35px;
 }
 
 .floorFlex {
+  width: 270px;
   display: flex;
-  width: 340px;
-  gap: 5px;
+  flex-direction: row;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-start;
   text-align: center;
   font-size: 14px;
+  gap: 5px;
+
+  text-align: center;
+  font-size: 14px;
+}
+
+.floorFlex div {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: calc(250px / 5);
+  height: 30px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+
+.floorFlex div.active {
+  background: #e46463;
 }
 
 .floorGrid div {
@@ -158,7 +186,8 @@
 .bottomFlex {
   display: flex;
   justify-content: center;
-  gap: 45px;
+  /* gap: 45px; */
+  gap: 30px;
   width: 100%;
 }
 
@@ -173,15 +202,19 @@
 .viewBox {
   width: 23%;
   height: 200px;
-  border-radius: 15px;
+  border: 1px solid #fff;
+  border-radius: 10px;
   box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
   position: relative;
 }
 
-.viewBox iframe {
+.viewBox video {
   width: 100%;
-  height: 100%;
+  height: 200px;
+  border: 1px solid #fff;
   border-radius: 15px;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+  position: relative;
 }
 
 .viewExchangeBtn {
@@ -225,6 +258,7 @@
 .standSitBtn div:hover,
 .speedBtn div:hover,
 .camBtn div:hover,
+.camBtn div.active,
 .zoomBtn div:hover {
   background: #808291;
 }
@@ -264,3 +298,132 @@
 .powerBtn img {
   height: 33px;
 }
+
+
+/* Robot Detail Modal */
+
+.detailModalContent {
+  width: 680px;
+  height: auto;
+  background: #1a1d2e;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  padding: 25px;
+}
+
+.detailCloseBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  color: white;
+  background: transparent;
+  font-size: 23px;
+  cursor: pointer;
+  position: absolute;
+  right: 20px;
+  top: 15px;
+}
+
+.detailTitle {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.detailTitle img {
+  width: 25px;
+}
+
+.detailTitle h2 {
+  font-weight: 500;
+  margin: 0;
+  color: #ffffff;
+}
+
+.itemBoxContainer {
+  width: 100%;
+  background: #3c415f;
+  border-radius: 15px;
+  margin-top: 20px;
+  height: auto;
+}
+
+.itemBoxTotal {
+  width: calc(100% - 60px);
+  padding: 40px 0;
+  margin: 0 auto;
+}
+
+.detailItemBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mb20 {
+  margin-bottom: 20px;
+}
+
+.detailItemBox div {
+  font-size: 16px;
+}
+
+.detailItemBox input {
+  width: 350px;
+  height: 40px;
+  border-radius: 6px;
+  padding: 5px 10px;
+  border: 1px solid #7f8ca7;
+  background: #4a4f6c;
+  color: #fcffff;
+}
+
+.detailItemBox input:focus {
+  outline: none;
+}
+
+.detailItemBox input::placeholder {
+  color: #fcffff;
+  font-size: 12px;
+  font-weight: 300;
+}
+
+.btnTotal{
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  margin-top: 35px;
+
+}
+
+.btnItemCommon {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 150px;
+  height: 40px;
+  border-radius: 6px;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btnBgRed{
+  background: #941621;
+  margin-right: 10px;
+}
+
+.btnBgBlue{
+  background: #196189;
+}
+
+.btnItemCommon img {
+  height: 10px;
+}
+
+.btnItemCommon div {
+  font-size: 14px;
+}
+

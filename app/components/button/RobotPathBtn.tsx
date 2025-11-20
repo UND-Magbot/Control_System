@@ -3,16 +3,17 @@
 import React from 'react';
 import { useState } from 'react';
 import styles from './Button.module.css';
-import type { RobotRowData, Video } from '@/app/type';
-import RobotPathModal from "../modal/RobotPathModal";
+import type { RobotRowData, Video, Camera } from '@/app/type';
+import RemoteMapModal from "../modal/RemoteMapModal";
 
 type RobotPathBtnProps = {
   robots: RobotRowData[];
   selectedRobots: RobotRowData | null;
-  video: Video[]
+  video: Video[];
+  camera: Camera[];
 }
 
-export default function RobotPathBtn({ selectedRobots, robots, video } : RobotPathBtnProps) {
+export default function RobotPathBtn({ selectedRobots, robots, video, camera } : RobotPathBtnProps) {
 
   const [robotPathModalOpen, setRobotPathModalOpen] = useState(false);
 
@@ -32,7 +33,7 @@ export default function RobotPathBtn({ selectedRobots, robots, video } : RobotPa
         </div>
         <div>Robot Path</div>
       </button>
-      <RobotPathModal isOpen={robotPathModalOpen} onClose={() => setRobotPathModalOpen(false)} selectedRobots={selectedRobots} robots={robots} video={video}/>
+      <RemoteMapModal isOpen={robotPathModalOpen} onClose={() => setRobotPathModalOpen(false)} selectedRobots={selectedRobots} robots={robots} video={video} camera={camera} primaryView="map"/>
     </>
   );
 }

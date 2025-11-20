@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
          {/* Robot Location */}
          <div className={styles["top-common-div"]}>
-           <MapSection floors={floors} robots={robots} video={videoStatus}/>
+           <MapSection floors={floors} robots={robots} video={videoStatus} cameras={cameras}/>
         </div>
 
 

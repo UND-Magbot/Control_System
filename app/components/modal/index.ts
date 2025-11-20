@@ -1,2 +1,2 @@
-export { default as RemoteModal } from "./RemoteModal";
+export { default as RemoteModal } from "./RemoteMapModal";
 export { default as RobotPathModal } from "./RobotPathModal";

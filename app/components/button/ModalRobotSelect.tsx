@@ -41,7 +41,7 @@ export default function RobotSelectBox({
 
   return (
 
-    <div ref={wrapperRef} className={`${styles.modalSeletWrapper}`}>
+    <div ref={wrapperRef} className={`${styles.modalSeletWrapper} ${styles.className}`}>
       <div className={styles.modalSelect} 
         onClick={() => setIsOpen(!isOpen)}>
         <span>{selectedLabel}</span>
