@@ -14,3 +14,8 @@
 .pagination button img {
     height: 10px;
 }
+
+.page.active {
+    color: #94d6f9;
+    font-weight: 600;            /* 강조 */
+}

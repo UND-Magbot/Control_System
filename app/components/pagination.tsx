@@ -66,12 +66,9 @@ export default function Pagination({
       {/* 페이지 번호들 (5개 블럭) */}
       {pages.map((page) => (
         <button
-          key={page}
-          type="button"
-          onClick={() => onPageChange(page)}
+          key={page} type="button" onClick={() => onPageChange(page)}
           aria-current={currentPage === page ? "page" : undefined}
-          className={currentPage === page ? "page active" : "page"}
-        >
+          className={ currentPage === page ? `${styles.page} ${styles.active}` : styles.page} >
           {page}
         </button>
       ))}

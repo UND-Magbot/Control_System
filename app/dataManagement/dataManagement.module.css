@@ -1,0 +1,19 @@
+.topPosition {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+}
+
+.topPosition h1 {
+    margin: 0;
+    font-weight: 500;
+}
+
+.tabPosition {
+    position: relative;
+}
+
+.videoList {
+    width: 100%;
+}

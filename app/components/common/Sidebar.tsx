@@ -11,7 +11,7 @@ export default function Sidebar() {
     const menuItems = [
       { path: "/dashboard", icon: "main", label: "Home" },
       { path: "/robots", icon: "robot", label: "Robot" },
-      { path: "/data-management", icon: "data", label: "Data" },
+      { path: "/dataManagement", icon: "data", label: "Data" },
       { path: "/schedules", icon: "schedule", label: "Schedule" },
     ];
   

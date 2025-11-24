@@ -1,0 +1,301 @@
+
+.videoListTab {
+    position: absolute;
+    top: 20px;
+    right: 0px;
+    display: flex;
+    gap: 15px;
+    z-index: 0;
+}
+
+.videoListTab div {
+    background: #1f2232;
+    border-radius: 15px 15px 0 0;
+    width: 280px;
+    height: 55px;
+    text-align: center;
+    line-height: 50px;
+    font-size: 20px;
+    color: #a2adcc;
+    cursor: pointer;
+}
+
+.videoListTab div.active {
+    background: #282d43;
+}
+
+.videoList,
+.DT {
+  background: #282d43;
+  border-radius: 10px;
+  width: 100%;
+  height: 730px;
+  padding: 20px;
+  z-index: 10;
+  position: absolute;
+}
+
+.videoListTopPosition {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+}
+
+.videoListTopPosition h2 {
+    font-weight: 600;
+    margin: 0 ;
+    color: #92d4f4;
+}
+
+.videoSearch {
+    display: flex;
+    gap: 25px;
+    color: #edf3fd;
+}
+
+.videoSelect {
+    display: flex;
+    gap: 10px;
+    position: relative;
+}
+
+.videoSelect .selete {
+    width: 150px;
+    background: #33384c;
+    border: 1px solid #8a96ac;
+    padding: 5px 14px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 13px;
+    height: 33px;
+}
+
+.videoSelect .selete img {
+    height: 40%;
+}
+
+.seletboxCommon {
+    width: 150px;
+    padding: 14px;
+    background: #202334;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 30;
+}
+
+.videoSeletbox {
+    position: absolute;
+    top: 45px;
+    height: auto;
+}
+
+.robotSeletbox {
+    position: absolute;
+    top: 45px;
+    height: 200px;
+    overflow-y: auto;
+}
+
+.robotSeletbox::-webkit-scrollbar {
+  width: 4px;
+}
+.robotSeletbox::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+.robotSeletbox::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.videoSeletbox div,
+.robotSeletbox div {
+    width: 100%;
+    height: 35px;
+    line-height: 35px;
+    padding: 0 10px;
+}
+
+.videoSeletbox div:hover,
+.robotSeletbox div:hover {
+    background: #d2d3d7;
+    border-radius: 4px;
+    width: 100%;
+    height: 35px;
+    padding: 0 10px;
+    line-height: 35px;
+    color: #16192c;
+}
+
+.videoPeriod {
+    display: flex;
+    width: 240px;
+    line-height: 30px;
+    font-size: 14px;
+}
+
+.videoPeriod div {
+    width: calc(100% / 3);
+    text-align: center;
+    height: 33px;
+    cursor: pointer;
+}
+
+.videoPeriod .PeriodItemL {
+    border-radius: 6px 0 0 6px;
+    border: 1px solid #8a96ac;
+}
+
+.videoPeriod .PeriodItemM {
+    border: 1px solid #8a96ac;
+    border: 1px solid #8a96ac;
+}
+
+.videoPeriod .PeriodItemR {
+    border-radius: 0 6px 6px 0;
+    border: 1px solid #8a96ac;
+}
+
+.videoPeriod div:hover {
+    background: #204766;
+}
+
+.videoDate {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.startDate,
+.endDate {
+    width: 130px;
+    background: #494c5f;
+    border: 1px solid #8a96ac;
+    padding: 5px 14px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 13px;
+    height: 33px;
+}
+
+.startDate img,
+.endDate img {
+    height: 60%;
+}
+
+.videoExport {
+    width: 110px;
+    line-height: 30px;
+    border-radius: 6px;
+    background: #307146;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.videoViewContainer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.videoViewItem {
+    width: 100%;
+    background: #3b425f;
+    padding: 15px;
+    border-radius: 20px;
+}
+
+.videoViewBox {
+    border-radius: 20px;
+    position: relative;
+    cursor: pointer;
+}
+
+.videoView {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.videoView img {
+    width: 100%;
+    object-fit: cover;
+}
+
+.videoViewIcon {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+}
+
+.videoViewIcon img {
+    width: 20%;
+}
+
+.videoViewText {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    height: 40px;
+    font-size: 11px;
+}
+
+.videoViewTextL {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    width: 50%;
+}
+
+.videoViewTextL .nameBox {
+    text-align: center;
+    border: 1px solid #fff;
+}
+
+.videoViewTextL .RobotCamNameBox {
+    width: 60px;
+    border-radius: 8px;
+    padding: 5px;
+}
+
+.videoViewTextL .videoNameBox {
+    width: 50px;
+    border-radius: 17px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px;
+    height: 30px;
+}
+
+.cameratypeIcon {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 50px;
+}
+
+.videoViewTextR {
+    text-align: right;
+}
+
+.videoTextColor {
+    color: #93cbf5;
+    margin-bottom: 2px;
+}
+
+.pagenationPosition {
+    position: absolute;
+    left: 50%;
+    bottom: 30px;
+}
