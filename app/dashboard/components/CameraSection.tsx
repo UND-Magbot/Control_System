@@ -60,7 +60,7 @@ export default function CameraSection({cameras, robots, video}:CombinedProps) {
             </div>
             <p>Robot Real-time Camera</p>
           </div>
-          <PlusBtn type="camera"  selectedRobots={selectedRobot} robots={robots} video={video}/>
+          <PlusBtn type="camera"  selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras}/>
       </div>
       <div className={styles["middle-div"]}>
         <div className={styles["view-div"]}>

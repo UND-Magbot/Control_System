@@ -22,6 +22,8 @@ export type Camera = {
     webrtcUrl: string;
 };
 
+export type PrimaryViewType = 'camera' | 'map';
+
 
 export type RobotRowData = {
     id: number;

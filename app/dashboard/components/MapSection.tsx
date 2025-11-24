@@ -154,7 +154,7 @@ export default function MapSection({ floors, robots, video, cameras }:FloorSelec
           </div>
             <p>Robot Location</p>
           </div>
-          <PlusBtn type="map" selectedRobots={selectedRobot} robots={robots} video={video} />
+          <PlusBtn type="map" selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras}/>
       </div>
       <div className={styles["middle-div"]}>
         <div className={styles["view-div"]}>
