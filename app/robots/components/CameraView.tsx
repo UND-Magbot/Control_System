@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import usePageRouter from "@/app/hooks/CommonRouter";
-import type { RobotRowData, BatteryItem, Camera, Floor, Video } from '@/app/type';
+import type { RobotRowData, Camera, Floor, Video } from '@/app/type';
 import styles from './RobotList.module.css';
 
 type CombinedProps = {
@@ -15,24 +14,12 @@ type CombinedProps = {
   }
 
 export default function CameraView({
-    selectedRobotId,
     selectedRobot,
     cameras,
-    robots,
-    video,
-    floors
 }: CombinedProps) {
 
     const [cameraTabActiveIndex, setCameraTabActiveIndex] = useState<number>(0);
-    const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  
-    // const apiBase = process.env.NEXT_PUBLIC_API_URL;
-  
-    // 실시간 카메라
-    const [webrtcUrl, setWebrtcUrl] = useState<string | undefined>(undefined);
-    const [activeCam, setActiveCam] = useState<number>(1);
-    const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
   
     const [cameraStream, setCameraStream] = useState("http://localhost:8000/Video/1");
     const handleCameraTab = (idx: number, cam: Camera) => {

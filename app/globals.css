@@ -5,6 +5,7 @@ html, body {
     color: #fff; 
     background-color: #333853;
     font-weight: 400;
+    user-select: none; 
 }
 
 .page-container {
@@ -90,6 +91,23 @@ a {
   font-weight: 900;
   src: url('/fonts/noto-sans-v42-latin-900.woff2') format('woff2'),
   url('/fonts/NotoSans-Black.ttf') format('ttf'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* 지마켓 산스 : 데이터 - 통계 탭 메뉴 */
+@font-face {
+  font-family: 'Gmarket Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/GmarketSansBold.woff2') format('woff2'),
+  url('/fonts/GmarketSansTTFBold.ttf') format('ttf'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+@font-face {
+  font-family: 'Gmarket Sans';
+  font-style: normal;
+  font-weight: 500;
+  src: url('/fonts/GmarketSansMedium.woff2') format('woff2'),
+  url('/fonts/GmarketSansTTFMedium.ttf') format('ttf'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 button {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import type { RobotRowData } from '@/app/type';
+import type { RobotRowData, PrimaryViewType } from '@/app/type';
 import styles from './Button.module.css';
 
 type ModalRobotSelectProps = {
@@ -10,6 +10,7 @@ type ModalRobotSelectProps = {
   selectedLabel: string; // 현재 선택된 로봇 이름
   onSelect: (index: number, robot: RobotRowData) => void;
   className?: string;
+  primaryView: PrimaryViewType;
 };
 
 export default function RobotSelectBox({
@@ -17,10 +18,13 @@ export default function RobotSelectBox({
   activeIndex,
   selectedLabel,
   onSelect,
-  className
+  className,
+  primaryView
 }: ModalRobotSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const isMap = primaryView === "map"; 
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -42,23 +46,27 @@ export default function RobotSelectBox({
   return (
 
     <div ref={wrapperRef} className={`${styles.modalSeletWrapper} ${styles.className}`}>
-      <div className={styles.modalSelect} 
-        onClick={() => setIsOpen(!isOpen)}>
+      <div className={`${styles.modalSelect} ${ isMap ? styles.mapSelect : "" }`.trim()} onClick={() => setIsOpen(!isOpen)}>
+        
         <span>{selectedLabel}</span>
+
         {isOpen ? (
-          <img src="/icon/arrow_up.png" alt="arrow_up" />
+          <img src={isMap ? "/icon/arrow-up-d.png" : "/icon/arrow_up.png"} alt="arrow up" />
         ) : (
-          <img src="/icon/arrow_down.png" alt="arrow_down" />
+          <img src={isMap ? "/icon/arrow-down-d.png" : "/icon/arrow_down.png"} alt="arrow down" />
         )}
+
       </div>
+      
       {isOpen && (
-        <div className={styles.modalSeletbox}>
+        <div className={`${styles.modalSeletbox} ${ isMap ? styles.mapSelectBox : "" }`.trim()}>
           {robots.map((item, idx) => (
             <div key={item.id} className={`${ activeIndex === idx ? styles["active"] : "" }`.trim()}
             onClick={() => { onSelect(idx, item); setIsOpen(false); }}>{item.no}</div>
           ))}
         </div>
       )}
+
     </div>
   );
 }

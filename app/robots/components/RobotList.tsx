@@ -33,6 +33,8 @@ export default function RobotStatusList({
   locationStatus
 }:RobotStatusListProps) {
 
+  console.log("RobotStatusList robots:", robots);
+
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
 
@@ -40,10 +42,12 @@ export default function RobotStatusList({
   const [networkActiveIndex, setNetworkActiveIndex] = useState<number>(0);
   const [powerActiveIndex, setPowerActiveIndex] = useState<number>(0);
   const [locationActiveIndex, setLocationActiveIndex] = useState<number>(0);
-      const [selectedBattery, setSelectedBattery] = useState<BatteryItem | null>(null);
-      const [selectedNetwork, setSelectedNetwork] = useState<NetworkItem | null>(null);
-      const [selectedPower, setSelectedPower] = useState<PowerItem | null>(null);
-      const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+
+
+  const [selectedBattery, setSelectedBattery] = useState<BatteryItem | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<NetworkItem | null>(null);
+  const [selectedPower, setSelectedPower] = useState<PowerItem | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
 
 
   const [robotDetailModalOpen, setRobotDetailModalOpen] = useState(false);
@@ -77,7 +81,7 @@ export default function RobotStatusList({
       const option = batteryStatus[batteryActiveIndex];
 
       // 예시: label 기준으로 분기 (실제 label에 맞게 수정)
-      if (option.label === "전체") {
+      if (option.label === "Total") {
         matchBattery = true;
       } else if (option.label === "76% 이상 100%") {
         matchBattery = robot.battery >= 76 && robot.battery <= 100;
@@ -98,7 +102,7 @@ export default function RobotStatusList({
     let matchNetwork = true;
     if (networkActiveIndex !== null) {
       const option = networkStatus[networkActiveIndex];
-      if (option.label !== "ALL") {
+      if (option.label !== "Total") {
         // robot.network: "Online" | "Offline" | "Error" 이런 구조라고 가정
         matchNetwork = robot.network === option.label;
       }
@@ -107,7 +111,7 @@ export default function RobotStatusList({
     let matchPower = true;
     if (powerActiveIndex !== null) {
       const option = powerStatus[powerActiveIndex];
-      if (option.label !== "ALL") {
+      if (option.label !== "Total") {
         // robot.power: "On" | "Off" 라고 가정
         matchPower = robot.power === option.label;
       }
@@ -116,7 +120,7 @@ export default function RobotStatusList({
     let matchLocation = true;
     if (locationActiveIndex !== null) {
       const option = locationStatus[locationActiveIndex];
-      if (option.label !== "ALL") {
+      if (option.label !== "Total") {
         // robot.mark: "Yes" | "No" 같은 값이라고 가정
         matchLocation = robot.mark === option.label;
       }
@@ -357,7 +361,8 @@ export default function RobotStatusList({
             </div>
           </div>
       </div>
-      <table className={styles.status}>
+      <div className={styles.statusListBox}>
+        <table className={styles.status}>
           <thead>
               <tr>
                   <th>Robot No</th>
@@ -416,17 +421,18 @@ export default function RobotStatusList({
             </tr>
           ))}
           </tbody>
-          </table>
-          <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot}/>
-          <div className={styles.bottomPosition}>
-            <div className={styles.RobotCrudBtnPosition}>
-              <RobotCrudBtn />
-            </div>
-            <div className={styles.pagenationPosition}>
-              <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={setCurrentPage} pageSize={PAGE_SIZE} blockSize={5} />
-            </div>
-          </div>
-          <div></div>
+        </table>
+      </div>
+      <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot}/>
+      <div className={styles.bottomPosition}>
+        <div className={styles.RobotCrudBtnPosition}>
+          <RobotCrudBtn />
+        </div>
+        <div className={styles.pagenationPosition}>
+          <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={setCurrentPage} pageSize={PAGE_SIZE} blockSize={5} />
+        </div>
+      </div>
+      <div></div>
     </div>
 
     <div className={styles.cameraMapView}>

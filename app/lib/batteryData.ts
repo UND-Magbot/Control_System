@@ -15,12 +15,13 @@ export default async function getBatteryStatus(): Promise<BatteryItem[]> {
 
 //   const raw = await res.json();
   const raw = [
-      { id: 1, label: "76% ~ 100%" },
-      { id: 2, label: "51% ~ 75%" },
-      { id: 3, label: "26% ~ 50%" },
-      { id: 4, label: "1% ~ 25%" },
-      { id: 5, label: "0%" },
-      { id: 6, label: "Charging" }
+      { id: 1, label: "Total" },
+      { id: 2, label: "76% ~ 100%" },
+      { id: 3, label: "51% ~ 75%" },
+      { id: 4, label: "26% ~ 50%" },
+      { id: 5, label: "1% ~ 25%" },
+      { id: 6, label: "0%" },
+      { id: 7, label: "Charging" }
   ];
   
 

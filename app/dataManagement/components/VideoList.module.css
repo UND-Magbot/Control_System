@@ -54,13 +54,15 @@
     color: #edf3fd;
 }
 
-.videoSelect {
+.videoSelect,
+.dtSearch {
     display: flex;
     gap: 10px;
     position: relative;
 }
 
-.videoSelect .selete {
+.videoSelect .selete,
+.dtSearch .selete {
     width: 150px;
     background: #33384c;
     border: 1px solid #8a96ac;
@@ -74,7 +76,8 @@
     height: 33px;
 }
 
-.videoSelect .selete img {
+.videoSelect .selete img,
+.dtSearch .selete img {
     height: 40%;
 }
 
@@ -87,7 +90,8 @@
     z-index: 30;
 }
 
-.videoSeletbox {
+.videoSeletbox,
+.robotTypeSeletbox {
     position: absolute;
     top: 45px;
     height: auto;
@@ -112,15 +116,18 @@
 }
 
 .videoSeletbox div,
-.robotSeletbox div {
+.robotSeletbox div,
+.robotTypeSeletbox div {
     width: 100%;
     height: 35px;
     line-height: 35px;
     padding: 0 10px;
+    font-size: 14px;
 }
 
 .videoSeletbox div:hover,
-.robotSeletbox div:hover {
+.robotSeletbox div:hover,
+.robotTypeSeletbox div:hover {
     background: #d2d3d7;
     border-radius: 4px;
     width: 100%;
@@ -159,7 +166,8 @@
     border: 1px solid #8a96ac;
 }
 
-.videoPeriod div:hover {
+.videoPeriod div:hover,
+.videoPeriod div.active {
     background: #204766;
 }
 
@@ -187,16 +195,6 @@
 .startDate img,
 .endDate img {
     height: 60%;
-}
-
-.videoExport {
-    width: 110px;
-    line-height: 30px;
-    border-radius: 6px;
-    background: #307146;
-    text-align: center;
-    font-size: 12px;
-    cursor: pointer;
 }
 
 .videoViewContainer {
@@ -244,38 +242,54 @@
 .videoViewText {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-top: 20px;
-    height: 40px;
+    margin-top: 15px;
     font-size: 11px;
+    height: 25px;
 }
 
-.videoViewTextL {
+.videoViewTopText {
     display: flex;
     justify-content: space-between;
     gap: 5px;
-    width: 50%;
+    width: 55%;
 }
 
-.videoViewTextL .nameBox {
+.videoExport {
+    width: 110px;
+    line-height: 30px;
+    border-radius: 6px;
+    background: #656e86;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.videoExport img {
+    margin-right: 5px;
+    width: 12px;
+}
+
+.videoViewTopText .nameBox {
     text-align: center;
     border: 1px solid #fff;
 }
 
-.videoViewTextL .RobotCamNameBox {
-    width: 60px;
-    border-radius: 8px;
-    padding: 5px;
+.videoViewTopText .RobotCamNameBox {
+    width: 70px;
+    border-radius: 6px;
+    padding: 3px;
 }
 
-.videoViewTextL .videoNameBox {
+.videoViewTopText .videoNameBox {
     width: 50px;
     border-radius: 17px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 9px;
-    height: 30px;
 }
 
 .cameratypeIcon {
@@ -285,8 +299,11 @@
     border-radius: 50px;
 }
 
-.videoViewTextR {
-    text-align: right;
+.videoViewBottomText {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    font-size: 10px;
 }
 
 .videoTextColor {
@@ -297,5 +314,227 @@
 .pagenationPosition {
     position: absolute;
     left: 50%;
-    bottom: 30px;
+    bottom: 12px;
+}
+
+/* donut */
+.donutContainerFlex{
+    display: flex;
+    gap: 2%;
+}
+
+.totalDonutCount {
+    display: flex;
+}
+
+.dtDonutLeftBox {
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3%;
+    position: relative;
+}
+
+.totalDonutCount {
+    display: flex;
+    width: 200px;
+    border-radius: 50px;
+    border: 1px solid #b6b9c8;
+    padding: 6px 10px;
+    align-items: center;
+    justify-content: space-around;
+    color: #dcd9de;
+    position: absolute;
+    top: 15px;
+    left: 0;
+}
+
+.totalDonutCount .totalCount {
+    color: #b7c1ce;
+}
+
+.totalCount span {
+    color: #928b8b;
+}
+
+.leftChart {
+    margin-top: 25px;
+}
+
+.robotTypeTotal {
+    width: 75%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.robotTypeOne {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.robotTypeName {
+    display: flex;
+}
+
+.robotTypeOne img {
+    width: 35px;
+    margin-right: 15px;
+}
+
+.oneContentFs20 {
+    font-size: 20px;
+}
+
+.oneContentCountBox {
+    display: flex;
+    gap: 2%;
+    width: 180px;
+    justify-content: flex-end;
+}
+
+.oneContentFs25 {
+    font-size: 25px;
+    font-family: 'Gmarket Sans';
+    font-weight: 700;
+}
+
+.oneContentFs25 span {
+    font-size: 18px;
+    font-family: 'Gmarket Sans';
+    font-weight: 500;
+}
+
+.oneContentBar {
+    font-size: 20px;
+    color: #98a7c4;
+}
+
+.oneSpanColor {
+    color: #bfbdbe;
+}
+
+.dtDonutRightBox {
+    width: 63%;
+}
+
+.useItemDonutBox {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid #949bb7;
+    border-radius: 10px;
+    position: relative;
+}
+
+/* 첫 번째 구분선 */
+.useItemDonutBox::before,
+.useItemDonutBox::after {
+  content: "";
+  position: absolute;
+  top: 20px;        /* ✅ padding 만큼 내려줌 */
+  bottom: 20px;     /* ✅ padding 만큼 위로 올림 */
+  width: 1px;
+  background: rgba(255, 255, 255, 0.3); /* ✅ 이미지처럼 연한 라인 */
+}
+
+/* 1번째 선 (1/3 지점) */
+.useItemDonutBox::before {
+  left: calc(33.33% - 10px); /* ✅ padding 고려해서 살짝 안쪽에 */
+}
+
+/* 2번째 선 (2/3 지점) */
+.useItemDonutBox::after {
+  left: calc(66.66% - 10px);
+}
+
+.itemBoxBg {
+    width: 100%;
+    border-radius: 10px;
+    background: #333855;
+    padding: 10px 15px;
+    margin-top: 13px;
+}
+
+.itemTitleBox {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.itemDataTotal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 130px;
+    height: 30px;
+    background: #282d43;
+    border-radius: 50px;
+    font-size: 14px;
+    color: #dbd3ce;
+}
+
+.leftText {
+    margin-right: 10px;
+}
+
+.middleText {
+    margin-right: 5px;
+}
+
+.rightText {
+    font-size: 12px;
+}
+
+.taskTextColor {
+    color: #719851;
+}
+
+.timeTextColor {
+    color: #1984b1;
+}
+
+.time .timeTextColor span {
+    color: #8f8da1;
+}
+
+.errorTextColor {
+    color: #ae4653;
+}
+
+.dtDonutRightBox h2 {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Log History */
+.container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.container img {
+    width: 80px;
+}
+
+.container .topTitle {
+    margin-top: 15px;
+    font-size: 35px;
+    font-weight: 600;
+    color: #b0b5bc;
+}
+
+.container .contentText {
+    margin-top: 15px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #aaadbf;
 }

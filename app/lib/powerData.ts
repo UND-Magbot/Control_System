@@ -15,8 +15,9 @@ export default async function getPowerStatus(): Promise<PowerItem[]> {
 
 //   const raw = await res.json();
   const raw = [
-    { id: 1, label: "On" },
-    { id: 2, label: "Off" }
+    { id: 1, label: "Total" },
+    { id: 2, label: "On" },
+    { id: 3, label: "Off" }
   ];
   
 

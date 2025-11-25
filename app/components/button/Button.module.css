@@ -215,6 +215,11 @@
   color: #16192c;
 }
 
+.mapSelectBox div:hover {
+  background: #858899;
+  color: #fdffff;
+}
+
 /* 모달 - 로봇 셀렉트 */
 
 .modalSeletWrapper {
@@ -237,6 +242,11 @@
   justify-content: space-between;
 }
 
+.mapSelect {
+  border: 1px solid #26273a;
+  color: #3c3c51;
+}
+
 .modalSelect img {
   height: 10px;
 }
@@ -253,6 +263,14 @@
   cursor: pointer;
   z-index: 10;
   overflow-y: auto;
+}
+
+.mapSelectBox {
+  border: 1px solid #26273a;
+}
+
+.mapSelectBox div {
+    color: #3c3c51;
 }
 
 .seletbox::-webkit-scrollbar,
@@ -308,6 +326,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50px;
+  font-weight: 600;
   border: 1px solid #fff;
   background: transparent;
   color: #fff;
@@ -317,8 +336,17 @@
   gap: 5px;
 }
 
+.mapVideoStatusBtn {
+  border: 1px solid #26273a;
+  color: #3c3c51;
+}
+
 .videoStatusBtn.active {
   background: #d95a59;
+}
+
+.mapVideoStatusBtn.active {
+  color: #ffffff;
 }
 
 .roundIcon {
@@ -326,6 +354,14 @@
   background-color: #ffffff;
   width: 10px;
   height: 10px;
+}
+
+.mapVideoStatusBtn .roundIcon {
+  background-color: #343856;
+}
+
+.mapVideoStatusBtn.active .roundIcon {
+  background-color: #ffffff;
 }
 
 .remotePad {
@@ -391,6 +427,11 @@
   justify-content: center;
 }
 
+.mapStopBox,
+.mapStopInerBox {
+  border: 1px solid #323547;
+}
+
 .stopInerBox {
   width: 46px;
   height: 46px;
@@ -428,10 +469,24 @@
   padding-top: 10px;
 }
 
+.mapUpBtn {
+  border-top: 1px solid #323547;
+  border-left: 1px solid #323547;
+  border-right: 1px solid #323547;
+}
+
 .leftBtn {
   border-top: 1px solid #fff;
   border-left: 1px solid #fff;
   border-bottom: 1px solid #fff;
+  border-radius: 10px 0 0 10px;
+  padding-left: 10px;
+}
+
+.mapLeftBtn {
+  border-top: 1px solid #323547;
+  border-left: 1px solid #323547;
+  border-bottom: 1px solid #323547;
   border-radius: 10px 0 0 10px;
   padding-left: 10px;
 }
@@ -445,10 +500,28 @@
   justify-content: flex-end;
 }
 
+.mapRightBtn {
+  border-top: 1px solid #323547;
+  border-right: 1px solid #323547;
+  border-bottom: 1px solid #323547;
+  border-radius: 0 10px 10px 0;
+  padding-right: 10px;
+  justify-content: flex-end;
+}
+
 .bottomBtn {
   border-left: 1px solid #fff;
   border-right: 1px solid #fff;
   border-bottom: 1px solid #fff;
+  border-radius: 0 0 10px 10px;
+  padding-bottom: 10px;
+  align-items: flex-end;
+}
+
+.mapBottomBtn {
+  border-left: 1px solid #323547;
+  border-right: 1px solid #323547;
+  border-bottom: 1px solid #323547;
   border-radius: 0 0 10px 10px;
   padding-bottom: 10px;
   align-items: flex-end;
@@ -471,6 +544,10 @@
 .returnIcon {
   border: 1px solid #fff;
   border-radius: 50px;
+}
+
+.mapReturnIcon {
+  border: 1px solid #323547;
 }
 
 .upBtn:hover,

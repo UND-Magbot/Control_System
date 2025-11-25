@@ -21,12 +21,17 @@ export default async function getRobots(): Promise<RobotRowData[]> {
   const robots = raw.map((item: any) => ({
     id: item.id,
     no: item.no,
+    type: item.type,
     info: item.info,
     battery: item.battery,
     isCharging: item.isCharging,
     network: item.network,
     power: item.power,
-    mark: item.mark
+    mark: item.mark,
+    tasks: [...item.tasks],
+    chargingTime: item.chargingTime,  // 충전 시간(분)
+    waitingTime: item.waitingTime,   // 대기 시간(분)
+    errors: [...item.errors],
   }));
 
   return robots;

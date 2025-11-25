@@ -58,7 +58,7 @@ export default async function DashboardPage() {
                  </div>
                  <p>Notice & Alert</p>
                </div>
-               <Link href="/" className={styles.plusBtn}>+</Link>
+               <Link href="#" className={styles.plusBtn}>+</Link>
            </div>
           <NoticeList />
        </div>

@@ -19,6 +19,9 @@ type Props = {
   selectedRobot: { no: string } | null;
   onFilteredChange: (data: VideoItem[]) => void;
   selectedPeriod: Period;
+  onChangePeriod: (period: Period | null) => void;
+  externalStartDate?: string | null;
+  externalEndDate?: string | null;
 };
 
 export default function VideoDateRange({
@@ -27,24 +30,34 @@ export default function VideoDateRange({
   selectedRobot,
   onFilteredChange,
   selectedPeriod,
+  onChangePeriod,
+  externalStartDate,
+  externalEndDate,
 }: Props) {
 
   const today = new Date();
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(today.getDate() - 7);
 
   // 초기값: 지난 1주 (oneWeekAgo ~ 오늘)
-  const [startDate, setStartDate] = useState(formatDate(oneWeekAgo));
+  const [startDate, setStartDate] = useState(formatDate(today));
   const [endDate, setEndDate] = useState(formatDate(today));
 
 
-  // 🔹 달력에서 날짜 선택했을 때 호출할 함수
   const handleDateSelect = (selected: string) => {
+    // 우선, 이번 선택으로 바뀔 값들을 계산
+    let nextStart = startDate;
+    let nextEnd = endDate;
+
     if (activeField === "start") {
+      nextStart = selected;
       setStartDate(selected);
     } else if (activeField === "end") {
+      nextEnd = selected;
       setEndDate(selected);
     }
+
+    // 선택한 날짜 조합이 1주/1달/1년이 아닐 경우 period active 해제
+    syncPeriodWithRange(nextStart, nextEnd, onChangePeriod);
+
     setIsCalendarOpen(false); // 모달 닫기
     setActiveField(null);
   };
@@ -118,6 +131,44 @@ export default function VideoDateRange({
     );
   };
 
+  // 🔹 현재 start/end 범위가 1주/1달/1년 중 무엇인지 확인
+  function syncPeriodWithRange(
+    startStr: string,
+    endStr: string,
+    onChangePeriod: (period: Period | null) => void
+  ) {
+    const today = new Date();
+    const todayStr = formatDate(today);
+
+    // 기준 날짜들 계산
+    const weekStart = new Date(today);
+    weekStart.setDate(weekStart.getDate() - 7);
+
+    const monthStart = new Date(today);
+    monthStart.setMonth(monthStart.getMonth() - 1);
+
+    const yearStart = new Date(today);
+    yearStart.setFullYear(yearStart.getFullYear() - 1);
+
+    const weekStartStr = formatDate(weekStart);
+    const monthStartStr = formatDate(monthStart);
+    const yearStartStr = formatDate(yearStart);
+
+    let nextPeriod: Period | null = null;
+
+    if (startStr === weekStartStr && endStr === todayStr) {
+      nextPeriod = "1week";
+    } else if (startStr === monthStartStr && endStr === todayStr) {
+      nextPeriod = "1month";
+    } else if (startStr === yearStartStr && endStr === todayStr) {
+      nextPeriod = "1year";
+    } else {
+      nextPeriod = null;   // 🔥 1주/1달/1년에 정확히 안 맞으면 active 해제
+    }
+
+    onChangePeriod(nextPeriod);
+  }
+
 
   // ✅ 비디오 타입 / 로봇 / 날짜 범위를 한 번에 필터링 (스왑 로직 포함)
   useEffect(() => {
@@ -131,6 +182,7 @@ export default function VideoDateRange({
         ? item.robotNo === selectedRobot.no
         : true;
 
+      console.log("item:", item, "matchVideo:", matchVideo, "matchRobot:", matchRobot);
       return matchVideo && matchRobot;
     });
 
@@ -209,6 +261,15 @@ export default function VideoDateRange({
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
+
+  useEffect(() => {
+    if (externalStartDate) {
+      setStartDate(externalStartDate);
+    }
+    if (externalEndDate) {
+      setEndDate(externalEndDate);
+    }
+  }, [externalStartDate, externalEndDate]);
 
   return (
     <div className={styles.wrapper}>

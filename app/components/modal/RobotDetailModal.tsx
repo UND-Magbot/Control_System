@@ -92,38 +92,38 @@ export default function RobotDetailModal({
                 <div className={`${styles.itemBoxContainer} ${styles.detailBoxFs}`}>
                     <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
                         <div className={styles.detailItemBox}>
-                            <div className={`${styles.itemTitleBox} ${styles.borderTl8}`}>Operator</div>
-                            <div className={styles.itemContentBox}>Bear Robotics</div>
+                            <div className={`${styles.itemTitleBox} ${styles.borderTl8}`}>Robot Type(Name)</div>
+                            <div className={styles.itemContentBox}>Robot1</div>
                         </div>
                         <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Group</div>
-                            <div className={`${styles.itemContentBox} ${styles.borderTr8}`}>UND</div>
+                            <div className={styles.itemTitleBox}>Operator</div>
+                            <div className={`${styles.itemContentBox} ${styles.borderTr8}`}>Bear Robotics</div>
                         </div>
                     </div>
                     <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Site</div>
-                            <div className={styles.itemContentBox}>Daegu Metropolitan City</div>
-                        </div>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Robot Type</div>
-                            <div className={styles.itemContentBox}>Guide Bot</div>
-                        </div>
-                    </div>
-                    <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Model</div>
-                            <div className={styles.itemContentBox}>RSCGD20.AGEN</div>
-                        </div>
                         <div className={styles.detailItemBox}>
                             <div className={styles.itemTitleBox}>Serial Number</div>
                             <div className={styles.itemContentBox}>rscgd20ac1c5e0a</div>
                         </div>
+                        <div className={styles.detailItemBox}>
+                            <div className={styles.itemTitleBox}>Model</div>
+                            <div className={styles.itemContentBox}>RSCGD20.AGEN</div>
+                        </div>
+                    </div>
+                    <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
+                        <div className={styles.detailItemBox}>
+                            <div className={styles.itemTitleBox}>Group</div>
+                            <div className={styles.itemContentBox}>Quadruped</div>
+                        </div>
+                        <div className={styles.detailItemBox}>
+                            <div className={styles.itemTitleBox}>Software Version</div>
+                            <div className={styles.itemContentBox}>RSCGD20.AGEN_v1.13.39</div>
+                        </div>
                     </div>
                     <div className={styles.detailRowItemBox}>
                         <div className={styles.detailItemBox}>
-                            <div className={`${styles.itemTitleBox} ${styles.borderBl8}`}>Software Version</div>
-                            <div className={styles.itemContentBox}>RSCGD20.AGEN_v1.13.39</div>
+                            <div className={`${styles.itemTitleBox} ${styles.borderBl8}`}>Site</div>
+                            <div className={styles.itemContentBox}>Daegu Metropolitan City</div>
                         </div>
                         <div className={styles.detailItemBox}>
                             <div className={`${styles.itemTitleBox} ${styles.lhUnset}`}>

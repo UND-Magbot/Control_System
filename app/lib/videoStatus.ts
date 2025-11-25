@@ -15,6 +15,7 @@ export default async function getVideoStatus(): Promise<Video[]> {
 
 //   const raw = await res.json();
   const raw = [
+    // { id: 1, label: "Total" },
     { id: 1, label: "AR" },
     { id: 2, label: "MR" }
   ];

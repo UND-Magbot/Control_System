@@ -14,7 +14,7 @@ export default function Header() {
                     <div className={styles["logo-img"]}>
                         <img src="/icon/logo.png" alt="로고" />
                     </div>
-                    <h2>HOSPOTAL CONTROL SYSTEM</h2>
+                    <h2>HOSPITAL CONTROL SYSTEM</h2>
                 </div>
                 <div className={styles["lr-div-flex"]}>
                     <div className={styles["alarm-icon"]}>
@@ -22,11 +22,11 @@ export default function Header() {
                             <img src="/icon/bell_c.png" alt="알림" />
                             <span>3</span>
                         </div>
-                        <Link className={styles.schedule} href="/schedule">
+                        <Link className={styles.schedule} href="/schedules">
                             <img src="/icon/calendar_c.png" alt="스케줄" />
                             <span>3</span>
                         </Link>
-                        <Link className={styles.lacation} href="/robot">
+                        <Link className={styles.lacation} href="/robots">
                             <img src="/icon/map.png" alt="로봇위치" />
                         </Link>
                     </div>
@@ -34,7 +34,7 @@ export default function Header() {
                         <span>2025-10-31</span>
                         <span>PM 01:36</span>
                     </div>
-                    <Link className={styles.admin} href="/admin">
+                    <Link className={styles.admin} href="#">
                         <div className={styles["admin-img"]}>
                             <img src="/icon/user.png" alt="사용자" />
                         </div>

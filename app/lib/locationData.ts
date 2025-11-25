@@ -15,8 +15,9 @@ export default async function getLocationStatus(): Promise<LocationItem[]> {
 
 //   const raw = await res.json();
   const raw = [
-    { id: 1, label: "Yes" },
-    { id: 2, label: "No" }
+    { id: 1, label: "Total" },
+    { id: 2, label: "Yes" },
+    { id: 3, label: "No" }
   ];
   
 

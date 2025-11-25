@@ -10,12 +10,6 @@ export type Floor = {
     label: string;
 };
 
-export type Robot = { 
-    id: number;
-    name: string;
-};
-
-
 export type Camera = { 
     id: number;
     label: string;
@@ -29,11 +23,16 @@ export type RobotRowData = {
     id: number;
     no: string;
     info: string;
+    type: "QUADRUPED" | "COBOT" | "AMR" | "HUMANOID";   
     battery: number;
     isCharging: boolean;
     network: 'Online' | 'Offline' | 'Error';
     power: 'On' | 'Off';
     mark: 'Yes' | 'No';
+    tasks: RobotStatistic[];
+    chargingTime: number;  // 충전 시간(분)
+    waitingTime: number;   // 대기 시간(분)
+    errors: RobotError[];
 };
 
 export type BatteryItem = {
@@ -81,4 +80,42 @@ export type DtItem = {
     date: DateTime;
 }
 
-export type Period = '1week' | '1month' | '1year' | null;
+export type LogItem = {
+    id: number;
+    robotNo: string;
+    cameraNo: string;
+    cameraType: string;
+    filename: string,
+    contentType: string;
+    data: string;
+    videoTime: string;
+    date: DateTime;
+}
+
+export type Period = 'today' | '1week' | '1month' | '1year' | null;
+
+// 도넛 차트에 쓸 공통 타입
+
+export type RobotType = { 
+    id: number;
+    label: "QUADRUPED" | "COBOT" | "AMR" | "HUMANOID";
+};
+
+export type RobotStatistic = {
+  taskName: string;
+  taskType: "monitoring" | "security" | "delivery" | string;
+  taskTime: number;
+}
+
+export type RobotError = {
+  errorType: "network" | "fail" | "etc" | string;
+  count: number;
+}
+
+export type DonutCommonInfo = {
+  id: number;
+  label: string;
+  value: number;
+  percent: number;
+  displayValue: string; 
+};

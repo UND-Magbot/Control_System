@@ -15,9 +15,10 @@ export default async function getNetworkStatus(): Promise<NetworkItem[]> {
 
 //   const raw = await res.json();
   const raw = [
-    { id: 1, label: "Online" },
-    { id: 2, label: "Offline" },
-    { id: 3, label: "Error" }
+    { id: 1, label: "Total" },
+    { id: 2, label: "Online" },
+    { id: 3, label: "Offline" },
+    { id: 4, label: "Error" }
   ];
   
 

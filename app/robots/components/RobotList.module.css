@@ -8,6 +8,10 @@
   gap: 10px;
 }
 
+.statusListBox {
+  height: 550px;
+}
+
 .status {
     width: 100%;
     border-collapse: collapse;
@@ -208,10 +212,12 @@
 
 .RobotStatusList {
   width: 64%;
+  min-width: 1035px;
 }
 
 .cameraMapView {
   width: 34%;
+  min-width: 350px;
 }
 
 .RobotStatusList,

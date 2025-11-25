@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import usePageRouter from "@/app/hooks/CommonRouter";
 import TabMenu, { Tab } from "@/app/components/button/TabMenu";
 import styles from './NoticeList.module.css';
 
@@ -19,8 +18,6 @@ interface Notice {
 type NoticesMap = Record<TabKey, Notice[]>;
 
 export default function NoticeList() {
-
-  const { handleRoute } = usePageRouter();
 
   // 🔹 탭 정의
   const tabs: Tab[] = [

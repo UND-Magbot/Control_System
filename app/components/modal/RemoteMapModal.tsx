@@ -42,9 +42,17 @@ export default function RemoteModal({
 
   const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
 
   const mapImage = "/images/map_sample.png";
+
+  // swap 전환 시 mainView 타입에 다르게 적용하기 위해 분기 처리
+  const mainView: "camera" | "map" = isSwapped ? (primaryView === "camera" ? "map" : "camera") : primaryView;
+  const pipView: "camera" | "map" = mainView === "camera" ? "map" : "camera";
+
+  const isMainMap = mainView === "map";
+  const isMainCamera = mainView === "camera";
+
+  const defaultRobotName = selectedRobot?.no || "Robot 1";
 
   useEffect(() => {
     setSelectedRobot(selectedRobots);
@@ -54,13 +62,24 @@ export default function RemoteModal({
     }
   }, [selectedRobots, robots]);
 
+  // 작업 시작
+  const handleWorkStart = () => {
+    console.log("작업 시작");
+  }
+
   // ---------------------------
   // Drag & Zoom Control
   // ---------------------------
 
+  // camera/map zoom in/out 기능 분기 처리
+  const cameraImgRef = useRef<HTMLImageElement | null>(null);
+  const mapImgRef = useRef<HTMLImageElement | null>(null);
+
+  const getActiveImg = () => (isMainMap ? mapImgRef.current : cameraImgRef.current);
+
   const clampTranslate = (nx: number, ny: number) => {
     const wrap = wrapperRef.current;
-    const img = imgRef.current;
+    const img = getActiveImg(); 
     if (!wrap || !img) return { x: nx, y: ny };
 
     const wrapW = wrap.clientWidth;
@@ -87,7 +106,7 @@ export default function RemoteModal({
   const onMouseDown = (e: React.MouseEvent) => {
     if (scale <= 1) return;
 
-    const img = imgRef.current;
+    const img = getActiveImg();
     if (!img) return;
 
     const rect = img.getBoundingClientRect();
@@ -185,8 +204,6 @@ export default function RemoteModal({
     setCameraStream(newUrl);
   };
 
-  const defaultRobotName = selectedRobot?.no || "Robot 1";
-
   // ---------------------------
   // UI
   // ---------------------------
@@ -201,7 +218,10 @@ export default function RemoteModal({
             <img src="/icon/robot_control_w.png" alt="robot_control" />
             <span>Remote Control (Real-time Camera & Location Map)</span>
           </div>
-          <button className={styles.closeBtn} onClick={handleClose}>✕</button>
+          <div>
+            <button type='button' className={styles.workStart} onClick={handleWorkStart}>작업 시작</button>
+            <button type='button' className={styles.closeBtn} onClick={handleClose}>✕</button>
+          </div>
         </div>
 
         {/* -------------------- MAIN CAMERA VIEW -------------------- */}
@@ -217,19 +237,20 @@ export default function RemoteModal({
                 setRobotActiveIndex(idx);
                 setSelectedRobot(robot);
               }}
+              primaryView={isMainMap ? "map" : "camera"}
             />
 
             <div className={styles.topRightPostion}>
               <div className={styles.topRightIcon}>
-                <VideoStatus className={styles.videoStatusCustom} video={video} />
+                <VideoStatus className={styles.videoStatusCustom} video={video} primaryView={isMainMap ? "map" : "camera"} />
 
-                <div className={styles.robotStatus}>
-                  <img src="/icon/status_w.png" alt="net" />
+                <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
+                  <img src={ isMainMap ? "/icon/online_d.png" : "/icon/online_w.png"} alt="net" />
                   <div>Online</div>
                 </div>
 
-                <div className={styles.robotStatus}>
-                  <img src="/icon/battery_full_w.png" alt="battery" />
+                <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
+                  <img src={ isMainMap ? "/icon/battery_full_d.png" : "/icon/battery_full_w.png"} alt="battery" />
                   <div>89%</div>
                 </div>
               </div>
@@ -257,7 +278,7 @@ export default function RemoteModal({
 
               {/* MAIN CAMERA */}
               <img
-                ref={imgRef}
+                ref={cameraImgRef}
                 src={cameraStream}
                 draggable={false}
                 style={{
@@ -267,8 +288,9 @@ export default function RemoteModal({
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  display: (!isSwapped && primaryView === "camera") ? "block" : "none",
-                  transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+                  // display: (!isSwapped && primaryView === "camera") ? "block" : "none",
+                  display: mainView === "camera" ? "block" : "none",
+                  transform: mainView === "camera" ? `translate(${translate.x}px, ${translate.y}px) scale(${scale})` : "none",
                   transformOrigin: "center center",
                   transition: isPanning ? "none" : "transform 120ms ease",
                 }}
@@ -276,6 +298,7 @@ export default function RemoteModal({
 
               {/* MAIN MAP */}
               <img
+                ref={mapImgRef}
                 src={mapImage}
                 style={{
                   width: "100%",
@@ -284,7 +307,11 @@ export default function RemoteModal({
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  display: (primaryView === "map" || isSwapped) ? "block" : "none",
+                  // display: (primaryView === "map" || isSwapped) ? "block" : "none",
+                  display: mainView === "map" ? "block" : "none",
+                  transform: mainView === "map" ? `translate(${translate.x}px, ${translate.y}px) scale(${scale})` : "none",
+                  transformOrigin: "center center",
+                  transition: isPanning ? "none" : "transform 120ms ease",
                 }}
               />
 
@@ -293,7 +320,7 @@ export default function RemoteModal({
 
           {/* Floor List */}
           <div className={styles.middlePosition}>
-            <div className={styles.floorFlex}>
+            <div className={`${styles.floorFlex} ${ isMainMap ? styles.mapFloorLine : styles.floorLine }`.trim()}>
               <div>1F</div>
               <div>2F</div>
               <div className={styles.active}>3F</div>
@@ -309,18 +336,18 @@ export default function RemoteModal({
           <div className={styles.bottomPosition}>
             <div className={styles.bottomFlex}>
 
-              <RemotePad />
+              <RemotePad primaryView={isMainMap ? "map" : "camera"}/>
 
               {/* MODE */}
               <div className={`${styles.modeBox} ${styles.mt50}`}>
-                <div className={styles.mb20}>MODE</div>
+                <div className={`${styles.mb10} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>MODE</div>
 
-                <div className={`${styles.standSitBtn} ${styles.mb20}`}>
+                <div className={`${styles.standSitBtn} ${styles.mb20} ${ isMainMap ? styles.mapStandSitBtn : styles.standSitBtn }`.trim()}>
                   <div onClick={standHandle}>Stand</div>
                   <div onClick={sitHandle}>Sit</div>
                 </div>
 
-                <div className={styles.speedBtn}>
+                <div className={`${styles.speedBtn} ${ isMainMap ? styles.mapSpeedBtn : styles.speedBtn }`.trim()}>
                   <div onClick={slowHandle}>Slow</div>
                   <div onClick={normalHandle}>Normal</div>
                   <div onClick={fastHandle}>Fast</div>
@@ -329,17 +356,17 @@ export default function RemoteModal({
 
               {/* POWER */}
               <div className={`${styles.powerBtn} ${styles.mt50}`}>
-                <div className={`${styles.mb20} ${styles.textCenter}`}>POWER</div>
-                <div className={styles.powerImg}>
+                <div className={`${styles.mb10} ${styles.textCenter} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>POWER</div>
+                <div className={`${styles.powerImg} ${ isMainMap ? styles.mapPowerImg : styles.powerImg }`.trim()}>
                   <img src="/icon/power-w.png" alt="power" />
                 </div>
               </div>
 
               {/* CAMERA TABS */}
               <div className={`${styles.viewBtn} ${styles.mt50}`}>
-                <div className={styles.mb20}>CAMERA</div>
+                <div className={`${styles.mb10} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>CAMERA</div>
 
-                <div className={`${styles.camBtn} ${styles.mb20}`}>
+                <div className={`${styles.camBtn} ${styles.mb20} ${ isMainMap ? styles.mapCamBtn : styles.camBtn }`.trim()}>
                   {camera.map((cam, idx) => (
                     <div
                       key={cam.id}
@@ -352,7 +379,7 @@ export default function RemoteModal({
                 </div>
 
                 {/* ZOOM */}
-                <div className={styles.zoomBtn}>
+                <div className={`${styles.zoomBtn} ${ isMainMap ? styles.mapZoomBtn : styles.zoomBtn }`.trim()}>
                   <div onClick={() => setScale(s => Math.min(s + 0.2, 3))}>Zoom In</div>
                   <div onClick={() => setScale(s => Math.max(s - 0.2, 1))}>Zoom Out</div>
                 </div>
@@ -368,7 +395,7 @@ export default function RemoteModal({
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    display: isSwapped ? "block" : "none",
+                    display: pipView === "camera" ? "block" : "none",
                     position: "absolute",
                     top: 0,
                     left: 0
@@ -382,7 +409,7 @@ export default function RemoteModal({
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    display: isSwapped ? "none" : "block",
+                    display: pipView === "map" ? "block" : "none",
                     position: "absolute",
                     top: 0,
                     left: 0

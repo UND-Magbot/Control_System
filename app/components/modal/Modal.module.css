@@ -1,3 +1,7 @@
+.mb10 {
+  margin-bottom: 10px;
+}
+
 .mb20 {
   margin-bottom: 20px;
 }
@@ -67,9 +71,20 @@
   font-size: 25px;
 }
 
+.workStart {
+  width: 100px;
+  height: 30px;
+  font-size: 14px;
+  border: 1px solid #fff;
+  color: #fff;
+  border-radius: 6px;
+  background: transparent;
+  margin-right: 10px;
+}
+
 .closeBtn {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    line-height: 30px;
     border: none;
     color: white;
     background: transparent;
@@ -121,6 +136,11 @@
 .robotStatus {
   display: flex;
   align-items: center;
+  font-weight: 600;
+}
+
+.mapRobotStatus div {
+  color: #373045;
 }
 
 .robotStatus img {
@@ -154,7 +174,6 @@
   flex-basis: calc(250px / 5);
   height: 30px;
   box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,6 +316,38 @@
 
 .powerBtn img {
   height: 33px;
+}
+
+.mapCategoryTitle {
+    color: #3c3c51;
+}
+
+.categoryTitle {
+    color: #fff;
+}
+
+.mapStandSitBtn div,
+.mapSpeedBtn div,
+.mapCamBtn div,
+.mapZoomBtn div,
+.mapFloorLine div,
+.mapPowerImg {
+  border: 1px solid #26273a;
+  color: #3c3c51;
+}
+
+.mapStandSitBtn div:hover,
+.mapSpeedBtn div:hover,
+.mapZoomBtn div:hover,
+.mapCamBtn div:hover,
+.mapCamBtn div.active {
+  background: #808291;
+  color: #fff;
+}
+
+.floorLine div {
+  border: 1px solid rgba(255, 255, 255);
+  color: #fff;
 }
 
 
@@ -489,7 +540,7 @@
 
 .itemTitleBox {
   width: 45%;
-  line-height: 60px;
+  line-height: 70px;
   background: #3c415f;
   padding-left: 20px;
   font-weight: 500;
@@ -498,7 +549,7 @@
 .itemContentBox {
   width: 55%;
   background: #465376;
-  line-height: 60px;
+  line-height: 70px;
   padding-left: 20px;
   font-weight: 300;
 }
@@ -590,4 +641,267 @@
 .confirmButtons button {
   color: #fff;
   border: none;
+}
+
+/* videoPlayModal */
+
+.videoViewText {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.videoViewTopText {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  width: 230px;
+  align-items: center;
+  height: 30px;
+  line-height: 30px;
+}
+
+.videoViewTopText .nameBox {
+    text-align: center;
+    border: 1px solid #fff;
+}
+
+.videoViewTopText .RobotCamNameBox {
+  width: 80px;
+  border-radius: 6px;
+  height: 100%;
+}
+
+.videoViewTopText .videoNameBox {
+  width: 55px;
+  border-radius: 17px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.cameratypeIcon {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  border-radius: 50px;
+  margin-right: 5px;
+}
+
+.videoViewBox {
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.videoViewBox:fullscreen {
+  width: 100%;
+  height: 100%;
+}
+
+.videoView {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ⭐ 전체화면일 때 비디오 100% 꽉 채우기 */
+.videoView {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.videoViewIcon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.videoViewIcon img {
+    width: 40%;
+}
+
+.playerWrapper {
+  width: 100%;
+  height: 800px;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.video {
+  width: 100%;
+  display: block;
+  background: #111827;
+}
+
+/* 컨트롤 바 */
+.controlBox {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.playBarBox {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #e5e7eb;
+  margin-top: 10px;
+}
+
+.fullscreenControls .playBarBox {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #e5e7eb;
+  margin-top: unset;
+}
+
+.fullscreenControls {
+  position: fixed;         /* 비디오 위에 오버레이 */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  transition: opacity 0.2s ease;
+  height: 80px;
+  padding: 10px 15px;
+}
+
+/* 컨트롤 바 */
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 전체화면에서만 자동 숨김 */
+.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.iconBtn {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  width: 30px;
+}
+
+.iconBtn:hover {
+  opacity: 0.8;
+}
+
+.iconBtn img {
+    height: 20px;
+}
+
+.timeText {
+  min-width: 90px;
+  text-align: center;
+  color: #7e7e7e;
+}
+
+.timeText span {
+  color: #f3ffff;
+}
+
+/* 재생 위치 슬라이더 */
+.progressBar {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  outline: none;
+  background: #808080; /* 🔘 회색 전체 구간 */
+  cursor: pointer;
+}
+
+.fullscreenControls .progressBar {
+  margin-top: 10px;
+}
+
+
+/* thumb 동그라미 */
+.progressBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #8dd4f5; /* 🔵 진행색과 맞춰도 되고 다른색도 가능 */
+  cursor: pointer;
+}
+
+.progressBar::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #8dd4f5;
+  border: 2px solid white;
+}
+
+/* 볼륨 슬라이더 */
+
+/* 전체 구간 (회색) */
+.volumeBar {
+  -webkit-appearance: none;
+  width: 65px;
+  height: 3px;                        /* progressBar와 통일 */
+  border-radius: 4px;
+  outline: none;
+  background: #818181;                /* 전체 구간 회색 */
+  cursor: pointer;
+  position: relative;
+}
+
+/* 진행된 구간 색 (재생바와 동일한 gradient 방식) */
+.volumeBar::-webkit-slider-runnable-track {
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    #ffffff 0%,                        /* 진행 구간 색 (청록) */
+    #ffffff var(--volume-percent, 50%),/* progressPercent처럼 볼륨에 맞춰 변경 */
+    #818181 var(--volume-percent, 50%),/* 전체 구간 회색 */
+    #818181 100%
+  );
+}
+
+/* thumb 동그라미 (progressBar 동일) */
+.volumeBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;                /* progressBar thumb 색과 동일 */
+  cursor: pointer;
+  margin-top: -4px;                   /* 중앙 정렬 */
+  position: relative;
+  z-index: 2;
 }

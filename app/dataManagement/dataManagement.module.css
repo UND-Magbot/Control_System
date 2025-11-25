@@ -12,6 +12,7 @@
 
 .tabPosition {
     position: relative;
+    min-width: 1550px;
 }
 
 .videoList {

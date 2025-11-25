@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import usePageRouter from "@/app/hooks/CommonRouter";
 import type { RobotRowData, BatteryItem, Camera, Floor, Video } from '@/app/type';
 import styles from './RobotList.module.css';
 
