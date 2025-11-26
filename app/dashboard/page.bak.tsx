@@ -214,7 +214,8 @@ export default function DashboardPage() {
     ];
     
     // 현재 선택된 로봇 이미지
-    const mapCurrentImage = floorImages[floorActiveIndex];
+    // const mapCurrentImage = floorImages[floorActiveIndex];
+    const mapCurrentImage = "/map/occ_grid.png";
 
     // 아이콘 매핑 객체
     const icons = {

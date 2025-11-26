@@ -45,8 +45,104 @@ export default function MapSection({ floors, robots, video, cameras }:FloorSelec
       "/images/map_view_2.png"
     ];
     
-    const mapCurrentImage = floorImages[floorActiveIndex];
+    // const mapCurrentImage = floorImages[floorActiveIndex];
+    const mapCurrentImage = "/map/occ_grid.png";
 
+    // 🎯 --- [2] FastAPI에서 로봇 좌표 실시간 가져오기 ---
+      const [robotPos, setRobotPos] = useState({ x: 0, y: 0, yaw: 0 });
+    
+      useEffect(() => {
+        const fetchRobotPos = () => {
+          fetch("http://localhost:8000/robot/position")
+            .then(res => res.json())
+            .then(data => setRobotPos(data))
+            .catch(() => {});
+        };
+    
+        fetchRobotPos();
+        const interval = setInterval(fetchRobotPos, 1000);
+        return () => clearInterval(interval);
+      }, []);
+    
+    
+    
+      // 🎯 --- [3] map.yaml 정보 가져오기 (origin, resolution, size) ---
+      type MapInfo = {
+      resolution: number;
+      origin: number[]; // [origin_x, origin_y, origin_z]
+      width: number;
+      height: number;
+      };
+    
+      const [mapInfo, setMapInfo] = useState<MapInfo | null>(null);
+    
+      useEffect(() => {
+        fetch("/map/occ_grid.yaml")
+          .then(res => res.text())
+          .then(text => {
+            const obj: Record<string, string> = {};
+            text.split("\n").forEach(line => {
+              const [key, value] = line.split(":");
+              if (!key || !value) return;
+              obj[key.trim()] = value.trim();
+            });
+    
+            const origin = obj["origin"]
+              .replace("[", "")
+              .replace("]", "")
+              .split(",")
+              .map(Number);
+    
+            setMapInfo({
+              resolution: parseFloat(obj["resolution"]),
+              origin,
+              width: parseInt(obj["width"]),
+              height: parseInt(obj["height"])
+            });
+          });
+      }, []);
+    
+    
+      // 🎯 --- [4] 로봇 좌표 → 이미지 픽셀 좌표 변환 --- 
+      const mapResolution = 0.1;
+      const mapOriginX = -19.9;
+      const mapOriginY = -13;
+
+      const mapPixelWidth = 427;  // PGM 원본
+      const mapPixelHeight = 200;
+
+      // FastAPI에서 가져온 실시간 로봇 좌표
+
+      // 맵 렌더 크기 저장
+      const [mapSize, setMapSize] = useState({ w: 1, h: 1 });
+
+      // 이미지 크기 자동 측정
+      useEffect(() => {
+        if (imgRef.current) {
+          const updateSize = () => {
+            const w = imgRef.current!.clientWidth;
+            const h = imgRef.current!.clientHeight;
+            setMapSize({ w, h });
+          };
+          updateSize();
+          window.addEventListener("resize", updateSize);
+          return () => window.removeEventListener("resize", updateSize);
+        }
+      }, []);
+
+      // 월드 좌표 → 화면 좌표 변환
+      const worldToPixel = (x: number, y: number) => {
+        const px = (x - mapOriginX) / mapResolution;
+        const py = (y - mapOriginY) / mapResolution;
+
+        return {
+          x: px * (mapSize.w / mapPixelWidth),
+          y: mapSize.h - (py * (mapSize.h / mapPixelHeight))
+        };
+      };
+
+      const robotScreenPos = worldToPixel(robotPos.x, robotPos.y);
+    
 
     const [scale, setScale] = useState(1);
     const [translate, setTranslate] = useState({ x: 0, y: 0 });
@@ -160,7 +256,47 @@ export default function MapSection({ floors, robots, video, cameras }:FloorSelec
         <div className={styles["view-div"]}>
           <div className={styles.FloorName}>{defaultFloorName}</div>
           <div ref={wrapperRef} className={styles["view-box"]} style={{ overflow: "hidden", userSelect: "none", touchAction: "none", cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",}} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={endPan} onMouseLeave={endPan} >
-            <img ref={imgRef} className={styles["path-icon-img"]} src={mapCurrentImage} alt="map" draggable={false} style={{ transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`, transformOrigin: "center center", transition: isPanning ? "none" : "transform 120ms ease"}}/>
+            
+           <div
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+              transformOrigin: "center center",
+              transition: isPanning ? "none" : "transform 120ms ease",
+            }}
+          >
+            {/* 맵 이미지 */}
+            <img
+              ref={imgRef}
+              src={mapCurrentImage}
+              className={styles["path-icon-img"]}
+              draggable={false}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* 로봇 마커 */}
+            <img
+              src="/icon/robot_location(1).png"
+              style={{
+                position: "absolute",
+                left: `${robotScreenPos.x}px`,
+                top: `${robotScreenPos.y}px`,
+                // width: "px",
+                height: "40px",
+                transform: "translate(-50%, -50%)",
+                pointerEvents: "none",
+                zIndex: 20,
+              }}
+            />
+          </div>
+          
           </div>
           <ZoomControl onClick={handleZoomFromChild} />
         </div>

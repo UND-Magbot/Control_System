@@ -1,7 +1,7 @@
 'use client';
 
 import styles from './Modal.module.css';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { RobotRowData, Video, Camera } from '@/app/type';
 import { VideoStatus, RemotePad, ModalRobotSelect } from '@/app/components/button';
 
@@ -42,10 +42,12 @@ export default function RemoteModal({
 
   const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const mapRef = useRef<HTMLImageElement | null>(null);
 
-  const mapImage = "/images/map_sample.png";
+  const mapImage = "/map/occ_grid.png";
 
-  // swap 전환 시 mainView 타입에 다르게 적용하기 위해 분기 처리
+// swap 전환 시 mainView 타입에 다르게 적용하기 위해 분기 처리
   const mainView: "camera" | "map" = isSwapped ? (primaryView === "camera" ? "map" : "camera") : primaryView;
   const pipView: "camera" | "map" = mainView === "camera" ? "map" : "camera";
 
@@ -53,8 +55,220 @@ export default function RemoteModal({
   const isMainCamera = mainView === "camera";
 
   const defaultRobotName = selectedRobot?.no || "Robot 1";
+  type BatteryStatus = {
+  VoltageLeft?: number;
+  VoltageRight?: number;
+  BatteryLevelLeft?: number;
+  BatteryLevelRight?: number;
+  battery_temperatureLeft?: number;
+  battery_temperatureRight?: number;
+  chargeLeft?: boolean;
+  chargeRight?: boolean;
+  serialLeft?: string;
+  serialRight?: string;
+};
+
+type RobotStatus = {
+  battery: BatteryStatus;
+};
+
+  /* --- FastAPI robot position --- */
+  const [robotPos, setRobotPos] = useState({ x: 0, y: 0, yaw: 0 });
+  const [robotStatus, setRobotStatus] = useState<RobotStatus>({
+    battery: {}
+  });
 
   useEffect(() => {
+    const fetchRobotPos = () => {
+      fetch("http://localhost:8000/robot/position")
+        .then(res => res.json())
+        .then(data => setRobotPos(data))
+        .catch(() => {});
+    };
+
+    fetchRobotPos();
+    const interval = setInterval(fetchRobotPos, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* --- map.yaml load --- */
+  type MapInfo = {
+    resolution: number;
+    origin: number[];
+    width: number;
+    height: number;
+  };
+
+  const [mapInfo, setMapInfo] = useState<MapInfo | null>(null);
+
+  useEffect(() => {
+    fetch("/map/occ_grid.yaml")
+      .then(res => res.text())
+      .then(text => {
+        const obj: Record<string, string> = {};
+        text.split("\n").forEach(line => {
+          const [key, value] = line.split(":");
+          if (!key || !value) return;
+          obj[key.trim()] = value.trim();
+        });
+
+        const origin = obj["origin"]
+          .replace("[", "")
+          .replace("]", "")
+          .split(",")
+          .map(Number);
+
+        setMapInfo({
+          resolution: parseFloat(obj["resolution"]),
+          origin,
+          width: parseInt(obj["width"]),
+          height: parseInt(obj["height"])
+        });
+      });
+  }, []);
+
+
+  /* --- map render size --- */
+  const [mapSize, setMapSize] = useState({ w: 0, h: 0 });
+
+  // 최초 렌더 + 리사이즈
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const updateSize = () => {
+      setMapSize({
+        w: mapRef.current!.clientWidth,
+        h: mapRef.current!.clientHeight
+      });
+    };
+
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  // ⭐ PIP → Main 전환 시 mapSize 재계산 (중요)
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const timer = setTimeout(() => {
+      setMapSize({
+        w: mapRef.current!.clientWidth,
+        h: mapRef.current!.clientHeight
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isSwapped, primaryView]);
+
+
+  /* --- world → pixel --- */
+  const mapResolution = 0.1;
+  const mapOriginX = -19.9;
+  const mapOriginY = -14.9;
+  const mapPixelWidth = 427;
+  const mapPixelHeight = 240;
+
+  const offsetX = 0;
+  const offsetY = 0;
+
+  const worldToPixel = (x: number, y: number) => {
+    const pixelX = (x - mapOriginX) / mapResolution;
+    const pixelY = (y - mapOriginY) / mapResolution;
+
+    const screenX = pixelX * (mapSize.w / mapPixelWidth);
+    const screenY = mapSize.h - (pixelY * (mapSize.h / mapPixelHeight));
+
+    return {
+      x: screenX + offsetX,
+      y: screenY + offsetY
+    };
+  };
+
+  const robotScreenPos = useMemo(() => {
+    if (mapSize.w === 0 || mapSize.h === 0) {
+      return { x: -9999, y: -9999 };
+    }
+    return worldToPixel(robotPos.x, robotPos.y);
+  }, [robotPos, mapSize]);
+
+  const pipMapRef = useRef<HTMLDivElement | null>(null);
+  const [pipSize, setPipSize] = useState({ w: 0, h: 0 });
+
+  useEffect(() => {
+    if (!pipMapRef.current) return;
+
+    const update = () => {
+      setPipSize({
+        w: pipMapRef.current!.clientWidth,
+        h: pipMapRef.current!.clientHeight
+      });
+    };
+    
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    if (!pipMapRef.current) return;
+
+    // PIP가 나타난 뒤 DOM이 안정되면 계산
+    const timer = setTimeout(() => {
+      setPipSize({
+        w: pipMapRef.current!.clientWidth,
+        h: pipMapRef.current!.clientHeight
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isSwapped]);
+
+  const pipRobotPos = useMemo(() => {
+    if (pipSize.w === 0 || pipSize.h === 0) return { x: -9999, y: -9999 };
+
+    const pixelX = (robotPos.x - mapOriginX) / mapResolution;
+    const pixelY = (robotPos.y - mapOriginY) / mapResolution;
+
+    const screenX = pixelX * (pipSize.w / mapPixelWidth);
+    const screenY = pipSize.h - (pixelY * (pipSize.h / mapPixelHeight));
+
+    return { x: screenX, y: screenY };
+  }, [robotPos, pipSize]);
+
+  useEffect(() => {
+  if (!isOpen) return;
+  if (!pipMapRef.current) return;
+
+  const timer = setTimeout(() => {
+    setPipSize({
+      w: pipMapRef.current!.clientWidth,
+      h: pipMapRef.current!.clientHeight
+    });
+  }, 100);
+
+  return () => clearTimeout(timer);
+}, [isOpen]);
+
+useEffect(() => {
+  const fetchStatus = () => {
+    fetch("http://localhost:8000/robot/status")
+      .then(res => res.json())
+      .then(data => setRobotStatus(data))
+      .catch(() => {});
+  };
+
+  fetchStatus();
+  const timer = setInterval(fetchStatus, 1000);
+  return () => clearInterval(timer);
+}, []);
+  
+const batteryPercentage =
+  robotStatus.battery?.BatteryLevelRight ??
+  robotStatus.battery?.BatteryLevelLeft ??
+  0;
+  /* --- robot selector --- */
+ useEffect(() => {
     setSelectedRobot(selectedRobots);
     if (selectedRobots) {
       const idx = robots.findIndex(r => r.id === selectedRobots.id);
@@ -62,8 +276,7 @@ export default function RemoteModal({
     }
   }, [selectedRobots, robots]);
 
-  // 작업 시작
-  const handleWorkStart = () => {
+const handleWorkStart = () => {
     console.log("작업 시작");
   }
 
@@ -76,7 +289,6 @@ export default function RemoteModal({
   const mapImgRef = useRef<HTMLImageElement | null>(null);
 
   const getActiveImg = () => (isMainMap ? mapImgRef.current : cameraImgRef.current);
-
   const clampTranslate = (nx: number, ny: number) => {
     const wrap = wrapperRef.current;
     const img = getActiveImg(); 
@@ -147,10 +359,7 @@ export default function RemoteModal({
     setTranslate(prev => clampTranslate(prev.x, prev.y));
   }, [scale]);
 
-  // ---------------------------
-  // Close Modal
-  // ---------------------------
-
+  /* --- close modal --- */
   const handleClose = () => {
     setScale(1);
     setTranslate({ x: 0, y: 0 });
@@ -178,29 +387,21 @@ export default function RemoteModal({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
 
-  // ---------------------------
-  // Robot control API
-  // ---------------------------
-
+  /* --- robot control API --- */
   const standHandle = () => fetch("http://localhost:8000/robot/stand", { method: "POST" });
   const sitHandle = () => fetch("http://localhost:8000/robot/sit", { method: "POST" });
   const slowHandle = () => fetch("http://localhost:8000/robot/slow", { method: "POST" });
   const normalHandle = () => fetch("http://localhost:8000/robot/normal", { method: "POST" });
   const fastHandle = () => fetch("http://localhost:8000/robot/fast", { method: "POST" });
 
-  // ---------------------------
-  // Camera Change (FIXED)
-  // ---------------------------
 
+  /* --- camera tab --- */
   const handleCameraTab = (idx: number, camId: number) => {
     setCameraTabActiveIndex(idx);
     setActiveCam(camId);
 
     const newUrl = `http://localhost:8000/Video/${camId}`;
-    console.log("카메라 변경 →", newUrl);
-
     setCameraStream(newUrl);
   };
 
@@ -208,11 +409,13 @@ export default function RemoteModal({
   // UI
   // ---------------------------
 
+  if (!isOpen) return null;
+
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
 
-        {/* -------------------- TOP -------------------- */}
+        {/* TOP */}
         <div className={styles.modalTopDiv}>
           <div className={styles.modalTitle}>
             <img src="/icon/robot_control_w.png" alt="robot_control" />
@@ -224,7 +427,7 @@ export default function RemoteModal({
           </div>
         </div>
 
-        {/* -------------------- MAIN CAMERA VIEW -------------------- */}
+        {/* MAIN CAMERA / MAP AREA */}
         <div className={styles.cameraView}>
 
           {/* Robot Select / Status */}
@@ -251,14 +454,14 @@ export default function RemoteModal({
 
                 <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
                   <img src={ isMainMap ? "/icon/battery_full_d.png" : "/icon/battery_full_w.png"} alt="battery" />
-                  <div>89%</div>
+                  <div>{batteryPercentage}%</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Camera + Map Swappable Main View */}
-          <div className={styles["video-box"]} style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", position: "relative" }}>
+          {/* Swappable Camera/Map View */}
+          <div className={styles["video-box"]} style={{ width: "100%", aspectRatio: "16/9", position: "relative" }}>
             <div
               ref={wrapperRef}
               style={{
@@ -312,13 +515,32 @@ export default function RemoteModal({
                   transform: mainView === "map" ? `translate(${translate.x}px, ${translate.y}px) scale(${scale})` : "none",
                   transformOrigin: "center center",
                   transition: isPanning ? "none" : "transform 120ms ease",
+                  visibility: (primaryView === "map" || isSwapped) ? "visible" : "hidden",
+                  pointerEvents: "none",
+                  zIndex: 0
+                }}
+              />
+
+              {/* ROBOT MARKER */}
+              <img
+                src="/icon/robot_location(1).png"
+                style={{
+                  position: "absolute",
+                  left: `${robotScreenPos.x}px`,
+                  top: `${robotScreenPos.y}px`,
+                  // width: "35px",
+                  height: "45px",
+                  transform: `translate(-50%, -50%)`,
+                  zIndex: 20,
+                  display: (primaryView === "map" || isSwapped) ? "block" : "none",
+                  pointerEvents: "none"
                 }}
               />
 
             </div>
           </div>
 
-          {/* Floor List */}
+          {/* Floors */}
           <div className={styles.middlePosition}>
             <div className={`${styles.floorFlex} ${ isMainMap ? styles.mapFloorLine : styles.floorLine }`.trim()}>
               <div>1F</div>
@@ -332,7 +554,7 @@ export default function RemoteModal({
             </div>
           </div>
 
-          {/* ---------------------- BOTTOM CONTROL AREA ---------------------- */}
+          {/* Bottom Control */}
           <div className={styles.bottomPosition}>
             <div className={styles.bottomFlex}>
 
@@ -387,8 +609,6 @@ export default function RemoteModal({
 
               {/* PIP VIEW */}
               <div className={styles.viewBox} style={{ overflow: "hidden", position: "relative" }}>
-
-                {/* PIP Camera */}
                 <img
                   src={cameraStream}
                   style={{
@@ -401,10 +621,9 @@ export default function RemoteModal({
                     left: 0
                   }}
                 />
-
-                {/* PIP Map */}
-                <img
-                  src={mapImage}
+              {/* PIP MAP (지도 + 마커 세트) */}
+                <div
+                  ref={pipMapRef}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -412,9 +631,37 @@ export default function RemoteModal({
                     display: pipView === "map" ? "block" : "none",
                     position: "absolute",
                     top: 0,
-                    left: 0
+                    left: 0,
                   }}
-                />
+                >
+                  {/* 지도 */}
+                  <img
+                    src={mapImage}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      position: "absolute",
+                      top: 0,
+                      left: 0
+                    }}
+                  />
+
+                  {/* 로봇 마커 */}
+                  <img
+                    src="/icon/robot_location(1).png"
+                    style={{
+                      position: "absolute",
+                      left: `${pipRobotPos.x}px`,
+                      top: `${pipRobotPos.y}px`,
+                      // width: "20px",
+                      height: "25px",
+                      transform: "translate(-50%, -50%)",
+                      pointerEvents: "none",
+                      zIndex: 10
+                    }}
+                  />
+                </div>
 
                 <div className={styles.viewExchangeBtn} onClick={() => setIsSwapped(prev => !prev)}>
                   <img src="/icon/view-change.png" alt="swap" />
