@@ -44,10 +44,10 @@ export default function RemoteModal({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const mapRef = useRef<HTMLImageElement | null>(null);
-
+  const innerRef = useRef<HTMLDivElement | null>(null);
   const mapImage = "/map/occ_grid.png";
 
-// swap 전환 시 mainView 타입에 다르게 적용하기 위해 분기 처리
+  // swap 전환 시 mainView 타입에 다르게 적용하기 위해 분기 처리
   const mainView: "camera" | "map" = isSwapped ? (primaryView === "camera" ? "map" : "camera") : primaryView;
   const pipView: "camera" | "map" = mainView === "camera" ? "map" : "camera";
 
@@ -55,6 +55,7 @@ export default function RemoteModal({
   const isMainCamera = mainView === "camera";
 
   const defaultRobotName = selectedRobot?.no || "Robot 1";
+
   type BatteryStatus = {
   VoltageLeft?: number;
   VoltageRight?: number;
@@ -156,10 +157,10 @@ type RobotStatus = {
         w: mapRef.current!.clientWidth,
         h: mapRef.current!.clientHeight
       });
-    }, 50);
+    }, 100);
 
     return () => clearTimeout(timer);
-  }, [isSwapped, primaryView]);
+  }, [isOpen, isSwapped, primaryView]);
 
 
   /* --- world → pixel --- */
@@ -268,7 +269,7 @@ const batteryPercentage =
   robotStatus.battery?.BatteryLevelLeft ??
   0;
   /* --- robot selector --- */
- useEffect(() => {
+  useEffect(() => {
     setSelectedRobot(selectedRobots);
     if (selectedRobots) {
       const idx = robots.findIndex(r => r.id === selectedRobots.id);
@@ -276,7 +277,8 @@ const batteryPercentage =
     }
   }, [selectedRobots, robots]);
 
-const handleWorkStart = () => {
+  // 작업 시작
+  const handleWorkStart = () => {
     console.log("작업 시작");
   }
 
@@ -289,6 +291,7 @@ const handleWorkStart = () => {
   const mapImgRef = useRef<HTMLImageElement | null>(null);
 
   const getActiveImg = () => (isMainMap ? mapImgRef.current : cameraImgRef.current);
+
   const clampTranslate = (nx: number, ny: number) => {
     const wrap = wrapperRef.current;
     const img = getActiveImg(); 
@@ -452,8 +455,8 @@ const handleWorkStart = () => {
                   <div>Online</div>
                 </div>
 
-                <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
-                  <img src={ isMainMap ? "/icon/battery_full_d.png" : "/icon/battery_full_w.png"} alt="battery" />
+                <div className={styles.robotStatus}>
+                  <img src="/icon/battery_full_w.png" alt="battery" />
                   <div>{batteryPercentage}%</div>
                 </div>
               </div>
@@ -499,43 +502,54 @@ const handleWorkStart = () => {
                 }}
               />
 
-              {/* MAIN MAP */}
-              <img
-                ref={mapImgRef}
-                src={mapImage}
+              {/* 👇 INNER WRAPPER (지도 + 마커 같이 움직임) */}
+              <div
+                ref={innerRef}
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  // display: (primaryView === "map" || isSwapped) ? "block" : "none",
-                  display: mainView === "map" ? "block" : "none",
-                  transform: mainView === "map" ? `translate(${translate.x}px, ${translate.y}px) scale(${scale})` : "none",
+                  position: "relative",
+                  transform: mainView === "map"
+                    ? `translate(${translate.x}px, ${translate.y}px) scale(${scale})`
+                    : "none",
                   transformOrigin: "center center",
-                  transition: isPanning ? "none" : "transform 120ms ease",
-                  visibility: (primaryView === "map" || isSwapped) ? "visible" : "hidden",
-                  pointerEvents: "none",
-                  zIndex: 0
+                  transition: isPanning ? "none" : "transform 120ms ease"
                 }}
-              />
+              >
 
-              {/* ROBOT MARKER */}
-              <img
-                src="/icon/robot_location(1).png"
-                style={{
-                  position: "absolute",
-                  left: `${robotScreenPos.x}px`,
-                  top: `${robotScreenPos.y}px`,
-                  // width: "35px",
-                  height: "45px",
-                  transform: `translate(-50%, -50%)`,
-                  zIndex: 20,
-                  display: (primaryView === "map" || isSwapped) ? "block" : "none",
-                  pointerEvents: "none"
-                }}
-              />
+                  {/* MAIN MAP */}
+                  <img
+                    ref={mapRef}
+                    src={mapImage}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      display: mainView === "map" ? "block" : "none",
+                      pointerEvents: "none",
+                      zIndex: 0
+                    }}
+                  />
+
+                  {/* ROBOT MARKER */}
+                  <img
+                    src="/icon/robot_location(1).png"
+                    style={{
+                      position: "absolute",
+                      left: `${robotScreenPos.x}px`,
+                      top: `${robotScreenPos.y}px`,
+                      height: "45px",
+                      transform: "translate(-50%, -50%)",
+                      zIndex: 20,
+                      display: mainView === "map" ? "block" : "none",
+                      pointerEvents: "none"
+                    }}
+                  />
+
+              </div>
 
             </div>
           </div>

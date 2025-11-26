@@ -35,6 +35,7 @@ export default function CameraView({
     const imgRef = useRef<HTMLImageElement | null>(null);
 
     const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+    const innerRef = useRef<HTMLDivElement | null>(null);
 
     const handleZoomFromChild = (action: string) => {
       setScale(prev => {
@@ -196,35 +197,44 @@ export default function CameraView({
                 onMouseUp={endPan}
                 onMouseLeave={endPan}
             >
-                {/* MAP IMAGE */}
-                <img
-                    ref={imgRef}
-                    src={mapCurrentImage}
-                    draggable={false}
+                <div
+                    ref={innerRef}
                     style={{
+                    width: "100%",
+                    height: "100%",
+                    position: "relative",
+                    transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+                    transformOrigin: "center center",
+                    transition: isPanning ? "none" : "transform 120ms ease",
+                    }}
+                >
+                    {/* MAP IMAGE */}
+                    <img
+                        ref={imgRef}
+                        src={mapCurrentImage}
+                        draggable={false}
+                        style={{
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-                        transformOrigin: "center center",
-                        transition: isPanning ? "none" : "transform 120ms ease",
-                    }}
-                />
+                        pointerEvents: "none",
+                        }}
+                    />
 
-                {/* ROBOT MARKER */}
-                <img
-                    src="/icon/robot_location(1).png"
-                    style={{
+                    {/* ROBOT MARKER */}
+                    <img
+                        src="/icon/robot_location(1).png"
+                        style={{
                         position: "absolute",
                         left: `${robotScreenPos.x}px`,
                         top: `${robotScreenPos.y}px`,
-                        width: "28px",
                         height: "38px",
                         transform: "translate(-50%, -50%)",
                         pointerEvents: "none",
                         zIndex: 50,
-                    }}
-                />
+                        }}
+                    />
+                </div>
             </div>
 
             {/* Zoom Buttons */}
