@@ -119,7 +119,7 @@ export default function RobotStatusList({robotRows}:RobotStatusListProps) {
           ))}
           </tbody>
       </table>
-      <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot}/>
+      <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robotRows}/>
     </>
   );
 }
