@@ -32,13 +32,24 @@ export type RobotRowData = {
     tasks: RobotStatistic[];
     chargingTime: number;  // 충전 시간(분)
     waitingTime: number;   // 대기 시간(분)
+    dockingTime: number;   // 도킹 시간(분)
     errors: RobotError[];
+    operator: string;
+    serialNumber: string;
+    model: string;               
+    group: string;               
+    softwareVersion: string;     
+    site: string;                
+    registrationDateTime: string;
 };
 
 export type BatteryItem = {
-    id: number;
-    label: string;
-}
+  id: number;
+  label: string;
+  min?: number;   // 하한
+  max?: number;   // 상한
+  charging?: boolean; // 충전 상태 옵션인지 여부
+};
 
 export type NetworkItem = {
     id: number;
@@ -92,7 +103,7 @@ export type LogItem = {
     date: DateTime;
 }
 
-export type Period = 'today' | '1week' | '1month' | '1year' | null;
+export type Period = 'today' | '1week' | '1month' | '1year' | 'Total' | null;
 
 // 도넛 차트에 쓸 공통 타입
 
@@ -103,12 +114,12 @@ export type RobotType = {
 
 export type RobotStatistic = {
   taskName: string;
-  taskType: "monitoring" | "security" | "delivery" | string;
+  taskType: "monitoring" | "security" | "delivery" | "Facility Inspection" | string;
   taskTime: number;
 }
 
 export type RobotError = {
-  errorType: "network" | "fail" | "etc" | string;
+  errorType: "network" | "fail" | "mapping" | "etc" | string;
   count: number;
 }
 

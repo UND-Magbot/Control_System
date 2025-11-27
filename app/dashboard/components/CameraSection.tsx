@@ -16,17 +16,10 @@ type CombinedProps = {
 export default function CameraSection({cameras, robots, video}:CombinedProps) {
   const [cameraTabActiveIndex, setCameraTabActiveIndex] = useState<number>(0);
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
-  const [robotCurrentImage, setRobotCurrentImage] = useState<string>("0");
   const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
 
-  // const apiBase = process.env.NEXT_PUBLIC_API_URL;
-
-  // 실시간 카메라
-  const [webrtcUrl, setWebrtcUrl] = useState<string | undefined>(undefined);
-  const [activeCam, setActiveCam] = useState<number>(1);
-  const [retryCount, setRetryCount] = useState<number>(0); // 자동 재시도 카운터
-
   const [cameraStream, setCameraStream] = useState("http://localhost:8000/Video/1");
+  
   const handleCameraTab = (idx: number, cam: Camera) => {
     setCameraTabActiveIndex(idx);
   

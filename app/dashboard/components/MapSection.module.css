@@ -85,7 +85,7 @@
 
   .FloorName {
     position: absolute;
-    width: 120px;
+    width: 50px;
     height: 35px;
     line-height: 35px;
     background: rgba(55, 70, 99, 0.8);

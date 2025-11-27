@@ -11,9 +11,10 @@ type RobotPathBtnProps = {
   selectedRobots: RobotRowData | null;
   video: Video[];
   camera: Camera[];
+  className?: string;
 }
 
-export default function RobotPathBtn({ selectedRobots, robots, video, camera } : RobotPathBtnProps) {
+export default function RobotPathBtn({ selectedRobots, robots, video, camera, className } : RobotPathBtnProps) {
 
   const [robotPathModalOpen, setRobotPathModalOpen] = useState(false);
 
@@ -27,7 +28,7 @@ export default function RobotPathBtn({ selectedRobots, robots, video, camera } :
 
   return (
     <>
-      <button type='button' className={styles["path-div"]} onClick={() => setRobotPathModalOpen(true)}>
+      <button type='button' className={`${styles["path-div"]} ${className ?? ""}`} onClick={() => setRobotPathModalOpen(true)}>
         <div className={styles["path-icon"]}>
           <img src="/icon/path_w.png" alt="robot path" />
         </div>

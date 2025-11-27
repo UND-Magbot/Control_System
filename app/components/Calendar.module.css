@@ -12,8 +12,9 @@
 .startDate,
 .endDate {
     width: 130px;
-    background: #494c5f;
-    border: 1px solid #8a96ac;
+    background: #34384d;
+    border: 2px solid #4c586e;
+    color: #dedee0;
     padding: 5px 14px;
     border-radius: 5px;
     display: flex;
@@ -53,14 +54,20 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+    color: #a4a4a8;
   }
   
   .header button {
-    background: none;
+    background: #34384d;
     border: none;
     color: #9ca3af;
     cursor: pointer;
     font-size: 16px;
+  }
+
+  .activeBtn {
+      background-color: #494c5f;
+      transition: background-color 0.15s ease;
   }
 
   .header button img {

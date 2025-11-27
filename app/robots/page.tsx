@@ -20,7 +20,42 @@ export default async function Page() {
         NetworkStatus(),
         PowerStatus(),
         LocationStatus()
-      ]);
+    ]);
+
+    let operating = 0;
+    let standby = 0;
+    let discharged = 0;
+    let charging = 0;
+
+    robots.forEach(r => {
+
+        // 전원 OFF → 무조건 Discharged
+        if (r.power === "Off") {
+            discharged++;
+            return;
+        }
+
+        // 충전 중 → Charging
+        if (r.isCharging) {
+            charging++;
+            return;
+        }
+
+        // 작업 중 (작업 있음 + 대기 아님)
+        if (r.tasks.length > 0 && r.waitingTime === 0) {
+            operating++;
+            return;
+        }
+
+        // 나머지는 Standby
+        if (r.waitingTime > 0) {
+            standby++;
+            return;
+        }
+    });
+
+    // 최종 전체 개수
+    const total = robots.length;
 
     return (
         <>
@@ -30,27 +65,27 @@ export default async function Page() {
                 <div className={styles.robotCount}>
                     <div className={styles.countItem}>
                         <div>Total</div>
-                        <div className={styles.totalNumber}>12</div>
+                        <div className={styles.totalNumber}>{total}</div>
                     </div>
                     <div>|</div>
                     <div className={styles.countItem}>
                         <div>Operating</div>
-                        <div className={styles.itemNumber}>3</div>
+                        <div className={styles.itemNumber}>{operating}</div>
                     </div>
                     <div>|</div>
                     <div className={styles.countItem}>
-                        <div>Idle</div>
-                        <div className={styles.itemNumber}>9</div>
+                        <div>Standby</div>
+                        <div className={styles.itemNumber}>{standby}</div>
                     </div>
                     <div>|</div>
                     <div className={styles.countItem}>
                         <div>Discharged</div>
-                        <div className={styles.itemNumber}>6</div>
+                        <div className={styles.itemNumber}>{discharged}</div>
                     </div>
                     <div>|</div>
                     <div className={styles.countItem}>
                         <div>charging</div>
-                        <div className={styles.itemNumber}>1</div>
+                        <div className={styles.itemNumber}>{charging}</div>
                     </div>
                 </div>
             </div>

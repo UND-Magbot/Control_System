@@ -322,7 +322,7 @@ export default function VideoPlayModal({
                     <video className={styles.videoView} 
                             ref={videoRef}
                             autoPlay
-                            src={"/videos/NoWordsCanSay.mp4"}
+                            src={"/videos/control_system_sample.mp4"}
                             onLoadedMetadata={handleLoadedMetadata}
                             onTimeUpdate={handleTimeUpdate}
                             onEnded={handleEnded}

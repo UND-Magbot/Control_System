@@ -65,7 +65,7 @@ export default function RobotInsertModal({ isOpen, onClose }: { isOpen: boolean;
                         </div>
                     </div>
                 </div>
-                <div className={styles.btnTotal}>
+                <div className={styles.insertBtnTotal}>
                     <div className={`${styles.btnItemCommon} ${styles.btnBgRed}`} onClick={handleCancel} >
                         <img src="/icon/close_btn.png" alt="cancel"/>
                         <div>Cancel</div>

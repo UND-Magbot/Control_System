@@ -49,8 +49,7 @@ export default function Pagination({
         disabled={!canGoPrev}
         aria-label="First page"
       >
-        <img src="/icon/arrow-left.png" alt="pre" />
-        <img src="/icon/arrow-left.png" alt="pre" />
+        <img src="/icon/initial-page.png" alt="pre" />
       </button>
 
       {/* 이전 */}
@@ -90,8 +89,7 @@ export default function Pagination({
         disabled={!canGoNext}
         aria-label="Last page"
       >
-        <img src="/icon/arrow-right.png" alt="next" />
-        <img src="/icon/arrow-right.png" alt="next" />
+        <img src="/icon/last-page.png" alt="next" />
       </button>
     </div>
   );

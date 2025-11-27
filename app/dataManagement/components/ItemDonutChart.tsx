@@ -13,6 +13,10 @@ type Props = {
 
 export default function RightDonutChart({ title, data, color, isTime }: Props) {
   const percent = data[0]?.percent ?? 0;
+  const percentStr = Number(percent).toFixed(1);  // "12.3"
+  const [intPart, decimalRaw] = percentStr.split(".");
+  const decimalPart = decimalRaw?.[0] ?? "0"; // 첫째 자리만 사용
+
   const display = data[0]?.displayValue ?? "";
   const backgroundImage = buildSingleDonutGradient(percent, color);
 
@@ -33,7 +37,7 @@ export default function RightDonutChart({ title, data, color, isTime }: Props) {
     <div className={styles.itemDonutContainer}>
       <div className={styles.leftFlexBox}>
         <div className={styles.itemDonutTitle}>{title}</div>
-          {/* ✅ Time일 때만 h/m 분리, 그 외엔 기존처럼 display 그대로 */}
+          {/* Time일 때만 h/m 분리, 그 외엔 기존처럼 display 그대로 */}
           {isTimeChart ? (
             <div className={styles.itemDonutValue}>
               <div className={styles.itemHourValue}>{hour}<span>h</span></div>
@@ -51,8 +55,8 @@ export default function RightDonutChart({ title, data, color, isTime }: Props) {
             {/* 안쪽 어두운 링 + 중앙 원 */}
             <div className={styles.totalDonutInner}>
               <div className={styles.totalDonutCenter}>
-                  <div className={styles.centerNumber}>{Number(percent).toFixed(1)}</div>
-                  <div className={styles.centerUnit}>%</div>
+                  <div className={styles.centerNumber}>{intPart}</div>
+                  <div className={styles.centerUnit}>.<span>{decimalPart}</span>%</div>
               </div>
             </div>
         </div>

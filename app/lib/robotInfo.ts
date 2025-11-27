@@ -31,7 +31,15 @@ export default async function getRobots(): Promise<RobotRowData[]> {
     tasks: [...item.tasks],
     chargingTime: item.chargingTime,  // 충전 시간(분)
     waitingTime: item.waitingTime,   // 대기 시간(분)
+    dockingTime: item.dockingTime,   // 도킹 시간(분)
     errors: [...item.errors],
+    operator: item.operator,
+    serialNumber: item.serialNumber,
+    model: item.model,
+    group: item.group,
+    softwareVersion: item.softwareVersion,
+    site: item.site,
+    registrationDateTime: item.registrationDateTime,
   }));
 
   return robots;

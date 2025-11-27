@@ -78,6 +78,8 @@
 .totalDonutCenter {
   text-align: center;
   color: #e5e7eb;
+  display: flex;
+  align-items: baseline;
 }
 
 .centerNumber {
@@ -92,5 +94,12 @@
   color: #9ca3af;
   font-weight: 500;
   margin-top: 2px;
+  font-family: 'Gmarket Sans';
+}
+
+.centerUnit span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e5e7eb;
   font-family: 'Gmarket Sans';
 }

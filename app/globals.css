@@ -1,7 +1,9 @@
 * { box-sizing: border-box; }
 html, body { 
     margin: 0; 
-    font-family: Noto Sans, sans-serif; 
+    height: 100%;
+    overflow: hidden;   
+    font-family: 'Noto Sans', sans-serif; 
     color: #fff; 
     background-color: #333853;
     font-weight: 400;
@@ -9,9 +11,31 @@ html, body {
 }
 
 .page-container {
-    width: calc(100% - 240px);
-    margin: 115px 0 0 240px;
-    padding: 0 30px;
+    position: fixed;
+    top: 115px;     
+    left: 240px;    
+    right: 0;       
+    bottom: 0;      
+
+    padding: 0 30px 30px;
+
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #96999b transparent;  
+}
+
+/* Chrome, Edge, Safari */
+.page-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.page-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.page-container::-webkit-scrollbar-thumb {
+    background: #2d3045;
+    border-radius: 50%;
 }
 
 a {

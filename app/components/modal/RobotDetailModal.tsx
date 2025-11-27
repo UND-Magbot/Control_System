@@ -11,18 +11,16 @@ type DetailModalProps = {
     onClose: () => void;
     selectedRobotId: number | null;
     selectedRobot: RobotRowData | null;
+    robots: RobotRowData[];   
 }
 
 export default function RobotDetailModal({
- isOpen,
- onClose,
- selectedRobotId,
- selectedRobot
-
+    isOpen,
+    onClose,
+    selectedRobotId,
+    selectedRobot,
+    robots
 }:DetailModalProps ){
-
-    console.log(selectedRobotId);
-    console.log(selectedRobot);
     
     const [showConfirm, setShowConfirm] = useState(false);
 
@@ -90,49 +88,85 @@ export default function RobotDetailModal({
                     <h2>Robot Information</h2>
                 </div>
                 <div className={`${styles.itemBoxContainer} ${styles.detailBoxFs}`}>
-                    <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
-                        <div className={styles.detailItemBox}>
-                            <div className={`${styles.itemTitleBox} ${styles.borderTl8}`}>Robot Type(Name)</div>
-                            <div className={styles.itemContentBox}>Robot1</div>
-                        </div>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Operator</div>
-                            <div className={`${styles.itemContentBox} ${styles.borderTr8}`}>Bear Robotics</div>
-                        </div>
+
+                {/* 1. Robot Type(Name) / Operator */}
+                <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
+                    <div className={styles.detailItemBox}>
+                    <div className={`${styles.itemTitleBox} ${styles.borderTl8}`}>
+                        Robot Type(Name)
                     </div>
-                    <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Serial Number</div>
-                            <div className={styles.itemContentBox}>rscgd20ac1c5e0a</div>
-                        </div>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Model</div>
-                            <div className={styles.itemContentBox}>RSCGD20.AGEN</div>
-                        </div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
+                        {/* 예: Quadruped (Robot 1) */}
+                        {selectedRobot
+                        ? `${selectedRobot.group} (${selectedRobot.no})`
+                        : "-"}
                     </div>
-                    <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Group</div>
-                            <div className={styles.itemContentBox}>Quadruped</div>
-                        </div>
-                        <div className={styles.detailItemBox}>
-                            <div className={styles.itemTitleBox}>Software Version</div>
-                            <div className={styles.itemContentBox}>RSCGD20.AGEN_v1.13.39</div>
-                        </div>
                     </div>
-                    <div className={styles.detailRowItemBox}>
-                        <div className={styles.detailItemBox}>
-                            <div className={`${styles.itemTitleBox} ${styles.borderBl8}`}>Site</div>
-                            <div className={styles.itemContentBox}>Daegu Metropolitan City</div>
-                        </div>
-                        <div className={styles.detailItemBox}>
-                            <div className={`${styles.itemTitleBox} ${styles.lhUnset}`}>
-                                <div>Robot Registration</div>
-                                <div>Date/Time</div>
-                            </div>
-                            <div className={`${styles.itemContentBox} ${styles.borderBr8}`}>2025.10.13  16:29:37</div>
-                        </div>
+
+                    <div className={styles.detailItemBox}>
+                    <div className={styles.itemTitleBox}>Operator</div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset} ${styles.borderTr8}`}>
+                        {selectedRobot?.operator ?? "-"}
                     </div>
+                    </div>
+                </div>
+
+                {/* 2. Serial Number / Model */}
+                <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
+                    <div className={styles.detailItemBox}>
+                    <div className={styles.itemTitleBox}>Serial Number</div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
+                        {selectedRobot?.serialNumber ?? "-"}
+                    </div>
+                    </div>
+
+                    <div className={styles.detailItemBox}>
+                    <div className={styles.itemTitleBox}>Model</div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
+                        {selectedRobot?.model ?? "-"}
+                    </div>
+                    </div>
+                </div>
+
+                {/* 3. Group / Software Version */}
+                <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
+                    <div className={styles.detailItemBox}>
+                    <div className={styles.itemTitleBox}>Group</div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
+                        {selectedRobot?.group ?? "-"}
+                    </div>
+                    </div>
+
+                    <div className={styles.detailItemBox}>
+                    <div className={styles.itemTitleBox}>Software Version</div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
+                        {selectedRobot?.softwareVersion ?? "-"}
+                    </div>
+                    </div>
+                </div>
+
+                {/* 4. Site / Robot Registration Date/Time */}
+                <div className={styles.detailRowItemBox}>
+                    <div className={styles.detailItemBox}>
+                    <div className={`${styles.itemTitleBox} ${styles.borderBl8}`}>
+                        Site
+                    </div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
+                        {selectedRobot?.site ?? "-"}
+                    </div>
+                    </div>
+
+                    <div className={styles.detailItemBox}>
+                    <div className={`${styles.itemTitleBox} ${styles.lhUnset}`}>
+                        <div>Robot Registration</div>
+                        <div>Date/Time</div>
+                    </div>
+                    <div className={`${styles.itemContentBox} ${styles.lhUnset} ${styles.borderBr8}`}>
+                        {selectedRobot?.registrationDateTime ?? "-"}
+                    </div>
+                    </div>
+                </div>
+
                 </div>
                 <div className={styles.btnTotal}>
                     <div className={styles.btnLeftBox}>

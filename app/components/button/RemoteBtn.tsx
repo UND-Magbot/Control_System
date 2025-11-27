@@ -11,9 +11,10 @@ type RemoteBtnProps = {
   selectedRobots: RobotRowData | null;
   video: Video[]
   cameras: Camera[]
+  className?: string;
 }
 
-export default function RemoteBtn({selectedRobots, robots, video, cameras } : RemoteBtnProps) {
+export default function RemoteBtn({selectedRobots, robots, video, cameras, className } : RemoteBtnProps) {
 
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
 
@@ -27,7 +28,7 @@ export default function RemoteBtn({selectedRobots, robots, video, cameras } : Re
 
   return (
     <>
-      <button type='button' className={styles["remote-div"]} onClick={() => setRemoteModalOpen(true)}>
+      <button type='button' className={`${styles["remote-div"]} ${className ?? ""}`} onClick={() => setRemoteModalOpen(true)}>
           <div className={styles["remote-icon"]}>
               <img src="/icon/robot_control_w.png" alt="robot path" />
           </div>

@@ -9,27 +9,16 @@ type DonutCommonProps = {
 function makeFixedPercents(counts: number[]): number[] {
   const total = counts.reduce((sum, v) => sum + v, 0);
 
-  if (total === 0 || counts.length === 0) {
+  // 값이 없거나 합계가 0이면 모두 0%
+  if (total <= 0 || counts.length === 0) {
     return counts.map(() => 0);
   }
 
-  // 1) 각각 비율 계산 (소수점 한 자리 기준)
-  const raw = counts.map((v) => (v / total) * 100);
-
-  // 2) 1 decimal place 로 반올림 (예: 33.333 → 33.3)
-  const rounded = raw.map((p) => Math.round(p * 10) / 10);
-
-  // 3) 합계 계산 후 100.0 과의 차이(diff)를 구함
-  const sumRounded = rounded.reduce((s, v) => s + v, 0);
-  const diff = Math.round((100 - sumRounded) * 10) / 10; // -0.1, 0, 0.1 정도
-
-  if (diff !== 0) {
-    // 마지막 항목에 보정값을 더해줌 (원하면 "가장 큰 값" 인덱스로 바꿔도 됨)
-    const lastIndex = rounded.length - 1;
-    rounded[lastIndex] = Math.round((rounded[lastIndex] + diff) * 10) / 10;
-  }
-
-  return rounded;
+  // 각 값의 비율을 그대로 계산 (소수점 1자리까지)
+  return counts.map((v) => {
+    const percent = (v / total) * 100;
+    return Number(percent.toFixed(1));   // 예: 33.333 → 33.3
+  });
 }
 
 
@@ -64,22 +53,26 @@ export function buildRobotTypeDonut({ robots }: DonutCommonProps) {
 
 // 작업/충전/대기 시간 도넛 데이터
 export function buildTimeDonut({ robots }: DonutCommonProps): DonutCommonInfo[] {
+
   let operating = 0;
   let standby = 0;
   let charging = 0;
+  let docking = 0;
 
   robots.forEach((r) => {
     // taskTime 을 모두 "운영 시간"으로 가정
     operating += r.tasks.reduce((sum, t) => sum + t.taskTime, 0);
     standby += r.waitingTime ?? 0;
     charging += r.chargingTime ?? 0;
+    docking += r.dockingTime ?? 0;
   });
 
   const items: { label: string; value: number }[] = [
     { label: "Operating", value: operating },
     { label: "Standby", value: standby },
     { label: "Charging", value: charging },
-  ].filter((i) => i.value > 0);
+    { label: "Docking", value: docking },
+  ];
 
   const values = items.map((i) => i.value);
   const percents = makeFixedPercents(values);
@@ -95,11 +88,21 @@ export function buildTimeDonut({ robots }: DonutCommonProps): DonutCommonInfo[] 
 
 // 오류 종류별 건수 도넛 데이터
 export function buildErrorDonut({ robots }: DonutCommonProps): DonutCommonInfo[] {
-  const errorCounts: Record<string, number> = {};
+  
+  const errorCounts: Record<string, number> = {
+    network: 0,
+    fail: 0,
+    etc: 0,
+  };
 
+  // 2) 로봇들의 에러 누적
   robots.forEach((r) => {
     r.errors.forEach((e) => {
-      errorCounts[e.errorType] = (errorCounts[e.errorType] || 0) + e.count;
+      if (errorCounts[e.errorType] === undefined) {
+        // 혹시 정의되지 않은 에러 타입이 오면 동적으로 추가
+        errorCounts[e.errorType] = 0;
+      }
+      errorCounts[e.errorType] += e.count;
     });
   });
 
@@ -119,15 +122,26 @@ export function buildErrorDonut({ robots }: DonutCommonProps): DonutCommonInfo[]
 
 // 작업 상태별 건수 도넛 데이터
 export function buildTaskCountDonut({ robots }: DonutCommonProps): DonutCommonInfo[] {
-  const counts: Record<string, number> = {};
+  // 기본 작업 타입 초기화
+  const taskCounts: Record<string, number> = {
+    delivery: 0,
+    monitoring: 0,
+    patrol: 0,
+    facility_inspection: 0,
+  };
 
+  // 실제 로봇 task 누적
   robots.forEach((r) => {
     r.tasks.forEach((t) => {
-      counts[t.taskType] = (counts[t.taskType] || 0) + 1;
+      if (taskCounts[t.taskType] === undefined) {
+        // 혹시 새로운 taskType이 들어오면 자동 추가
+        taskCounts[t.taskType] = 0;
+      }
+      taskCounts[t.taskType] += 1;
     });
   });
-
-  const entries = Object.entries(counts);
+  
+  const entries = Object.entries(taskCounts);
   const values = entries.map(([_, count]) => count);
   const percents = makeFixedPercents(values);
 

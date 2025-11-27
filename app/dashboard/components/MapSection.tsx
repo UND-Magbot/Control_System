@@ -248,54 +248,59 @@ export default function MapSection({ floors, robots, video, cameras }:FloorSelec
           <div>
               <img src="/icon/map_w.png" alt="map" />
           </div>
-            <p>Robot Location</p>
+            <p>Robot Location Map</p>
           </div>
           <PlusBtn type="map" selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras}/>
       </div>
       <div className={styles["middle-div"]}>
         <div className={styles["view-div"]}>
           <div className={styles.FloorName}>{defaultFloorName}</div>
-          <div ref={wrapperRef} className={styles["view-box"]} style={{ overflow: "hidden", userSelect: "none", touchAction: "none", cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",}} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={endPan} onMouseLeave={endPan} >
+          <div ref={wrapperRef} 
+                className={styles["view-box"]} 
+                style={{ overflow: "hidden", userSelect: "none", touchAction: "none", cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",}} 
+                onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={endPan} onMouseLeave={endPan} >
             
-           <div
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-              transformOrigin: "center center",
-              transition: isPanning ? "none" : "transform 120ms ease",
-            }}
-          >
-            {/* 맵 이미지 */}
-            <img
-              ref={imgRef}
-              src={mapCurrentImage}
-              className={styles["path-icon-img"]}
-              draggable={false}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* 로봇 마커 */}
-            <img
-              src="/icon/robot_location(1).png"
+            <div
               style={{
                 position: "absolute",
-                left: `${robotScreenPos.x}px`,
-                top: `${robotScreenPos.y}px`,
-                // width: "px",
-                height: "40px",
-                transform: "translate(-50%, -50%)",
-                pointerEvents: "none",
-                zIndex: 20,
+                width: "100%",
+                height: "100%",
+                transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+                transformOrigin: "center center",
+                transition: isPanning ? "none" : "transform 120ms ease",
               }}
-            />
-          </div>
+            >
+              
+              {/* 맵 이미지 */}
+              <img
+                ref={imgRef}
+                src={mapCurrentImage}
+                className={styles["path-icon-img"]}
+                draggable={false}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  pointerEvents: "none",
+                  borderRadius: "10px"
+                }}
+              />
+
+              {/* 로봇 마커 */}
+              <img
+                src="/icon/robot_location(1).png"
+                style={{
+                  position: "absolute",
+                  left: `${robotScreenPos.x}px`,
+                  top: `${robotScreenPos.y}px`,
+                  // width: "px",
+                  height: "40px",
+                  transform: "translate(-50%, -50%)",
+                  pointerEvents: "none",
+                  zIndex: 20,
+                }}
+              />
+            </div>
           
           </div>
           <ZoomControl onClick={handleZoomFromChild} />

@@ -41,6 +41,8 @@ export default function VideoDateRange({
   const [startDate, setStartDate] = useState(formatDate(today));
   const [endDate, setEndDate] = useState(formatDate(today));
 
+  const [activeNav, setActiveNav] = useState<"prev" | "next" | null>(null);
+
 
   const handleDateSelect = (selected: string) => {
     // 우선, 이번 선택으로 바뀔 값들을 계산
@@ -72,6 +74,7 @@ export default function VideoDateRange({
   const [tempDate, setTempDate] = useState<Date | null>(null);
 
   const openCalendar = (field: ActiveField) => {
+
     setActiveField(field);
     setIsCalendarOpen(true);
 
@@ -182,8 +185,7 @@ export default function VideoDateRange({
         ? item.robotNo === selectedRobot.no
         : true;
 
-      console.log("item:", item, "matchVideo:", matchVideo, "matchRobot:", matchRobot);
-      return matchVideo && matchRobot;
+        return matchVideo && matchRobot;
     });
 
     // 2) 날짜가 하나라도 비어 있으면 → 날짜 필터 없이 1차 결과만 사용
@@ -275,22 +277,30 @@ export default function VideoDateRange({
     <div className={styles.wrapper}>
       {/* 기존 날짜 입력 영역 */}
       <div className={styles.videoDate}>
-        <div className={styles.startDate}>
+        <div className={`${styles.startDate} ${activeNav === "prev" ? styles.activeBtn : ""}`}>
           <div>{startDate}</div>
           <img
             src="/icon/search_calendar.png"
             alt="calendar" 
-            onClick={() => openCalendar("start")}
+            onClick={() => { 
+              openCalendar("start")
+              setActiveNav("prev");
+              setTimeout(() => setActiveNav(null), 200);
+            }}
           />
             
         </div>
         <div>~</div>
-        <div className={styles.endDate}>
+        <div className={`${styles.endDate} ${activeNav === "next" ? styles.activeBtn : ""}`}>
           <div>{endDate}</div>
           <img
             src="/icon/search_calendar.png"
             alt="calendar"
-            onClick={() => openCalendar("end")}
+            onClick={() => {
+              openCalendar("end")
+              setActiveNav("next");
+              setTimeout(() => setActiveNav(null), 200);
+            }}
           />
         </div>
       </div>
@@ -309,7 +319,7 @@ export default function VideoDateRange({
                   )
                 }
               >
-                <img src="/icon/arrow-left.png" alt="left" />
+                <img src="/icon/arrow-left-g.png" alt="left" />
               </button>
               <div className={styles.title}>
                 {year}년 {month + 1}월
@@ -322,7 +332,7 @@ export default function VideoDateRange({
                   )
                 }
               >
-                <img src="/icon/arrow-right.png" alt="next" />
+                <img src="/icon/arrow-right-g.png" alt="next" />
               </button>
             </div>
 

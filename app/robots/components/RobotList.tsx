@@ -33,9 +33,6 @@ export default function RobotStatusList({
   locationStatus
 }:RobotStatusListProps) {
 
-  console.log("RobotStatusList robots:", robots);
-
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
 
   const [batteryActiveIndex, setBatteryActiveIndex] = useState<number>(0);
@@ -64,7 +61,7 @@ export default function RobotStatusList({
   const [locationIsOpen, setLocationIsOpen] = useState(false);
   const locationWrapperRef = useRef<HTMLDivElement>(null);
   
-  // 🔥 여기 추가: 선택된 로봇 id (또는 전체 데이터)
+  // 여기 추가: 선택된 로봇 id (또는 전체 데이터)
   const [selectedRobotId, setSelectedRobotId] = useState<number | null>(null);
 
   // 필요하면 전체 데이터도 같이 보관
@@ -73,57 +70,41 @@ export default function RobotStatusList({
   
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 🔥 기본 robots 대신, 필터가 적용된 robots 배열을 만듦
+  // 필터가 적용된 robots 배열
   const filteredRobots = robots.filter((robot) => {
+
     // --- 배터리 필터 ---
     let matchBattery = true;
-    if (batteryActiveIndex !== null) {
-      const option = batteryStatus[batteryActiveIndex];
 
-      // 예시: label 기준으로 분기 (실제 label에 맞게 수정)
-      if (option.label === "Total") {
-        matchBattery = true;
-      } else if (option.label === "76% 이상 100%") {
-        matchBattery = robot.battery >= 76 && robot.battery <= 100;
-      } else if (option.label === "51% 이상 75%") {
-        matchBattery = robot.battery >= 51 && robot.battery < 76;
-      } else if (option.label === "26% 이상 50%") {
-        matchBattery = robot.battery >= 26 && robot.battery < 51;
-      } else if (option.label === "1% 이상 25%") {
-        matchBattery = robot.battery >= 1 && robot.battery < 26;
-      } else if (option.label === "0%") {
-        matchBattery = robot.battery === 0;
-      } else if (option.label === "Charging") {
-        matchBattery = robot.isCharging;
-      }
+    const option = selectedBattery;
+
+    // Total or 선택 안 한 상태
+    if (!option) {
+      matchBattery = true;
+    } else if (option.charging) {
+      matchBattery = robot.isCharging;
+    } else if (option.min !== undefined && option.max !== undefined) {
+      matchBattery =
+        robot.battery >= option.min && robot.battery <= option.max;
     }
 
-    // --- 네트워크 / 전원 / 위치 필터는 예시 ---
+    // 네트워크
     let matchNetwork = true;
-    if (networkActiveIndex !== null) {
-      const option = networkStatus[networkActiveIndex];
-      if (option.label !== "Total") {
-        // robot.network: "Online" | "Offline" | "Error" 이런 구조라고 가정
-        matchNetwork = robot.network === option.label;
-      }
+    if (selectedNetwork) {
+      // 예: item.value === "Online" 이런 식으로
+      matchNetwork = robot.network === selectedNetwork.label;
     }
 
+    // 전원
     let matchPower = true;
-    if (powerActiveIndex !== null) {
-      const option = powerStatus[powerActiveIndex];
-      if (option.label !== "Total") {
-        // robot.power: "On" | "Off" 라고 가정
-        matchPower = robot.power === option.label;
-      }
+    if (selectedPower) {
+      matchPower = robot.power === selectedPower.label;
     }
 
+    // 위치 (mark: 'Yes' | 'No')
     let matchLocation = true;
-    if (locationActiveIndex !== null) {
-      const option = locationStatus[locationActiveIndex];
-      if (option.label !== "Total") {
-        // robot.mark: "Yes" | "No" 같은 값이라고 가정
-        matchLocation = robot.mark === option.label;
-      }
+    if (selectedLocation) {
+      matchLocation = robot.mark === selectedLocation.label;
     }
 
     return matchBattery && matchNetwork && matchPower && matchLocation;
@@ -133,19 +114,37 @@ export default function RobotStatusList({
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const currentItems = filteredRobots.slice(startIndex, startIndex + PAGE_SIZE);
 
+  // 로봇 아이콘 개수
+  const ROBOT_ICON_COUNT = 7;
+
+  const robotColors = [
+    "#ed1c24", "#059fd7", "#92d050", "#f7941d",
+    "#d65bdb", "#0fc6cc", "#51b77c"
+  ];
+
+  function getRobotIndexFromNo(robotNo: string): number {
+    const match = robotNo.match(/\d+/); // "Robot 1" → ["1"]
+    const num = match ? Number(match[0]) : 1; // 못 찾으면 1번 로봇으로 가정
+    const idx = num - 1;
+
+    // 순환시키려면 이렇게:
+    return ((idx % robotColors.length) + robotColors.length) % robotColors.length;
+  }
+
+  function buildRobotIconPath(robotNo: string, kind: "icon" | "location"): string {
+    const idx = getRobotIndexFromNo(robotNo); // 0-based index
+    const iconNo = idx + 1;                   // 파일 이름은 1부터 시작
+
+    if (kind === "icon") {
+      return `/icon/robot_icon(${iconNo}).png`;
+    }
+    return `/icon/robot_location(${iconNo}).png`;
+  }
+
   const robotInfoIcons = {
-    info: (index: number) => {
-      const robotIcons = [
-        "/icon/robot_icon(1).png",
-        "/icon/robot_icon(2).png",
-        "/icon/robot_icon(3).png",
-        "/icon/robot_icon(4).png",
-        "/icon/robot_icon(5).png",
-        "/icon/robot_icon(6).png",
-        "/icon/robot_icon(7).png"
-      ];
-      return robotIcons[index] ?? "/icon/robot_icon(1).png";
-    },
+    
+    info: (robotNo: string) => buildRobotIconPath(robotNo, "icon"),
+
     battery: (battery: number, isCharging?: boolean) => {
       if (isCharging) return "/icon/battery_charging.png";
       if (battery >= 100) return "/icon/battery_full.png";
@@ -154,26 +153,18 @@ export default function RobotStatusList({
       if (battery > 25) return "/icon/battery_low.png";
       return "/icon/battery_empty.png";
     },
+
     network: (status: string) => {
       if (status === "Error") return "/icon/status(2).png";
       if (status === "Offline") return "/icon/status(3).png";
       return "/icon/status(1).png";
     },
+
     power: (power: string) => {
       return power === "On" ? "/icon/power_on.png" : "/icon/power_off.png";
     },
-    mark: (index: number) => {
-      const robotIcons = [
-        "/icon/robot_location(1).png",
-        "/icon/robot_location(2).png",
-        "/icon/robot_location(3).png",
-        "/icon/robot_location(4).png",
-        "/icon/robot_location(5).png",
-        "/icon/robot_location(6).png",
-        "/icon/robot_location(7).png"
-      ];
-      return robotIcons[index] ?? "/icon/robot_location(1).png";
-    }
+
+    mark: (robotNo: string) => buildRobotIconPath(robotNo, "location"),
   };
 
   // Location 클릭 시 실행되는 핸들러
@@ -236,6 +227,20 @@ export default function RobotStatusList({
       ) {
         setNetworkIsOpen(false); // 외부 클릭 → 닫기
       }
+
+      if (
+        powerWrapperRef.current &&
+        !powerWrapperRef.current.contains(e.target as Node)
+      ) {
+        setPowerIsOpen(false); // 외부 클릭 → 닫기
+      }
+
+      if (
+        locationWrapperRef.current &&
+        !locationWrapperRef.current.contains(e.target as Node)
+      ) {
+        setLocationIsOpen(false); // 외부 클릭 → 닫기
+      }
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
@@ -255,7 +260,7 @@ export default function RobotStatusList({
             {/* 배터리 검색 필터 */}
             <div ref={batteryWrapperRef} className={`${styles.selecteWrapper}`} >
                 <div className={styles.selecte} onClick={() => setBatteryIsOpen(!batteryIsOpen)}>
-                  <span>{selectedBattery?.label ?? "배터리 상태"}</span>
+                  <span>{batteryActiveIndex === -1 ? "Total" : selectedBattery?.label ?? "배터리 상태"}</span>
                   {batteryIsOpen ? (
                     <img src="/icon/arrow_up.png" alt="arrow_up" />
                   ) : (
@@ -264,17 +269,29 @@ export default function RobotStatusList({
                 </div> 
                 {batteryIsOpen && (
                   <div className={styles.selectebox}>
-                      {batteryStatus.map((item, idx) => (
-                          <div key={item.id} 
-                                className={batteryActiveIndex === idx ? styles["active"] : ""}
-                                onClick={() => {
-                                  batteryStatusClick(idx, item);
-                                }}
-                          >
-                          {item.label}
+                    {/* Total을 맨 위에 직접 추가 */}
+                    <div
+                      className={batteryActiveIndex === -1 ? styles.active : ""}
+                      onClick={() => {
+                        setBatteryActiveIndex(-1);
+                        setSelectedBattery(null);   // null → 전체 조건 의미
+                        setBatteryIsOpen(false);
+                      }}
+                    >
+                      Total
+                    </div>
+
+                    {/* 실제 옵션들 */}
+                    {batteryStatus.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className={batteryActiveIndex === idx ? styles.active : ""}
+                        onClick={ () => { batteryStatusClick(idx, item); } }
+                      >
+                        {item.label}
                       </div>
-                      ))}
-                  </div>
+                    ))}
+                </div>
                 )}
             </div>
 
@@ -282,7 +299,7 @@ export default function RobotStatusList({
             <div ref={networkWrapperRef} className={styles.selecteWrapper}>
                   <div className={styles.selecte} 
                     onClick={() => setNetworkIsOpen(!networkIsOpen)}>
-                    <span>{selectedNetwork?.label ?? "네트워크 상태"}</span>
+                    <span>{networkActiveIndex === -1 ? "Total" : selectedNetwork?.label ?? "네트워크 상태"}</span>
                     {networkIsOpen ? (
                       <img src="/icon/arrow_up.png" alt="arrow_up" />
                     ) : (
@@ -291,17 +308,29 @@ export default function RobotStatusList({
                   </div> 
                   {networkIsOpen && (
                     <div className={styles.selectebox}>
-                        {networkStatus.map((item, idx) => (
-                            <div
-                                key={item.id}
-                                className={networkActiveIndex === idx ? styles["active"] : ""}
-                                onClick={() => {
-                                  networkStatusClick(idx, item);
-                                }}
-                            >
-                            {item.label}
+                      {/* Total */}
+                      <div
+                        className={networkActiveIndex === -1 ? styles.active : ""}
+                        onClick={() => {
+                          setNetworkActiveIndex(-1);
+                          setSelectedNetwork(null); // 전체
+                          setNetworkIsOpen(false);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        Total
+                      </div>
+
+                      {/* 실제 네트워크 옵션들 */}
+                      {networkStatus.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className={networkActiveIndex === idx ? styles.active : ""}
+                          onClick={ () => { networkStatusClick(idx, item); } }
+                        >
+                          {item.label}
                         </div>
-                        ))}
+                      ))}
                     </div>
                   )}
             </div>
@@ -309,7 +338,7 @@ export default function RobotStatusList({
             <div ref={powerWrapperRef} className={styles.selecteWrapper}>
                 <div className={styles.selecte} 
                   onClick={() => setPowerIsOpen(!powerIsOpen)}>
-                  <span>{selectedPower?.label ?? "전원 온/오프 상태"}</span>
+                  <span>{powerActiveIndex === -1 ? "Total" : selectedPower?.label ?? "전원 상태"}</span>
                   {powerIsOpen ? (
                     <img src="/icon/arrow_up.png" alt="arrow_up" />
                   ) : (
@@ -318,17 +347,29 @@ export default function RobotStatusList({
                 </div> 
                 {powerIsOpen && (
                   <div className={styles.selectebox}>
-                      {powerStatus.map((item, idx) => (
-                          <div
-                              key={item.id}
-                              className={powerActiveIndex === idx ? styles["active"] : ""}
-                              onClick={() => {
-                                powerStatusClick(idx, item);
-                              }}
-                          >
-                          {item.label}
+                    {/* Total */}
+                    <div
+                      className={powerActiveIndex === -1 ? styles.active : ""}
+                      onClick={() => {
+                        setPowerActiveIndex(-1);
+                        setSelectedPower(null);
+                        setPowerIsOpen(false);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      Total
+                    </div>
+
+                    {/* 실제 전원 옵션들 */}
+                    {powerStatus.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className={powerActiveIndex === idx ? styles.active : ""}
+                        onClick={ () => { powerStatusClick(idx, item); } }
+                      >
+                        {item.label}
                       </div>
-                      ))}
+                    ))}
                   </div>
                 )}
             </div>
@@ -336,7 +377,7 @@ export default function RobotStatusList({
             <div ref={locationWrapperRef} className={styles.selecteWrapper}>
               <div className={styles.selecte} 
                 onClick={() => setLocationIsOpen(!locationIsOpen)}>
-                <span>{selectedLocation?.label ?? "위치표시 상태"}</span>
+                <span>{locationActiveIndex === -1 ? "Total" : selectedLocation?.label ?? "위치 상태"}</span>
                 {locationIsOpen ? (
                   <img src="/icon/arrow_up.png" alt="arrow_up" />
                 ) : (
@@ -345,17 +386,29 @@ export default function RobotStatusList({
               </div> 
               {locationIsOpen && (
                 <div className={styles.selectebox}>
-                    {locationStatus.map((item, idx) => (
-                        <div
-                            key={item.id}
-                            className={locationActiveIndex === idx ? styles["active"] : ""}
-                            onClick={() => {
-                              locationStatusClick(idx, item);
-                            }}
-                        >
-                        {item.label}
+                  {/* Total */}
+                  <div
+                    className={locationActiveIndex === -1 ? styles.active : ""}
+                    onClick={() => {
+                      setLocationActiveIndex(-1);
+                      setSelectedLocation(null);
+                      setLocationIsOpen(false);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    Total
+                  </div>
+
+                  {/* 실제 위치 옵션들 */}
+                  {locationStatus.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={locationActiveIndex === idx ? styles.active : ""}
+                      onClick={ () => { locationStatusClick(idx, item);} }
+                    >
+                      {item.label}
                     </div>
-                    ))}
+                  ))}
                 </div>
               )}
             </div>
@@ -375,55 +428,78 @@ export default function RobotStatusList({
               </tr>
           </thead>
           <tbody>
-          {currentItems.map((r, idx) => (
-              <tr key={r.no}>
-              <td>
-                  <div>
-                  {r.no}
+          {currentItems.map((r, idx) => {
+            const robotIndex = getRobotIndexFromNo(r.no);
+            const robotColor = robotColors[robotIndex];
+
+            return (
+              <tr
+                key={r.no}
+                style={
+                  {
+                    "--robot-color": robotColor,
+                  } as React.CSSProperties
+                }
+              >
+                <td>
+                  <div>{r.no}</div>
+                </td>
+                <td>
+                  <div className={styles.robot_status_icon_div}>
+                    <img src={robotInfoIcons.info(r.no)} alt="robot_icon" />
+                    <div
+                      className={styles["info-box"]}
+                      onClick={() => ViewInfoClick(idx, r)}
+                    >
+                      View Info
+                    </div>
                   </div>
-              </td>
-              <td>
-                  <div className={`${styles.robot_status_icon_div}`}>
-                    <img src={robotInfoIcons.info(idx)} alt={`robot_icon`} />
-                    <div className={styles["info-box"]} onClick={() => ViewInfoClick(idx, r)}>View Info</div>
+                </td>
+                <td>
+                  <div className={styles.robot_status_icon_div}>
+                    <img
+                      src={robotInfoIcons.battery(r.battery, r.isCharging)}
+                      alt="battery"
+                    />
+                    {r.battery}%
                   </div>
-              </td>
-              <td>
-                  <div className={styles["robot_status_icon_div"]}>
-                  <img src={robotInfoIcons.battery(r.battery, r.isCharging)} alt="battery" />
-                  {r.battery}%
+                </td>
+                <td>
+                  <div className={styles.robot_status_icon_div}>
+                    <img src={robotInfoIcons.network(r.network)} alt="network" />
+                    {r.network}
                   </div>
-              </td>
-              <td>
-                  <div className={styles["robot_status_icon_div"]}>
-                  <img src={robotInfoIcons.network(r.network)} alt="network" />
-                  {r.network}
+                </td>
+                <td>
+                  <div className={styles.robot_status_icon_div}>
+                    <img src={robotInfoIcons.power(r.power)} alt="power" />
+                    {r.power}
                   </div>
-              </td>
-              <td>
-                  <div className={styles["robot_status_icon_div"]}>
-                  <img src={robotInfoIcons.power(r.power)} alt="power" />
-                  {r.power}
+                </td>
+                <td>
+                  <div className={styles.robot_status_icon_div}>
+                    <img src={robotInfoIcons.mark(r.no)} alt="mark" />
+                    {r.mark}
                   </div>
-              </td>
-              <td>
-                  <div className={styles["robot_status_icon_div"]}>
-                  <img src={robotInfoIcons.mark(idx)} alt="mark" />
-                  {r.mark}
-                  </div>
-              </td>
-              <td>
-                  <div className={`${styles["robot_status_icon_div"]} ${styles.viewMap}`} onClick={() => { handleLocationClick(idx, r) }}>
+                </td>
+                <td>
+                  <div
+                    className={`${styles.robot_status_icon_div} ${styles.viewMap}`}
+                    onClick={() => {
+                      handleLocationClick(idx, r);
+                    }}
+                  >
                     <div>View Map</div>
                     <div>→</div>
                   </div>
-              </td>
-            </tr>
-          ))}
+                </td>
+              </tr>
+            );
+          })}
           </tbody>
         </table>
       </div>
-      <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot}/>
+      <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots}   />
       <div className={styles.bottomPosition}>
         <div className={styles.RobotCrudBtnPosition}>
           <RobotCrudBtn />
@@ -442,8 +518,8 @@ export default function RobotStatusList({
         <CameraViews selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots} floors={floors} video={video} cameras={cameras} />
         <br />
         <div className={styles.modalOpenBox}>
-            <RemoteBtn selectedRobots={selectedRobot} robots={robots} video={video} cameras={cameras} />
-            <RobotPathBtn selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras} />
+            <RemoteBtn className={styles.customRemoteDiv} selectedRobots={selectedRobot} robots={robots} video={video} cameras={cameras} />
+            <RobotPathBtn  className={styles.customPathDiv} selectedRobots={selectedRobot} robots={robots} video={video} camera={cameras} />
         </div>        
     </div>
     </>

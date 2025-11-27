@@ -1,6 +1,8 @@
 .RobotStatusTopPosition {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .RobotSearch {
@@ -113,7 +115,7 @@
 }
 
 .viewMap:hover {
-  background: #ed1c24;
+  background-color: var(--robot-color);
   color: #fff;
 }
 
@@ -139,6 +141,8 @@
   border: 1px solid #fff;
   border-radius: 12px;
   font-size: 14px;
+  overflow: hidden;
+  position: relative;
 }
 
 
@@ -150,6 +154,7 @@
   border: 1px solid #fff;
   border-radius: 5px;
   text-align: center;
+  z-index: 10;
 }
 
 .floorBox{
@@ -217,7 +222,7 @@
 
 .cameraMapView {
   width: 34%;
-  min-width: 350px;
+  min-width: 560px;
 }
 
 .RobotStatusList,
@@ -229,14 +234,23 @@
 
 .RobotStatusList h2,
 .cameraMapView h2 {
-  font-weight: 600;
-  margin: 0 0 20px 0;
+  font-weight: 500;
+  margin: 0;
   color: #92d4f4;
+}
+
+.cameraMapView h2 {
+  margin-bottom: 15px;
 }
 
 .modalOpenBox {
   display: flex;
   justify-content: space-between;
+}
+
+.customRemoteDiv,
+.customPathDiv {
+  height: 33px;
 }
 
 .cameraWrapper {
@@ -262,7 +276,7 @@
 }
 
 .selecte {
-    width: 150px;
+    width: 190px;
     background: #33384c; 
     border: 1px solid #8a96ac;
     padding:5px 14px;
@@ -280,7 +294,7 @@
 }
 
 .selectebox {
-    width: 150px;
+    width: 190px;
     height: auto;
     padding: 14px;
     background: #202334;

@@ -42,7 +42,6 @@ export default function RemoteModal({
 
   const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
   const mapRef = useRef<HTMLImageElement | null>(null);
   const innerRef = useRef<HTMLDivElement | null>(null);
   const mapImage = "/map/occ_grid.png";
@@ -290,7 +289,7 @@ const batteryPercentage =
   const cameraImgRef = useRef<HTMLImageElement | null>(null);
   const mapImgRef = useRef<HTMLImageElement | null>(null);
 
-  const getActiveImg = () => (isMainMap ? mapImgRef.current : cameraImgRef.current);
+  const getActiveImg = () => (isMainMap ? innerRef.current : cameraImgRef.current);
 
   const clampTranslate = (nx: number, ny: number) => {
     const wrap = wrapperRef.current;
@@ -455,8 +454,8 @@ const batteryPercentage =
                   <div>Online</div>
                 </div>
 
-                <div className={styles.robotStatus}>
-                  <img src="/icon/battery_full_w.png" alt="battery" />
+                <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
+                  <img src={ isMainMap ? "/icon/battery_full_d.png" : "/icon/battery_full_w.png"} alt="battery" />
                   <div>{batteryPercentage}%</div>
                 </div>
               </div>
@@ -494,7 +493,6 @@ const batteryPercentage =
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  // display: (!isSwapped && primaryView === "camera") ? "block" : "none",
                   display: mainView === "camera" ? "block" : "none",
                   transform: mainView === "camera" ? `translate(${translate.x}px, ${translate.y}px) scale(${scale})` : "none",
                   transformOrigin: "center center",
@@ -557,9 +555,9 @@ const batteryPercentage =
           {/* Floors */}
           <div className={styles.middlePosition}>
             <div className={`${styles.floorFlex} ${ isMainMap ? styles.mapFloorLine : styles.floorLine }`.trim()}>
-              <div>1F</div>
+              <div className={styles.active}>1F</div>
               <div>2F</div>
-              <div className={styles.active}>3F</div>
+              <div>3F</div>
               <div>4F</div>
               <div>5F</div>
               <div>6F</div>
@@ -677,8 +675,8 @@ const batteryPercentage =
                   />
                 </div>
 
-                <div className={styles.viewExchangeBtn} onClick={() => setIsSwapped(prev => !prev)}>
-                  <img src="/icon/view-change.png" alt="swap" />
+                <div className={`${styles.viewExchangeBtn} ${ isMainMap ? styles.mapViewExchangeBtn : styles.camViewExchangeBtn }`.trim()} onClick={() => setIsSwapped(prev => !prev)}>
+                  <img src={ isMainMap ? "/icon/view-change.png" : "/icon/view-change-d.png" } alt="swap" />
                 </div>
 
               </div>

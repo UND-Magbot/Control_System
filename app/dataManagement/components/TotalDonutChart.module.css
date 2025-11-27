@@ -73,13 +73,13 @@
 }
 
 .centerLabelTop {
-  font-size: 18px;
+  font-size: 14px;
   letter-spacing: 1px;
   font-weight: 500;
 }
 
 .centerNumber {
-  font-size: 50px;
+  font-size: 48px;
   font-weight: 700;
   margin-top: 5px;
   height: 45px;
@@ -90,6 +90,6 @@
   font-size: 12px;
   color: #9ca3af;
   font-weight: 500;
-  margin-top: 8px;
+  margin-top: 5px;
   font-family: 'Gmarket Sans';
 }

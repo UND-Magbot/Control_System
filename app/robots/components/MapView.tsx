@@ -50,18 +50,18 @@ export default function CameraView({
     -------------------------------------------------- */
     const [robotPos, setRobotPos] = useState({ x: 0, y: 0, yaw: 0 });
 
-    useEffect(() => {
-        const loadRobotPos = () => {
-            fetch("http://localhost:8000/robot/position")
-                .then(res => res.json())
-                .then(data => setRobotPos(data))
-                .catch(() => {});
-        };
+    // useEffect(() => {
+    //     const loadRobotPos = () => {
+    //         fetch("http://localhost:8000/robot/position")
+    //             .then(res => res.json())
+    //             .then(data => setRobotPos(data))
+    //             .catch(() => {});
+    //     };
 
-        loadRobotPos();
-        const timer = setInterval(loadRobotPos, 1000);
-        return () => clearInterval(timer);
-    }, []);
+    //     loadRobotPos();
+    //     const timer = setInterval(loadRobotPos, 1000);
+    //     return () => clearInterval(timer);
+    // }, []);
 
     /* -------------------------------------------------
        mapSize 측정
@@ -181,13 +181,12 @@ export default function CameraView({
 
     return (
         <div className={styles.commonBox}>
+            <div className={styles.floorBox}>1F</div>
             <div
                 ref={wrapperRef}
                 style={{
                     width: "100%",
                     height: "100%",
-                    overflow: "hidden",
-                    position: "relative",
                     userSelect: "none",
                     touchAction: "none",
                     cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",
