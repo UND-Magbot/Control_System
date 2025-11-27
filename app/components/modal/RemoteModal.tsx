@@ -133,13 +133,13 @@ export default function RemoteModal({
         </div>
         <div className={styles.CameraView}>
           <div className={styles.topPosition}>
-            <ModalRobotSelect selectedLabel={defaultRobotName} robots={robots} activeIndex={robotActiveIndex} onSelect={handleRobotSelect} />
+            {/* <ModalRobotSelect selectedLabel={defaultRobotName} robots={robots} activeIndex={robotActiveIndex} onSelect={handleRobotSelect} /> */}
 
 
             <div className={styles.topRightPostion}>
               <div className={styles.topRightIcon}>
 
-                <VideoStatus className={styles.videoStatusCustom} video={video} />
+                {/* <VideoStatus className={styles.videoStatusCustom} video={video} /> */}
 
                 <div className={styles.robotStatus}>
                   <img src="/icon/status_w.png" alt="network" />
@@ -173,7 +173,7 @@ export default function RemoteModal({
           </div>
           <div className={styles.bottomPosition}>
             <div className={styles.bottomFlex}>
-              <RemotePad />
+              {/* <RemotePad /> */}
               <div className={`${styles.modeBox} ${styles.mt50}`}>
                 <div className={styles.mb20}>MODE</div>
                 <div className={`${styles.standSitBtn} ${styles.mb20}`}>
