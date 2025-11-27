@@ -93,6 +93,20 @@ export default function VideoDateRange({
     }
   };
 
+  // videoData에서 가장 오래된 날짜 구하기
+  const getEarliestVideoDate = (videoData: VideoItem[]): Date | null => {
+    if (!videoData || videoData.length === 0) return null;
+
+    return videoData.reduce<Date | null>((earliest, item) => {
+      const d = new Date(item.date);
+      if (isNaN(d.getTime())) return earliest;
+      if (!earliest) return d;
+      return d < earliest ? d : earliest;
+    }, null);
+  };
+
+  const earliestVideoDate = getEarliestVideoDate(videoData);
+
   const handleConfirm = () => {
     if (!tempDate || !activeField) return;
     const value = formatDate(tempDate);
@@ -134,7 +148,7 @@ export default function VideoDateRange({
     );
   };
 
-  // 🔹 현재 start/end 범위가 1주/1달/1년 중 무엇인지 확인
+  // 현재 start/end 범위가 1주/1달/1년 중 무엇인지 확인
   function syncPeriodWithRange(
     startStr: string,
     endStr: string,
@@ -353,29 +367,50 @@ export default function VideoDateRange({
                 d === null ? (
                   <div key={idx} className={styles.emptyCell} />
                 ) : (
-                  <button
-                    key={idx}
-                    type="button"
-                    className={
-                      isSameDate(tempDate, d)
-                        ? styles.daySelected
-                        : styles.day
-                    }
-                    onClick={() => {
-                      const selected = new Date(year, month, d);
+                   (() => {
+                      const cellDate = new Date(year, month, d);
+                      cellDate.setHours(0, 0, 0, 0);
 
-                      // 1) 임시 선택(하이라이트용) 유지하고 싶으면
-                      setTempDate(selected);
+                      // 🔹 가장 오래된 데이터 날짜 이전이면 비활성화
+                      let isDisabled = false;
+                      if (earliestVideoDate) {
+                        const earliest = new Date(
+                          earliestVideoDate.getFullYear(),
+                          earliestVideoDate.getMonth(),
+                          earliestVideoDate.getDate()
+                        );
+                        isDisabled = cellDate < earliest;
+                      }
 
-                      // 2) startDate / endDate 에 반영 예시: "YYYY-MM-DD"
-                      const dateStr = formatDate(selected); 
+                      const isSelected = isSameDate(tempDate, d);
 
-                      // 여기서 시작/종료일 실제로 바뀜
-                      handleDateSelect(dateStr);
-                    }}
-                  >
-                    {d}
-                  </button>
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          disabled={isDisabled}
+                          className={
+                            isDisabled
+                              ? styles.dayDisabled
+                              : isSelected
+                              ? styles.daySelected
+                              : styles.day
+                          }
+                          onClick={() => {
+                            if (isDisabled) return; // 안전장치
+
+                            const selected = new Date(year, month, d);
+
+                            setTempDate(selected);
+
+                            const dateStr = formatDate(selected);
+                            handleDateSelect(dateStr);
+                          }}
+                        >
+                        {d}
+                      </button>
+                    );
+                  })()
                 )
               )}
             </div>

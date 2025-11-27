@@ -113,6 +113,10 @@ export default function VideoList({
     const startIndex = (currentPage - 1) * PAGE_SIZE;
     const currentItems = currentData.slice(startIndex, startIndex + PAGE_SIZE);
 
+    // video 탭에서 사용할 전용 배열 (타입을 VideoItem[] 으로 고정)
+    const videoCurrentItems: VideoItem[] =
+    activeTab === "video" ? (currentItems as VideoItem[]) : [];
+
     const handleTabClick = (tab: "video" | "dt" | "log") => {
         setActiveTab(tab);
     
@@ -572,7 +576,7 @@ export default function VideoList({
                     </div>
                 </div>
                 <div className={styles.videoViewContainer}>
-                    {currentItems.map((r, idx) => (
+                    {videoCurrentItems.map((r, idx) => (
                         <div key={r.id} className={styles.videoViewItem}>
                             {videoThumbnail && (
                                 <div className={styles.videoViewBox} onClick={() => { VideoPlayClick(idx, r) }}>

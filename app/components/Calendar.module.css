@@ -58,7 +58,7 @@
   }
   
   .header button {
-    background: #34384d;
+    background: transparent;
     border: none;
     color: #9ca3af;
     cursor: pointer;
@@ -116,6 +116,15 @@
     background: transparent;
     color: #9f9fa6;
     cursor: pointer;
+  }
+
+  .dayDisabled {
+    height: 23px;
+    border-radius: 5px;
+    border: none;
+    background: transparent;
+    color: #707070;
+    cursor: not-allowed;
   }
   
   .day:hover {
