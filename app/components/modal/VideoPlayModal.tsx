@@ -19,25 +19,25 @@ export default function VideoPlayModal({
     playedVideo
 }: VideoPlayModalProps) {
 
-
-    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const controlsRef = useRef<HTMLDivElement | null>(null);
     const progressBarRef = useRef<HTMLInputElement | null>(null);
+    const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);        // 총 길이 (초)
     const [currentTime, setCurrentTime] = useState(0);  // 현재 재생 위치 (초)
+    
     const [isMuted, setIsMuted] = useState(false);
     const [volume, setVolume] = useState(1);            // 0 ~ 1
+    const [prevVolume, setPrevVolume] = useState(1); // 음소거 직전 볼륨 저장
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(true); // hover 감지
 
     const [showPlayButton, setShowPlayButton] = useState(false);
-    const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
     // 메타데이터 로딩 완료 시 길이 설정
     const handleLoadedMetadata = () => {
@@ -57,19 +57,35 @@ export default function VideoPlayModal({
 
     // 재생 / 일시정지 토글
     const handlePlayPause = () => {
-
-        clearHideTimer();
         const video = videoRef.current;
-        
         if (!video) return;
 
-        if (video.paused || video.ended) {
+        // ▶ 현재 재생 중이면 → "일시정지"로 전환
+        if (!video.paused && !video.ended) {
+            video.pause();
+            setIsPlaying(false);
+
+            // 클릭으로 멈췄을 때:
+            // - 아이콘 항상 보이게
+            // - 컨트롤바 항상 보이게
+            // - 더 이상 숨기지 않도록 타이머 제거
+            clearHideTimer();
+            setShowPlayButton(true);
+            setShowControls(true);
+            return;
+        }
+
+        // 현재 정지 상태면 → "재생"으로 전환
         video.play();
         setIsPlaying(true);
-        } else {
-        video.pause();
-        setIsPlaying(false);
-        }
+
+        // 재생 시작할 때는 잠깐 보여주고, 이후에는 auto-hide 로직이 처리
+        setShowPlayButton(true);
+        setShowControls(true);
+
+        // 전체화면 + 재생중일 때만 자동 숨김을 쓰고 싶다면
+        // isFullscreen 체크 후에 호출해도 됨
+        startHideTimer();
     };
 
     // progress bar 드래그 → 재생 위치 변경
@@ -107,14 +123,22 @@ export default function VideoPlayModal({
         if (!video) return;
 
         const nextMuted = !isMuted;
-        video.muted = nextMuted;
-        setIsMuted(nextMuted);
 
-        // 음소거 해제 시 볼륨 0이면 약간 살려주기
-        if (!nextMuted && volume === 0) {
-        video.volume = 0.5;
-        setVolume(0.5);
+        if (nextMuted) {
+            // 음소거 ON
+            setPrevVolume(volume); // 현재 볼륨 저장
+            setVolume(0);
+            video.volume = 0;
+            video.muted = true;
+        } else {
+            // 음소거 OFF → 이전 볼륨으로 복원
+            const restored = prevVolume > 0 ? prevVolume : 1; 
+            setVolume(restored);
+            video.volume = restored;
+            video.muted = false;
         }
+
+        setIsMuted(nextMuted);
     };
 
     // 재생 끝났을 때 상태 초기화
@@ -135,52 +159,6 @@ export default function VideoPlayModal({
         const mm = String(minutes).padStart(2, "0");
         const ss = String(seconds).padStart(2, "0");
         return `${mm}:${ss}`;
-    };
-
-    const clearHideTimer = () => {
-        if (hideTimeoutRef.current) {
-            clearTimeout(hideTimeoutRef.current);
-            hideTimeoutRef.current = null;
-        }
-    };
-
-    const handleMouseMove = () => {
-        if (!isPlaying) {
-            setShowPlayButton(true);
-            clearHideTimer();
-            return;
-        }
-
-        setShowPlayButton(true);
-        clearHideTimer();
-
-        hideTimeoutRef.current = setTimeout(() => {
-            setShowPlayButton(false);
-        }, 2000);
-    };
-
-    const handleMouseLeave = () => {
-        if (!isPlaying) {
-            setShowPlayButton(true);
-            clearHideTimer();
-            return;
-        }
-
-        clearHideTimer();
-        setShowPlayButton(false);
-    };
-
-    const handleAutoPlayStart = () => {
-        // 재생 상태 업데이트
-        setIsPlaying(true);
-        
-        // 아이콘 먼저 보였다가 (재생중이니)
-        setShowPlayButton(true);
-
-        // 1초뒤 자동으로 사라지도록
-        setTimeout(() => {
-            setShowPlayButton(false);
-        }, 2000);
     };
 
     const resetVideoState = () => {
@@ -205,7 +183,7 @@ export default function VideoPlayModal({
         if (!wrapper) return;
 
         if (!document.fullscreenElement) {
-            await wrapperRef.current?.requestFullscreen();   // ✅ div 전체를 전체화면
+            await wrapperRef.current?.requestFullscreen();   // div 전체를 전체화면
             setIsFullscreen(true);
         } else {
             await document.exitFullscreen();
@@ -221,32 +199,52 @@ export default function VideoPlayModal({
         return () => document.removeEventListener("fullscreenchange", onFSChange);
     }, []);
 
-    // 컨트롤바 자동 숨김 (유튜브 방식)
-    useEffect(() => {
-        // 전체화면이 아니면 항상 보임
-        if (!isFullscreen) {
-            setShowControls(true);
-            return;
+    const clearHideTimer = () => {
+        if (hideControlsTimerRef.current) {
+            clearTimeout(hideControlsTimerRef.current);
+            hideControlsTimerRef.current = null;
         }
+    };
 
-        // ⭐ 정지 상태면 항상 보임
+    const startHideTimer = () => {
+        clearHideTimer();
+        hideControlsTimerRef.current = setTimeout(() => {
+            setShowPlayButton(false);
+            setShowControls(false);
+        }, 2000);
+    };
+
+    // 마우스 움직임
+    const handleMouseMove = () => {
+        // 정지 상태면 → 항상 보임 & 타이머 없음
         if (!isPlaying) {
+            setShowPlayButton(true);
             setShowControls(true);
+            clearHideTimer();
             return;
         }
 
-        let timeout: NodeJS.Timeout;
+        // 재생 중 → 다시 표시 + 타이머 리셋
+        setShowPlayButton(true);
+        setShowControls(true);
+        startHideTimer();
+    };
 
-        const handleMove = () => {
+    // 마우스가 나갈 때
+    const handleMouseLeave = () => {
+        // 정지 상태면 → 그대로 표시
+        if (!isPlaying) {
+            setShowPlayButton(true);
             setShowControls(true);
+            clearHideTimer();
+            return;
+        }
 
-            clearTimeout(timeout);
-            timeout = setTimeout(() => setShowControls(false), 2000);
-        };
-
-        window.addEventListener("mousemove", handleMove);
-        return () => window.removeEventListener("mousemove", handleMove);
-    }, [isFullscreen, isPlaying]);
+        // 재생 중이면 → 즉시 숨김
+        clearHideTimer();
+        setShowPlayButton(false);
+        setShowControls(false);
+    };
 
     useEffect(() => {
         if (!progressBarRef.current) return;
@@ -261,6 +259,18 @@ export default function VideoPlayModal({
             )
         `;
     }, [progressPercent]);
+
+    const handleAutoPlayStart = () => {
+        // 재생 상태 업데이트
+        setIsPlaying(true);
+
+        // 아이콘 먼저 보이기
+        setShowPlayButton(true);
+        setShowControls(true);
+
+        // 기존 타이머 제거 후 새로운 타이머 시작
+        startHideTimer();
+    };
 
     // ---------------------------
     // Close Modal
@@ -316,6 +326,7 @@ export default function VideoPlayModal({
 
             <div className={styles.playerWrapper} ref={wrapperRef}>
                 <div className={styles.videoViewBox}
+                    onClick={handlePlayPause}
                   onMouseMove={handleMouseMove}
                     onMouseLeave={handleMouseLeave}
                     >
@@ -329,7 +340,7 @@ export default function VideoPlayModal({
                             onPlay={handleAutoPlayStart}  />
                     {/* ▶ / ❚❚ 아이콘 */}
                     {showPlayButton && (
-                        <div className={styles.videoViewIcon} onClick={handlePlayPause}>
+                        <div className={styles.videoViewIcon}>
                             <img
                                 src={isPlaying ? "/icon/pause.png" : "/icon/play-btn.png"}
                                 alt={isPlaying ? "Pause" : "Play"}

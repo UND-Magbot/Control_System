@@ -357,6 +357,13 @@ const batteryPercentage =
     panStartRef.current = null;
   };
 
+  const handleSwapView = () => {
+    setIsSwapped(prev => !prev);
+    setScale(1);
+    setTranslate({ x: 0, y: 0 });
+    setIsPanning(false);
+  };
+
   useEffect(() => {
     setTranslate(prev => clampTranslate(prev.x, prev.y));
   }, [scale]);
@@ -675,7 +682,10 @@ const batteryPercentage =
                   />
                 </div>
 
-                <div className={`${styles.viewExchangeBtn} ${ isMainMap ? styles.mapViewExchangeBtn : styles.camViewExchangeBtn }`.trim()} onClick={() => setIsSwapped(prev => !prev)}>
+                <div className={`${styles.viewExchangeBtn} ${ isMainMap ? styles.mapViewExchangeBtn : styles.camViewExchangeBtn }`.trim()} 
+                onClick={() => {
+                  handleSwapView();
+                }}>
                   <img src={ isMainMap ? "/icon/view-change.png" : "/icon/view-change-d.png" } alt="swap" />
                 </div>
 
