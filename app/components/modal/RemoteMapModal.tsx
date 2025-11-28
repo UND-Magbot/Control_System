@@ -275,12 +275,7 @@ const batteryPercentage =
       if (idx !== -1) setRobotActiveIndex(idx);
     }
   }, [selectedRobots, robots]);
-
-  // 작업 시작
-  const handleWorkStart = () => {
-    console.log("작업 시작");
-  }
-
+  
   // ---------------------------
   // Drag & Zoom Control
   // ---------------------------
@@ -403,6 +398,8 @@ const batteryPercentage =
   const slowHandle = () => fetch("http://localhost:8000/robot/slow", { method: "POST" });
   const normalHandle = () => fetch("http://localhost:8000/robot/normal", { method: "POST" });
   const fastHandle = () => fetch("http://localhost:8000/robot/fast", { method: "POST" });
+  const handleWorkStart = () => fetch("http://localhost:8000/nav/startmove", {method: "POST"});
+  const handlesavePoint = () => fetch("http://localhost:8000/nav/savepoint", {method: "POST"});
 
 
   /* --- camera tab --- */
@@ -431,6 +428,7 @@ const batteryPercentage =
             <span>Remote Control (Real-time Camera & Location Map)</span>
           </div>
           <div>
+            <button type='button' className={styles.workStart} onClick={handlesavePoint}>위치 저장</button>
             <button type='button' className={styles.workStart} onClick={handleWorkStart}>작업 시작</button>
             <button type='button' className={styles.closeBtn} onClick={handleClose}>✕</button>
           </div>
