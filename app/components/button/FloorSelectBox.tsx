@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
 import styles from './Button.module.css';
-import type { Floor } from "@/app/type";
+import type { Floor, Camera } from "@/app/type";
 
 
 type FloorSelectBoxProps = {
@@ -11,6 +11,7 @@ type FloorSelectBoxProps = {
   activeIndex: number;
   selectedFloor: Floor | null;
   onSelect: (index: number, floors: Floor) => void;
+  selectedCam: Camera | null;
   className?: string;
 };
 
@@ -19,6 +20,7 @@ export default function FloorSelectBox({
   activeIndex,
   selectedFloor,
   onSelect,
+  selectedCam,
   className
 }: FloorSelectBoxProps) {
 

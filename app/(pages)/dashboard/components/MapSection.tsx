@@ -13,7 +13,7 @@ type FloorSelectBoxProps = {
   robots: RobotRowData[];
   video: Video[];
   cameras: Camera[];
-  selectedCam: Camera | null;
+  selectedCam?: Camera | null;
 };
 
 
@@ -23,7 +23,8 @@ export default function MapSection({ floors, robots, video, cameras, selectedCam
     const [floorActiveIndex, setFloorActiveIndex] = useState<number>(2);
     const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
     const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
-
+    
+    if (!selectedCam) return 0;
     
     const handleFloorSelect = (idx: number, floors: Floor) => {
       setFloorActiveIndex(idx);
@@ -38,18 +39,18 @@ export default function MapSection({ floors, robots, video, cameras, selectedCam
     // --- [2] FastAPI에서 로봇 좌표 실시간 가져오기 ---
       const [robotPos, setRobotPos] = useState({ x: 0, y: 0, yaw: 0 });
     
-      // useEffect(() => {
-      //   const fetchRobotPos = () => {
-      //     fetch("http://localhost:8000/robot/position")
-      //       .then(res => res.json())
-      //       .then(data => setRobotPos(data))
-      //       .catch(() => {});
-      //   };
+      useEffect(() => {
+        const fetchRobotPos = () => {
+          fetch("http://localhost:8000/robot/position")
+            .then(res => res.json())
+            .then(data => setRobotPos(data))
+            .catch(() => {});
+        };
     
-      //   fetchRobotPos();
-      //   const interval = setInterval(fetchRobotPos, 1000);
-      //   return () => clearInterval(interval);
-      // }, []);
+        fetchRobotPos();
+        const interval = setInterval(fetchRobotPos, 1000);
+        return () => clearInterval(interval);
+      }, []);
     
     
     
@@ -307,7 +308,7 @@ export default function MapSection({ floors, robots, video, cameras, selectedCam
       </div>
 
       <div className={styles["bottom-div"]}>
-        <FloorSelectBox floors={floors} activeIndex={floorActiveIndex} selectedFloor={selectedFloor} onSelect={handleFloorSelect} className={styles.customSelectBox} />
+        <FloorSelectBox floors={floors} activeIndex={floorActiveIndex} selectedFloor={selectedFloor} onSelect={handleFloorSelect} className={styles.customSelectBox} selectedCam={selectedCam} />
         <RobotPathBtn
           selectedRobots={selectedRobot}
           robots={robots}
