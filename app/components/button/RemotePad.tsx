@@ -10,8 +10,8 @@ type ClassType = {
   };
 
 export default function RemotePad({
-    className,
-    primaryView
+   primaryView,
+   className
 }: ClassType
 ){
     const isMap = primaryView === "map"; 
@@ -85,44 +85,46 @@ export default function RemotePad({
     return (
         <div className={`${styles.remotePad}`}>
             <img className={styles.padImg} 
-                 src={isMap ? "/images/remote-control-pad-d.png" : "/images/remote_control_pad.png"}
-                 alt={isMap ? "control_pad_dark" : "control_pad"} />
+                 src={"/images/remote_control_pad.png"}
+                 alt={"control_pad"} />
+            
             <div className={styles.PadControlKey}>
                 <div className={styles.padIconGrid}>
                     <div className={styles.topIcon}>
                         <div></div>
-                        <div className={`${styles.upBtn} ${ isMap ? styles.mapUpBtn : ""}`.trim()} onClick={upHandle}>
-                            <img src={isMap ? "/icon/arrow-up-d.png" : "/icon/arrow_up.png"} alt="up" />
+                        <div className={styles.upBtn} onClick={upHandle}>
+                            <img src={"/icon/arrow_up.png"} alt="up" />
                             </div>
                         <div></div>
                     </div>
                     <div className={styles.middleIcon}>
-                        <div className={`${styles.leftBtn} ${ isMap ? styles.mapLeftBtn : ""}`.trim()} onClick={leftHandle}>
-                            <img src={isMap ? "/icon/arrow-left-d.png" : "/icon/arrow-left.png"} alt="left" />
+                        <div className={styles.leftBtn} onClick={leftHandle}>
+                            <img src={"/icon/arrow-left.png"} alt="left" />
                         </div>
-                        <div className={`${styles.stopBox} ${ isMap ? styles.mapStopBox : ""}`.trim()} onClick={stopHandle}>
-                            <div className={`${styles.stopInerBox} ${ isMap ? styles.mapStopInerBox : ""}`.trim()}>
+                        <div className={styles.stopBox} onClick={stopHandle}>
+                            <div className={styles.stopInerBox}>
                                 <img src="/icon/robot-stop.png" alt="stop" />
                                 <p className={styles.stopText}>Stop</p>
                             </div>
                         </div>
-                        <div className={`${styles.rightBtn} ${ isMap ? styles.mapRightBtn : ""}`.trim()} onClick={rightHandle}>
-                            <img src={isMap ? "/icon/arrow-right-d.png" : "/icon/arrow-right.png"} alt="right" />
+                        <div className={styles.rightBtn} onClick={rightHandle}>
+                            <img src={"/icon/arrow-right.png"} alt="right" />
                         </div>
                     </div>
                     <div className={styles.bottomIcon}>
                         <div></div>
-                        <div className={`${styles.bottomBtn} ${ isMap ? styles.mapBottomBtn : ""}`.trim()} onClick={downHandle}>
-                            <img src={isMap ? "/icon/arrow-down-d.png" : "/icon/arrow_down.png"} alt="down" />
+                        <div className={styles.bottomBtn} onClick={downHandle}>
+                            <img src={"/icon/arrow_down.png"} alt="down" />
                         </div>
                         <div></div>
                     </div>
                 </div>
-                <div className={`${styles.returnIcon} ${styles.leftre} ${ isMap ? styles.mapReturnIcon : ""}`.trim()} onClick={leftTurnHandle}>
-                    <img src={isMap ? "/icon/left-return-d.png" : "/icon/left-return.png"} alt="left return" />
+
+                <div className={`${styles.returnIcon} ${styles.leftre}`} onClick={leftTurnHandle}>
+                    <img src={"/icon/left-return.png"} alt="left return" />
                 </div>
-                <div className={`${styles.returnIcon} ${styles.rightre} ${ isMap ? styles.mapReturnIcon : ""}`.trim()} onClick={rightTurnHandle}>
-                    <img src={isMap ? "/icon/right-return-d.png" : "/icon/right-return.png"} alt="right return" />
+                <div className={`${styles.returnIcon} ${styles.rightre}`} onClick={rightTurnHandle}>
+                    <img src={"/icon/right-return.png"} alt="right return" />
                 </div>
             </div>
         </div>

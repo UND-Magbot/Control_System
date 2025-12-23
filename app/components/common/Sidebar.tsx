@@ -1,24 +1,33 @@
 "use client"
 
-import React from 'react';
 import styles from './common.module.css';
-import { useState } from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Sidebar() {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [retryKey, setRetryKey] = useState(0);
+    const router = useRouter();
 
     const menuItems = [
       { path: "/dashboard", icon: "main", label: "Home" },
       { path: "/robots", icon: "robot", label: "Robot" },
       { path: "/dataManagement", icon: "data", label: "Data" },
       { path: "/schedules", icon: "schedule", label: "Schedule" },
+      { path: "/alerts", icon: "alerts", label: "Alerts" }
     ];
-  
-    const bottomItems = [
-      { path: "/settings", icon: "setting", label: "Setting" },
-      { path: "#", icon: "log_out", label: "Log out" },
-    ];
+
+    const handleLogout = () => {
+        localStorage.clear();
+        router.replace("/login");
+    };
+
+    const handleImgError = () => {
+        setTimeout(() => {
+            setRetryKey(prev => prev + 1);
+        }, 1000); // 1초 뒤 재시도
+    };
 
 
     return(
@@ -35,7 +44,7 @@ export default function Sidebar() {
                             }}
                             onMouseEnter={() => setHoveredIndex(idx)} onMouseLeave={() => setHoveredIndex(null)}>
                         <div className={`${item.icon}-icon`}>
-                            <img src={ hoveredIndex === idx ? `/icon/${item.icon}_d.png` : `/icon/${item.icon}_w.png`} alt={item.label}/>
+                            <img src={ hoveredIndex === idx ? `/icon/${item.icon}_d.png` : `/icon/${item.icon}_w.png`} alt={item.label} key={retryKey} onError={handleImgError} />
                         </div>
                         {item.label}
                     </Link>
@@ -43,21 +52,25 @@ export default function Sidebar() {
             </div>
 
             <div>
-                {bottomItems.map((item, idx) => (
-                <Link key={idx} href={item.path}
+                <Link href="/settings"
                         onClick={(e) => {
-                            if (window.location.pathname === item.path) {
+                            if (window.location.pathname === "/settings") {
                             e.preventDefault();
                             window.location.reload();
                             }
                         }}
-                        className={styles.menuItems} onMouseEnter={() => setHoveredIndex(idx + 100)} onMouseLeave={() => setHoveredIndex(null)}>
-                    <div className={`${item.icon}-icon`}>
-                        <img src={ hoveredIndex === idx + 100 ? `/icon/${item.icon}_d.png` : `/icon/${item.icon}_w.png`} alt={item.label}/>
+                        className={styles.menuItems} onMouseEnter={() => setHoveredIndex(100)} onMouseLeave={() => setHoveredIndex(null)}>
+                    <div className={`setting-icon`}>
+                        <img src={ hoveredIndex === 100 ? `/icon/setting_d.png` : `/icon/setting_w.png`} alt="setting" key={retryKey} onError={handleImgError} />
                     </div>
-                    {item.label}
+                    setting
                 </Link>
-                ))}
+                <div className={styles.menuItems} onClick={handleLogout} onMouseEnter={() => setHoveredIndex(101)} onMouseLeave={() => setHoveredIndex(null)}>
+                    <div className={`log_out-icon`}>
+                        <img src={ hoveredIndex === 101 ? `/icon/log_out_d.png` : `/icon/log_out_w.png`} alt="log_out" key={retryKey} onError={handleImgError} />
+                    </div>
+                    Log out
+                </div>
             </div>
         </aside>
     )

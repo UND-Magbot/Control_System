@@ -2,10 +2,8 @@
 
 import styles from './Modal.module.css';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import type { RobotRowData, Video, Camera } from '@/app/type';
+import type { RobotRowData, Video, Camera, PrimaryViewType } from '@/app/type';
 import { VideoStatus, RemotePad, ModalRobotSelect } from '@/app/components/button';
-
-type PrimaryViewType = 'camera' | 'map';
 
 type RobotViewModalProps = {
   isOpen: boolean;
@@ -14,48 +12,12 @@ type RobotViewModalProps = {
   robots: RobotRowData[];
   video: Video[];
   camera: Camera[];
+  initialCam?: Camera | null;
+  initialCamIndex?: number;
   primaryView: PrimaryViewType;
 };
 
-export default function RemoteModal({
-  isOpen,
-  onClose,
-  selectedRobots,
-  robots,
-  video,
-  camera,
-  primaryView
-}: RobotViewModalProps) {
-
-  const [activeCam, setActiveCam] = useState<number>(1);
-  const [cameraStream, setCameraStream] = useState("http://localhost:8000/Video/1");
-
-  const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
-  const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
-
-  const [isSwapped, setIsSwapped] = useState(false);
-  const [cameraTabActiveIndex, setCameraTabActiveIndex] = useState<number>(0);
-
-  const [scale, setScale] = useState(1);
-  const [translate, setTranslate] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-
-  const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<HTMLImageElement | null>(null);
-  const innerRef = useRef<HTMLDivElement | null>(null);
-  const mapImage = "/map/occ_grid.png";
-
-  // swap 전환 시 mainView 타입에 다르게 적용하기 위해 분기 처리
-  const mainView: "camera" | "map" = isSwapped ? (primaryView === "camera" ? "map" : "camera") : primaryView;
-  const pipView: "camera" | "map" = mainView === "camera" ? "map" : "camera";
-
-  const isMainMap = mainView === "map";
-  const isMainCamera = mainView === "camera";
-
-  const defaultRobotName = selectedRobot?.no || "Robot 1";
-
-  type BatteryStatus = {
+type BatteryStatus = {
   VoltageLeft?: number;
   VoltageRight?: number;
   BatteryLevelLeft?: number;
@@ -72,60 +34,130 @@ type RobotStatus = {
   battery: BatteryStatus;
 };
 
+/* --- map.yaml load --- */
+type MapInfo = {
+  resolution: number;
+  origin: number[];
+  width: number;
+  height: number;
+};
+
+export default function RemoteModal({
+  isOpen,
+  onClose,
+  selectedRobots,
+  robots,
+  video,
+  camera,
+  initialCam,
+  initialCamIndex,
+  primaryView,
+}: RobotViewModalProps) {
+
+  const [retryKey, setRetryKey] = useState(0);
+  
+  // 선택된 로봇
+  const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
+  const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
+  const defaultRobotName = selectedRobot?.no || "Robot 1";
+
+  
+  // 활성 카메라
+  const [activeCam, setActiveCam] = useState<number>(1);
+  const [cameraTabActiveIndex, setCameraTabActiveIndex] = useState<number>(0);
+
+  const [isCamOpen, setIsCamOpen] = useState(false);
+  const camWrapperRef = useRef<HTMLDivElement>(null);
+  const [selectedCam, setSelectedCam] = useState<number | null>(null);
+  const [cameraStream, setCameraStream] = useState("http://localhost:8000/Video/1");
+
+  //"open 시 1회 초기화” + “모달 내 변경은 유지” 적용
+  const didInitOnOpenRef = useRef(false);
+  const userTouchedCamRef = useRef(false);
+
+  //fresh
+  const [flashFront, setFlashFront] = useState<"on" | "off">("off");
+  const [flashRear, setFlashRear] = useState<"on" | "off">("off");
+
+  
+  // camera/map swap 상태
+  const [isSwapped, setIsSwapped] = useState(false);
+
+  
+  // swap 전환 시 mainView 타입에 다르게 적용
+  const mainView: "camera" | "map" = isSwapped ? (primaryView === "camera" ? "map" : "camera") : primaryView;
+  const pipView: "camera" | "map" = mainView === "camera" ? "map" : "camera";
+  const isMainMap = mainView === "map";
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<HTMLImageElement | null>(null);
+  // const mapImage = "/map/occ_grid.png";
+  const mapImage = "/map/map_test_3_240x240.png";
+
+
+  // map.yaml 정보
+  const [mapInfo, setMapInfo] = useState<MapInfo | null>(null);
+
+
+  // zoom & pan 상태
+  const [scale, setScale] = useState(1);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+
+  const handleImgError = () => {
+    setTimeout(() => {
+      setRetryKey(prev => prev + 1);
+    }, 1000); // 1초 뒤 재시도
+  };
+
+   
   /* --- FastAPI robot position --- */
   const [robotPos, setRobotPos] = useState({ x: 0, y: 0, yaw: 0 });
   const [robotStatus, setRobotStatus] = useState<RobotStatus>({
     battery: {}
   });
 
-  useEffect(() => {
-    const fetchRobotPos = () => {
-      fetch("http://localhost:8000/robot/position")
-        .then(res => res.json())
-        .then(data => setRobotPos(data))
-        .catch(() => {});
-    };
+  // 로봇 위치 주기적 갱신
+  // useEffect(() => {
+  //   const fetchRobotPos = () => {
+  //     fetch("http://localhost:8000/robot/position")
+  //       .then(res => res.json())
+  //       .then(data => setRobotPos(data))
+  //       .catch(() => {});
+  //   };
 
-    fetchRobotPos();
-    const interval = setInterval(fetchRobotPos, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  //   fetchRobotPos();
+  //   const interval = setInterval(fetchRobotPos, 1000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
-  /* --- map.yaml load --- */
-  type MapInfo = {
-    resolution: number;
-    origin: number[];
-    width: number;
-    height: number;
-  };
+  // map.yaml 파일 로드
+  // useEffect(() => {
+  //   fetch("/map/occ_grid.yaml")
+  //     .then(res => res.text())
+  //     .then(text => {
+  //       const obj: Record<string, string> = {};
+  //       text.split("\n").forEach(line => {
+  //         const [key, value] = line.split(":");
+  //         if (!key || !value) return;
+  //         obj[key.trim()] = value.trim();
+  //       });
 
-  const [mapInfo, setMapInfo] = useState<MapInfo | null>(null);
+  //       const origin = obj["origin"]
+  //         .replace("[", "")
+  //         .replace("]", "")
+  //         .split(",")
+  //         .map(Number);
 
-  useEffect(() => {
-    fetch("/map/occ_grid.yaml")
-      .then(res => res.text())
-      .then(text => {
-        const obj: Record<string, string> = {};
-        text.split("\n").forEach(line => {
-          const [key, value] = line.split(":");
-          if (!key || !value) return;
-          obj[key.trim()] = value.trim();
-        });
-
-        const origin = obj["origin"]
-          .replace("[", "")
-          .replace("]", "")
-          .split(",")
-          .map(Number);
-
-        setMapInfo({
-          resolution: parseFloat(obj["resolution"]),
-          origin,
-          width: parseInt(obj["width"]),
-          height: parseInt(obj["height"])
-        });
-      });
-  }, []);
+  //       setMapInfo({
+  //         resolution: parseFloat(obj["resolution"]),
+  //         origin,
+  //         width: parseInt(obj["width"]),
+  //         height: parseInt(obj["height"])
+  //       });
+  //     });
+  // }, []);
 
 
   /* --- map render size --- */
@@ -147,7 +179,7 @@ type RobotStatus = {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // ⭐ PIP → Main 전환 시 mapSize 재계산 (중요)
+  // PIP → Main 전환 시 mapSize 재계산
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -160,7 +192,6 @@ type RobotStatus = {
 
     return () => clearTimeout(timer);
   }, [isOpen, isSwapped, primaryView]);
-
 
   /* --- world → pixel --- */
   const mapResolution = 0.1;
@@ -251,17 +282,34 @@ type RobotStatus = {
 }, [isOpen]);
 
 useEffect(() => {
-  const fetchStatus = () => {
-    fetch("http://localhost:8000/robot/status")
-      .then(res => res.json())
-      .then(data => setRobotStatus(data))
-      .catch(() => {});
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (
+      camWrapperRef.current &&
+      !camWrapperRef.current.contains(e.target as Node)
+    ) {
+      setIsCamOpen(false); // 외부 클릭 → 닫기
+    }
   };
 
-  fetchStatus();
-  const timer = setInterval(fetchStatus, 1000);
-  return () => clearInterval(timer);
+  document.addEventListener("mousedown", handleOutsideClick);
+
+  return () => {
+    document.removeEventListener("mousedown", handleOutsideClick);
+  };
 }, []);
+
+// useEffect(() => {
+//   const fetchStatus = () => {
+//     fetch("http://localhost:8000/robot/status")
+//       .then(res => res.json())
+//       .then(data => setRobotStatus(data))
+//       .catch(() => {});
+//   };
+
+//   fetchStatus();
+//   const timer = setInterval(fetchStatus, 1000);
+//   return () => clearInterval(timer);
+// }, []);
   
 const batteryPercentage =
   robotStatus.battery?.BatteryLevelRight ??
@@ -282,8 +330,6 @@ const batteryPercentage =
 
   // camera/map zoom in/out 기능 분기 처리
   const cameraImgRef = useRef<HTMLImageElement | null>(null);
-  const mapImgRef = useRef<HTMLImageElement | null>(null);
-
   const getActiveImg = () => (isMainMap ? innerRef.current : cameraImgRef.current);
 
   const clampTranslate = (nx: number, ny: number) => {
@@ -401,15 +447,114 @@ const batteryPercentage =
   const handleWorkStart = () => fetch("http://localhost:8000/nav/startmove", {method: "POST"});
   const handlesavePoint = () => fetch("http://localhost:8000/nav/savepoint", {method: "POST"});
 
+// fresh
+type FlashTarget = "front" | "rear";
+type FlashValue = "on" | "off";
+
+const sendFlashCommand = async (target: FlashTarget, value: FlashValue) => {
+  // try {
+  //   const res = await fetch(`http://localhost:8000/robot/flash/${target}`, {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({ value }),
+  //   });
+
+  //   if (!res.ok) {
+  //     throw new Error(`Flash ${target} ${value} failed`);
+  //   }
+
+  //   console.log(`FLASH ${target.toUpperCase()} → ${value.toUpperCase()}`);
+  // } catch (err) {
+  //   console.error(err);
+  // }
+};
+
+const handleFlashFront = (value: FlashValue) => {
+  if (flashFront === value) return; // 동일 값 클릭 방지
+
+  setFlashFront(value);
+  sendFlashCommand("front", value);
+};
+
+const handleFlashRear = (value: FlashValue) => {
+  if (flashRear === value) return;
+
+  setFlashRear(value);
+  sendFlashCommand("rear", value);
+};
+
+
+const selectedCamLabel = useMemo(() => {
+  const found = camera.find((c) => c.id === (selectedCam ?? activeCam));
+  return found?.label ?? "Cam 1";
+}, [camera, selectedCam, activeCam]);
+
 
   /* --- camera tab --- */
-  const handleCameraTab = (idx: number, camId: number) => {
-    setCameraTabActiveIndex(idx);
-    setActiveCam(camId);
+  // const handleCameraTab = (idx: number, camId: number) => {
+  //   setSelectedCam(camId);
+  //   setCameraTabActiveIndex(idx);
 
-    const newUrl = `http://localhost:8000/Video/${camId}`;
-    setCameraStream(newUrl);
-  };
+  //   const newUrl = `http://localhost:8000/Video/${camId}`;
+  //   setCameraStream(newUrl);
+  //   setIsCamOpen(false);
+  // };
+
+  /* --- camera tab --- */
+const handleCameraTab = (idx: number, cam: Camera) => {
+  setSelectedCam(cam.id);
+  setActiveCam(cam.id);
+  setCameraTabActiveIndex(idx);
+
+  // API 스트림 URL 사용 (type.ts 기준 Camera.webrtcUrl 존재)
+  // 만약 백엔드가 /Video/{id} 규칙이면 아래 fallback 방식으로도 OK
+  const nextUrl = cam.webrtcUrl || `http://localhost:8000/Video/${cam.id}`;
+  setCameraStream(nextUrl);
+
+  setIsCamOpen(false);
+};
+
+useEffect(() => {
+  if (!isOpen) {
+    didInitOnOpenRef.current = false;
+    userTouchedCamRef.current = false;
+  }
+}, [isOpen]);
+
+useEffect(() => {
+  if (!isOpen) return;
+
+  // ✅ 이미 open 이후 초기화가 끝났고, 사용자가 모달에서 CAM을 바꿨다면 덮어쓰지 않음
+  if (didInitOnOpenRef.current && userTouchedCamRef.current) return;
+
+  // ✅ open 시 1회만 초기화
+  if (didInitOnOpenRef.current) return;
+  didInitOnOpenRef.current = true;
+
+  // 우선순위: initialCam → activeCam → camera[0]
+  const baseCam =
+    initialCam ??
+    camera.find((c) => c.id === activeCam) ??
+    camera[0];
+
+  if (!baseCam) return;
+
+  const nextIdx =
+    typeof initialCamIndex === "number"
+      ? initialCamIndex
+      : Math.max(0, camera.findIndex((c) => c.id === baseCam.id));
+
+  setSelectedCam(baseCam.id);
+  setActiveCam(baseCam.id);
+  setCameraTabActiveIndex(nextIdx);
+
+  const nextUrl = baseCam.webrtcUrl || `http://localhost:8000/Video/${baseCam.id}`;
+  setCameraStream(nextUrl);
+  setIsCamOpen(false);
+}, [isOpen, initialCam?.id, initialCamIndex, camera, activeCam]);
+
 
   // ---------------------------
   // UI
@@ -419,13 +564,13 @@ const batteryPercentage =
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.remonteModalContent} onClick={(e) => e.stopPropagation()}>
 
         {/* TOP */}
         <div className={styles.modalTopDiv}>
           <div className={styles.modalTitle}>
-            <img src="/icon/robot_control_w.png" alt="robot_control" />
-            <span>Remote Control (Real-time Camera & Location Map)</span>
+            <img src="/icon/robot_control_w.png" alt="robot_control" key={retryKey} onError={handleImgError} />
+            <div>원격 제어 <span>(실시간 카메라 및 위치 맵)</span></div>
           </div>
           <div>
             <button type='button' className={styles.workStart} onClick={handlesavePoint}>위치 저장</button>
@@ -450,17 +595,64 @@ const batteryPercentage =
               primaryView={isMainMap ? "map" : "camera"}
             />
 
+          {/* camera selectBox */}
+          <div ref={camWrapperRef} className={styles.modalCamSeletWrapper}>
+            <div
+              className={styles.modalCamSelect}
+              onClick={() => setIsCamOpen((p) => !p)}
+            >
+              <span>{selectedCamLabel}</span>
+              {isCamOpen ? (
+                <img src="/icon/arrow_up.png" alt="arrow up" />
+              ) : (
+                <img src="/icon/arrow_down.png" alt="arrow down" />
+              )}
+            </div>
+
+            {isCamOpen && (
+              <div className={styles.modalCamSeletbox}>
+                {camera.map((cam, idx) => (
+                  <div
+                    key={cam.id}
+                    className={`${styles.camLabel} ${cameraTabActiveIndex === idx ? styles.active : ""}`.trim()}
+                    onClick={() => handleCameraTab(idx, cam)}
+                  >
+                    {cam.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+                          {/* <div className={`${styles.viewBtn} ${styles.mt50}`}>
+                <div className={`${styles.mb10} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>CAMERA</div>
+
+                <div className={`${styles.camBtn} ${styles.mb20} ${ isMainMap ? styles.mapCamBtn : styles.camBtn }`.trim()}>
+                  {camera.map((cam, idx) => (
+                    <div
+                      key={cam.id}
+                      className={`${styles.camItem} ${cameraTabActiveIndex === idx ? styles.active : ""}`}
+                      onClick={() => handleCameraTab(idx, cam.id)}
+                    >
+                      {cam.label}
+                    </div>
+                  ))}
+                </div>
+
+                
+                </div> */}
+
             <div className={styles.topRightPostion}>
               <div className={styles.topRightIcon}>
                 <VideoStatus className={styles.videoStatusCustom} video={video} primaryView={isMainMap ? "map" : "camera"} />
 
-                <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
-                  <img src={ isMainMap ? "/icon/online_d.png" : "/icon/online_w.png"} alt="net" />
+                <div className={styles.robotStatus}>
+                  <img src={"/icon/online_w.png"} alt="net" key={retryKey} onError={handleImgError} />
                   <div>Online</div>
                 </div>
 
-                <div className={` ${styles.robotStatus} ${ isMainMap ? styles.mapRobotStatus : "" }`.trim()}>
-                  <img src={ isMainMap ? "/icon/battery_full_d.png" : "/icon/battery_full_w.png"} alt="battery" />
+                <div className={styles.robotStatus}>
+                  <img src={"/icon/battery_full_w.png"} alt="battery" key={retryKey} onError={handleImgError} />
                   <div>{batteryPercentage}%</div>
                 </div>
               </div>
@@ -475,6 +667,7 @@ const batteryPercentage =
                 width: "100%",
                 height: "100%",
                 position: "relative",
+                background: mainView === "map" ? "rgb(128, 128, 128)" : "transparent",
                 overflow: "hidden",
                 userSelect: "none",
                 touchAction: "none",
@@ -527,7 +720,7 @@ const batteryPercentage =
                     style={{
                       width: "100%",
                       height: "100%",
-                      objectFit: "cover",
+                      objectFit: "contain",
                       position: "absolute",
                       top: 0,
                       left: 0,
@@ -556,20 +749,15 @@ const batteryPercentage =
 
             </div>
           </div>
-
-          {/* Floors */}
-          <div className={styles.middlePosition}>
-            <div className={`${styles.floorFlex} ${ isMainMap ? styles.mapFloorLine : styles.floorLine }`.trim()}>
-              <div className={styles.active}>1F</div>
-              <div>2F</div>
-              <div>3F</div>
-              <div>4F</div>
-              <div>5F</div>
-              <div>6F</div>
-              <div>7F</div>
-              <div>8F</div>
+          <div className={styles.zoomBtnBox}>
+            <div className={styles.zoomBtn} onClick={() => setScale(s => Math.min(s + 0.2, 3))}>
+              <img src={`/icon/zoom_in_w.png`} />
+            </div>
+            <div className={styles.zoomBtn} onClick={() => setScale(s => Math.max(s - 0.2, 0.5))}>
+              <img src={`/icon/zoom_out_w.png`} />
             </div>
           </div>
+        </div>
 
           {/* Bottom Control */}
           <div className={styles.bottomPosition}>
@@ -577,55 +765,69 @@ const batteryPercentage =
 
               <RemotePad primaryView={isMainMap ? "map" : "camera"}/>
 
-              {/* MODE */}
-              <div className={`${styles.modeBox} ${styles.mt50}`}>
-                <div className={`${styles.mb10} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>MODE</div>
-
-                <div className={`${styles.standSitBtn} ${styles.mb20} ${ isMainMap ? styles.mapStandSitBtn : styles.standSitBtn }`.trim()}>
-                  <div onClick={standHandle}>Stand</div>
-                  <div onClick={sitHandle}>Sit</div>
-                </div>
-
-                <div className={`${styles.speedBtn} ${ isMainMap ? styles.mapSpeedBtn : styles.speedBtn }`.trim()}>
-                  <div onClick={slowHandle}>Slow</div>
-                  <div onClick={normalHandle}>Normal</div>
-                  <div onClick={fastHandle}>Fast</div>
-                </div>
-              </div>
-
-              {/* POWER */}
-              <div className={`${styles.powerBtn} ${styles.mt50}`}>
-                <div className={`${styles.mb10} ${styles.textCenter} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>POWER</div>
-                <div className={`${styles.powerImg} ${ isMainMap ? styles.mapPowerImg : styles.powerImg }`.trim()}>
-                  <img src="/icon/power-w.png" alt="power" />
-                </div>
-              </div>
-
-              {/* CAMERA TABS */}
-              <div className={`${styles.viewBtn} ${styles.mt50}`}>
-                <div className={`${styles.mb10} ${ isMainMap ? styles.mapCategoryTitle : styles.categoryTitle }`.trim()}>CAMERA</div>
-
-                <div className={`${styles.camBtn} ${styles.mb20} ${ isMainMap ? styles.mapCamBtn : styles.camBtn }`.trim()}>
-                  {camera.map((cam, idx) => (
-                    <div
-                      key={cam.id}
-                      className={`${styles.camItem} ${cameraTabActiveIndex === idx ? styles.active : ""}`}
-                      onClick={() => handleCameraTab(idx, cam.id)}
-                    >
-                      {cam.label}
+              <div className={styles.middleBtnTotal}>
+                <div className={styles.middleBtnTop}>
+                  <div className={styles.modeBtnCommonBox}>
+                    <div>MODE</div>
+                    <div className={styles.standSitBtn}>
+                      <div onClick={standHandle}>Stand</div>
+                      <div onClick={sitHandle}>Sit</div>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                {/* ZOOM */}
-                <div className={`${styles.zoomBtn} ${ isMainMap ? styles.mapZoomBtn : styles.zoomBtn }`.trim()}>
-                  <div onClick={() => setScale(s => Math.min(s + 0.2, 3))}>Zoom In</div>
-                  <div onClick={() => setScale(s => Math.max(s - 0.2, 1))}>Zoom Out</div>
+                  <div className={styles.modeBtnCommonBox}>
+                    <div>SPEED</div>
+                    <div className={styles.speedBtn}>
+                      <div onClick={slowHandle}>Slow</div>
+                      <div onClick={normalHandle}>Normal</div>
+                      <div onClick={fastHandle}>Fast</div>
+                    </div> 
+                  </div>
+                </div>
+                <div className={styles.middleBtnBottom}>
+                  <div className={styles.freshBtnTitle}>FLASH</div>
+                  <div className={styles.freshBtnFlex}>
+                    <div className={styles.freshBtnSubtitle}>Front</div>
+                    <div className={`${styles.freshBtn} ${styles.freshBtnFlex} ${styles.freshBtnFront}`}>
+                      <div
+                        className={`${styles.freshBtnMr8} ${styles.freshOn} ${flashFront === "on" ? styles.active : ""}`}
+                        onClick={() => handleFlashFront("on")}
+                      >
+                        On
+                      </div>
+                      <div
+                        className={`${styles.freshOff} ${flashFront === "off" ? styles.active : ""}`}
+                        onClick={() => handleFlashFront("off")}
+                      >
+                        Off
+                      </div>
+                    </div>
+                    <div className={styles.freshBtnSubtitle}>Rear</div>
+                    <div className={`${styles.freshBtn} ${styles.freshBtnFlex}`}>
+                      <div
+                        className={`${styles.freshBtnMr8} ${styles.freshOn} ${flashRear === "on" ? styles.active : ""}`}
+                        onClick={() => handleFlashRear("on")}
+                      >
+                        On
+                      </div>
+                      <div
+                        className={`${styles.freshOff} ${flashRear === "off" ? styles.active : ""}`}
+                        onClick={() => handleFlashRear("off")}
+                      >
+                        Off
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              
               {/* PIP VIEW */}
-              <div className={styles.viewBox} style={{ overflow: "hidden", position: "relative" }}>
+              <div className={styles.viewBox} style={{ 
+                overflow: "hidden",
+                position: "relative",
+                
+                }}>
                 <img
                   src={cameraStream}
                   style={{
@@ -645,6 +847,7 @@ const batteryPercentage =
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
+                    background: pipView === "map" ? "rgb(128, 128, 128)" : "transparent",
                     display: pipView === "map" ? "block" : "none",
                     position: "absolute",
                     top: 0,
@@ -657,7 +860,7 @@ const batteryPercentage =
                     style={{
                       width: "100%",
                       height: "100%",
-                      objectFit: "cover",
+                      objectFit: "contain",
                       position: "absolute",
                       top: 0,
                       left: 0
@@ -679,21 +882,19 @@ const batteryPercentage =
                     }}
                   />
                 </div>
+          
+                <div className={styles.Floors}>1F</div>
 
-                <div className={`${styles.viewExchangeBtn} ${ isMainMap ? styles.mapViewExchangeBtn : styles.camViewExchangeBtn }`.trim()} 
+                <div className={styles.viewExchangeBtn} 
                 onClick={() => {
                   handleSwapView();
                 }}>
-                  <img src={ isMainMap ? "/icon/view-change.png" : "/icon/view-change-d.png" } alt="swap" />
+                  <img src={"/icon/view-change.png"} alt="swap" key={retryKey} onError={handleImgError}/>
                 </div>
 
               </div>
-
             </div>
           </div>
-
-        </div>
-
       </div>
     </div>
   );

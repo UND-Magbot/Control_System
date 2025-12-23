@@ -6,8 +6,8 @@ import styles from './Button.module.css';
 
 type CameraSelectorProps = {
   cameras: Camera[];
-  activeIndex: number;                         // 현재 선택된 카메라 index (부모가 관리)
-  onSelect: (index: number, camId: Camera) => void; // 클릭 시 부모에 알려줄 콜백
+  activeIndex: number;
+  onSelect: (index: number, camId: Camera) => void;
 };
 
 export default function CameraSelector({
@@ -15,6 +15,7 @@ export default function CameraSelector({
   activeIndex,
   onSelect,
 }: CameraSelectorProps) {
+  
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (

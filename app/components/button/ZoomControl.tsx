@@ -1,10 +1,12 @@
 "use client";
 
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import styles from './Button.module.css'
+import { ZoomAction } from '@/app/utils/zoom';
 
-export default function ZoomControl({ onClick,}: { onClick: (action: string) => void; }) {
+export default function ZoomControl({ 
+  onClick
+}: { onClick: (action: ZoomAction) => void; }) {
     
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   
@@ -14,29 +16,21 @@ export default function ZoomControl({ onClick,}: { onClick: (action: string) => 
     ];
   
     return (
-      <div className={styles["map-button"]}>
+
+      <div className={styles.mapButton}>
         {optionItems.map((item, idx) => (
           <button
             type="button"
             key={idx}
-            className={styles["zoom-icon"]}
+            className={styles.zoomIcon}
             onMouseEnter={() => setHoveredIndex(idx)}
             onMouseLeave={() => setHoveredIndex(null)}
-            onClick={() => onClick(item.action)}  // ← 부모 함수 실행
+            onClick={() => onClick(item.action as ZoomAction)}
           >
-            <div className={`${item.icon}-icon`}>
-              <img
-                src={
-                  hoveredIndex === idx
-                    ? `/icon/${item.icon}_w.png`
-                    : `/icon/${item.icon}_d.png`
-                }
-                alt={item.label}
-              />
-            </div>
-            {item.label}
+            <img src={`/icon/${item.icon}_w.png`} />
           </button>
         ))}
       </div>
+
     );
-  }
+}

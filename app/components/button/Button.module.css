@@ -38,15 +38,16 @@
 }
 
 .viewBtn,
-.map-button {
+.mapButton {
   position: absolute;
   display: flex;
   bottom: 15px;
   right: 15px;
 }
 
-.map-button button {
-  font-weight: 500;
+.mapButton {
+  width: 59px;
+  justify-content: space-between;
 }
 
 .viewBtn .camerabtn {
@@ -79,23 +80,18 @@
   width: 20px;
 }
 
-.zoom-icon {
+.zoomIcon {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  margin-left: 10px; 
-  width: 110px;
-  height: 35px;
-  font-size: 14px;
-  background: rgba(247, 247, 247, 0.8);
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-}
+  justify-content: center;
 
-.zoom-icon:hover {
-  background: rgba(54, 63, 94, 0.8);
-  color: #fff;
+  width: 25px;
+  height: 25px;
+  
+  background-color: transparent;
+  border-radius: 50px;
+  border: 1px solid #F5F6F8;
+  cursor: pointer;
 }
 
 .remote-icon,
@@ -105,19 +101,14 @@
   margin-right: 8px;
 }
 
-.zoom-icon div {
-  width: auto;
-  height: 15px;
-  margin-right: 8px;
+.zoomIcon img {
+  height: 14px;
 }
 
-.zoom-icon img,
 .remote-icon img,
 .path-icon img {
   height: 100%;
 }
-
-
 
 .tab-buttons {
   display: flex;
@@ -166,52 +157,63 @@
 
 .selete {
   width: 100%;
+  height: 29px;
   background: #33384c; 
+  
+  padding: 0 19px;
+  border-radius: 4px;
   border: 1px solid #8a96ac;
-  padding:5px 14px;
-  border-radius: 5px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+  
   cursor: pointer;
   font-size: 13px;
-  height: 33px;
 }
 
 .selete img {
-  height: 40%;
+  width: 12px;
+  height: 8px;
 }
 
 .seletbox {
   width: 100%;
-  height: 200px;
-  padding: 14px;
+  max-height: 200px;
+  font-size: 13px;
+  
+  padding: 9px;
+  
   background: #202334;
   border-radius: 5px;
+  
   position: absolute;
   top: 45px;
+  
   cursor: pointer;
   z-index: 10;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
-.seletbox div,
-.modalSeletbox div {
+.seletbox .floorLabel,
+.seletbox .robotsLabel,
+.modalSeletbox .robotsItem {
   width: 100%;
-  height: 35px;
-  line-height: 35px;
+  height: 29px;
+  line-height: 29px;
   padding: 0 10px;
   color: #fff; 
 }
 
-.seletbox div:hover,
-.modalSeletbox div:hover {
+.seletbox .floorLabel:hover,
+.seletbox .robotsLabel:hover,
+.modalSeletbox .robotsItem:hover {
   background: #d2d3d7;
   border-radius: 4px;
   width: 100%;
-  height: 35px;
+  height: 29px;
+  line-height: 29px;
   padding: 0 10px;
-  line-height: 35px;
   color: #16192c;
 }
 
@@ -224,45 +226,54 @@
 
 .modalSeletWrapper {
   position: absolute;
-  width: 12%;
-  top: 20px;
-  left: 20px;
+  top: 17px;
+  left: 17px;
   z-index: 10;
 }
 
-.modalSelect {
-  width: 100%;
-  height: 40px;
-  padding: 14px;
+.modalRobotSelect {
+  width: 138px;
+  height: 29px;
+  padding: 0 10px 0 20px;
+
   border-radius: 5px;
-  cursor: pointer;
   border: 1px solid #fff;
+  font-size: 13px;
+  
+  cursor: pointer;
+  
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .mapSelect {
-  border: 1px solid #26273a;
-  color: #3c3c51;
+  border: 1px solid #ffffff;
+  color: #ffffff;
 }
 
-.modalSelect img {
-  height: 10px;
+.modalRobotSelect img {
+  width: 11px;
+  height: 6px;
 }
 
 .modalSeletbox {
-  width: 100%;
-  height: 200px;
-  padding: 8px;
+  width: 138px;
+  height: auto;
+  max-height: 200px;
+
+  font-size: 13px;
+
+  padding: 6px 8px;
   background: transparent;
   border: 1px solid #fff;
   border-radius: 5px;
+
   position: absolute;
-  top: 50px;
-  cursor: pointer;
+  top: 37px;
   z-index: 10;
-  overflow-y: auto;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 .mapSelectBox {
@@ -273,28 +284,15 @@
     color: #3c3c51;
 }
 
-.seletbox::-webkit-scrollbar,
-.modalSeletbox::-webkit-scrollbar {
-  width: 4px;
-}
-.seletbox::-webkit-scrollbar-thumb,
-.modalSeletbox::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
-}
-.seletbox::-webkit-scrollbar-track
-.modalSeletbox::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 
 .remote-div,
 .path-div {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 170px;
-  padding: 2px 15px;
+  width: 118px;
+  height: 29px;
+  padding: 0 17px;
   background-color: #454d72;
   border-radius: 5px;
   border: none;
@@ -310,7 +308,7 @@
 .remote-icon,
 .path-icon {
   width: auto;
-  height: 20px;
+  height: 16px;
   margin-right: 15px;
 }
 
@@ -326,7 +324,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50px;
-  font-weight: 600;
+  font-weight: 500;
   border: 1px solid #fff;
   background: transparent;
   color: #fff;
@@ -352,8 +350,8 @@
 .roundIcon {
   border-radius: 50px;
   background-color: #ffffff;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 .mapVideoStatusBtn .roundIcon {
@@ -366,11 +364,16 @@
 
 .remotePad {
   position: relative;
+  width: 196px;
+  height: 165px;
+
+  border-radius: 13px;
+  background: #333954;
 }
 
 .remotePad .padImg {
-  width: 250px;
-  height: 200px;
+  width: 196px;
+  height: 165px;
 }
 
 .PadControlKey {
@@ -397,8 +400,8 @@
 
 .topIcon div,
 .bottomIcon div {
-  width: 55px;
-  height: 55px;
+  width: 44px;
+  height: 41px;
   display: flex;
   justify-content: center;
   cursor: pointer;
@@ -407,16 +410,16 @@
 .middleIcon .leftBtn,
 .middleIcon .stopBox,
 .middleIcon .rightBtn {
-  width: 55px;
-  height: 55px;
+  width: 41px;
+  height: 44px;
   display: flex;
   align-items: center;
   cursor: pointer;
 }
 
 .returnIcon {
-  width: 38px;
-  height: 38px;
+  width: 29px;
+  height: 30px;
 }
 
 .stopBox,
@@ -433,8 +436,8 @@
 }
 
 .stopInerBox {
-  width: 46px;
-  height: 46px;
+  width: 35px;
+  height: 38px;
   background: #c85152;
   display: flex;
   align-items: center;
@@ -447,7 +450,7 @@
 .stopText {
   margin: 0;
   text-align: center;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .topIcon img,
@@ -457,7 +460,7 @@
 
 .middleIcon img,
 .returnIcon img {
-  height: 18px;
+  height: 16px;
 }
 
 
@@ -529,14 +532,14 @@
 
 .leftre {
   position: absolute;
-  bottom: 40px;
+  bottom: 30px;
   left: 25px;
   cursor: pointer;
 }
 
 .rightre {
   position: absolute;
-  bottom: 40px;
+  bottom: 30px;
   right: 25px;
   cursor: pointer;
 }
@@ -563,17 +566,21 @@
 /* 로봇관리 - 로봇 CRUD 버튼 */
 
 .robotCrudBox {
-  width: 230px;
-  height: 40px;
+  width: 128px;
+  height: 29px;
+  
   display: flex;
   justify-content: center;
-  padding: 3px 10px;
   align-items: center;
   gap: 5px;
+
+  padding: 8px 12px;
   background: #196189;
+  
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  
+  font-size: 12px;
   color: #e1fbfa;
 }
 
@@ -587,4 +594,44 @@
   border: none;
   color: #fff;
   font-size: 30px;
+}
+
+
+
+/* 실제 스크롤 영역: 네이티브 스크롤바는 숨김 */
+.inner {
+  max-height: inherit;
+  overflow-y: scroll;
+  padding-right: 3px; /* 오른쪽 커스텀 스크롤바 공간 */
+  padding-bottom: 10px;
+  box-sizing: border-box;
+
+  /* 스크롤바 숨김(네이티브) */
+  scrollbar-width: none; /* Firefox */
+}
+.inner::-webkit-scrollbar {
+  display: none; /* Chrome/Edge */
+}
+
+.scrollTrack {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  right: 3px;
+
+  width: 2px;
+  border-radius: 50px;
+  background:transparent;
+}
+
+/* 썸(움직이는 막대) */
+.scrollThumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 50%;            /* JS가 동적으로 조절 */
+  border-radius: 50px;
+  background: #EAEAED;     /* 요청 색상 */
 }

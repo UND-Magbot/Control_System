@@ -24,6 +24,7 @@ export default async function getRobots(): Promise<RobotRowData[]> {
     type: item.type,
     info: item.info,
     battery: item.battery,
+    return: item.return,
     isCharging: item.isCharging,
     network: item.network,
     power: item.power,

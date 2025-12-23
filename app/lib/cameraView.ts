@@ -15,8 +15,12 @@ export default async function getCameras(): Promise<Camera[]> {
   // const raw = await res.json();
   
   const raw = [
-    { id: 1, label: "CAM 1", webrtcUrl: "1" },
-    { id: 2, label: "CAM 2", webrtcUrl: "2" }
+    { id: 1, label: "CAM 1", type:"http", webrtcUrl: "http://localhost:8000/Video/1" },
+    { id: 2, label: "CAM 2", type:"http", webrtcUrl: "http://localhost:8000/Video/2" },
+    { id: 3, label: "CAM 3", type:"ws", webrtcUrl: "ws://192.168.0.154:8765" }
+    // ,
+    // { id: 4, label: "CAM 3", type:"ws", webrtcUrl: "ws://192.168.0.154:8765" },
+    // { id: 5, label: "CAM 3", type:"ws", webrtcUrl: "ws://192.168.0.154:8765" }
   ]
 
   const cameras: Camera[] = raw.map((item: any) => ({

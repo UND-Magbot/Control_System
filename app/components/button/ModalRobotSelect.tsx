@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import type { RobotRowData, PrimaryViewType } from '@/app/type';
 import styles from './Button.module.css';
+import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
 
 type ModalRobotSelectProps = {
   robots: RobotRowData[];
@@ -21,8 +22,13 @@ export default function RobotSelectBox({
   className,
   primaryView
 }: ModalRobotSelectProps) {
+
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
 
   const isMap = primaryView === "map"; 
 
@@ -43,30 +49,44 @@ export default function RobotSelectBox({
     };
   }, []);
 
+  useCustomScrollbar({
+    enabled: isOpen,
+    scrollRef,
+    trackRef,
+    thumbRef,
+    minThumbHeight: 50,
+    deps: [robots.length],
+  });
+
   return (
 
     <div ref={wrapperRef} className={`${styles.modalSeletWrapper} ${styles.className}`}>
-      <div className={`${styles.modalSelect} ${ isMap ? styles.mapSelect : "" }`.trim()} onClick={() => setIsOpen(!isOpen)}>
+      <div className={`${styles.modalRobotSelect} ${ isMap ? styles.mapSelect : "" }`.trim()} onClick={() => setIsOpen(!isOpen)}>
         
         <span>{selectedLabel}</span>
 
         {isOpen ? (
-          <img src={isMap ? "/icon/arrow-up-d.png" : "/icon/arrow_up.png"} alt="arrow up" />
+          <img src={"/icon/arrow_up.png"} alt="arrow up" />
         ) : (
-          <img src={isMap ? "/icon/arrow-down-d.png" : "/icon/arrow_down.png"} alt="arrow down" />
+          <img src={"/icon/arrow_down.png"} alt="arrow down" />
         )}
 
       </div>
       
       {isOpen && (
-        <div className={`${styles.modalSeletbox} ${ isMap ? styles.mapSelectBox : "" }`.trim()}>
-          {robots.map((item, idx) => (
-            <div key={item.id} className={`${ activeIndex === idx ? styles["active"] : "" }`.trim()}
-            onClick={() => { onSelect(idx, item); setIsOpen(false); }}>{item.no}</div>
-          ))}
+        <div className={styles.modalSeletbox}>
+          <div ref={scrollRef} className={styles.inner} role="listbox">
+            {robots.map((item, idx) => (
+              <div key={item.id} className={`${styles.robotsItem} ${ activeIndex === idx ? styles["active"] : "" }`.trim()}
+              onClick={() => { onSelect(idx, item); setIsOpen(false); }}>{item.no}</div>
+            ))}
+          </div>
+
+          <div ref={trackRef} className={styles.scrollTrack}>
+            <div ref={thumbRef} className={styles.scrollThumb} />
+          </div>
         </div>
       )}
-
     </div>
   );
 }

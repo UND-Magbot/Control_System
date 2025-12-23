@@ -1,7 +1,6 @@
 "use client";
 
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import styles from './Button.module.css';
 import type { RobotRowData, Video, Camera } from '@/app/type';
 import RemoteMapModal from "../modal/RemoteMapModal";
@@ -12,19 +11,23 @@ type RemoteBtnProps = {
   video: Video[]
   cameras: Camera[]
   className?: string;
+
+  selectedCam?: Camera | null;
+  selectedCamIndex?: number;
 }
 
-export default function RemoteBtn({selectedRobots, robots, video, cameras, className } : RemoteBtnProps) {
+export default function RemoteBtn({
+  selectedRobots,
+  robots,
+  video,
+  cameras,
+  className,
+
+  selectedCam,
+  selectedCamIndex,
+} : RemoteBtnProps) {
 
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
-
-  const openRemoteModal = () => {
-    if (!selectedRobots) {
-      alert("로봇을 먼저 선택하세요.");
-      return;
-    }
-    setRemoteModalOpen(true);
-  };
 
   return (
     <>
@@ -32,7 +35,7 @@ export default function RemoteBtn({selectedRobots, robots, video, cameras, class
           <div className={styles["remote-icon"]}>
               <img src="/icon/robot_control_w.png" alt="robot path" />
           </div>
-          <div>Remote Control</div>
+          <div>원격 제어</div>
       </button>
       <RemoteMapModal isOpen={remoteModalOpen} onClose={() => setRemoteModalOpen(false)} selectedRobots={selectedRobots} robots={robots} video={video} camera={cameras} primaryView="camera"/>
     </>

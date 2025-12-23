@@ -19,7 +19,7 @@ export default async function getFloor(): Promise<Floor[]> {
     { id: "2", label: "B1" },
     { id: "3", label: "1F" },
     { id: "4", label: "2F" },
-    { id: "5", label: "3F" },
+    { id: "5", label: "3F" }
   ];
   
 

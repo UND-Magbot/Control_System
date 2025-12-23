@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import styles from "./Calendar.module.css";
-import type { VideoItem, Period } from '@/app/type';
+import type { VideoItem, Period, ActiveField } from '@/app/type';
 
-type ActiveField = "start" | "end" | null;
 
 function formatDate(date: Date) {
   const y = date.getFullYear();
@@ -37,7 +36,7 @@ export default function VideoDateRange({
 
   const today = new Date();
 
-  // 초기값: 지난 1주 (oneWeekAgo ~ 오늘)
+  // 초기값: 당일
   const [startDate, setStartDate] = useState(formatDate(today));
   const [endDate, setEndDate] = useState(formatDate(today));
 
@@ -45,6 +44,7 @@ export default function VideoDateRange({
 
 
   const handleDateSelect = (selected: string) => {
+    
     // 우선, 이번 선택으로 바뀔 값들을 계산
     let nextStart = startDate;
     let nextEnd = endDate;
@@ -149,7 +149,7 @@ export default function VideoDateRange({
   };
 
   // 현재 start/end 범위가 1주/1달/1년 중 무엇인지 확인
-  function syncPeriodWithRange(
+  function syncPeriodWithRange (
     startStr: string,
     endStr: string,
     onChangePeriod: (period: Period | null) => void
@@ -180,14 +180,14 @@ export default function VideoDateRange({
     } else if (startStr === yearStartStr && endStr === todayStr) {
       nextPeriod = "1year";
     } else {
-      nextPeriod = null;   // 🔥 1주/1달/1년에 정확히 안 맞으면 active 해제
+      nextPeriod = null;   // 1주/1달/1년에 정확히 안 맞으면 active 해제
     }
 
     onChangePeriod(nextPeriod);
   }
 
 
-  // ✅ 비디오 타입 / 로봇 / 날짜 범위를 한 번에 필터링 (스왑 로직 포함)
+  // 비디오 타입 / 로봇 / 날짜 범위를 한 번에 필터링 (스왑 로직 포함)
   useEffect(() => {
     // 1) 비디오 타입 / 로봇 기준 1차 필터
     const baseFiltered = videoData.filter((item) => {
@@ -233,7 +233,7 @@ export default function VideoDateRange({
   }, [videoData, selectedVideo, selectedRobot, startDate, endDate, onFilteredChange]);
 
 
-  // 🔥 기간 버튼(1주 / 1달 / 1년) 클릭 시 시작일/종료일 자동 변경
+  // 기간 버튼(1주 / 1달 / 1년) 클릭 시 시작일/종료일 자동 변경
   useEffect(() => {
     if (!selectedPeriod) return;
 
@@ -266,8 +266,8 @@ export default function VideoDateRange({
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
       ) {
-        setIsCalendarOpen(false); // 외부 클릭 → 닫기
-        setActiveField(null);  // 🔥 어느 필드도 선택 안 함
+        setIsCalendarOpen(false);
+        setActiveField(null);
       }
     };
 
@@ -289,7 +289,7 @@ export default function VideoDateRange({
 
   return (
     <div className={styles.wrapper}>
-      {/* 기존 날짜 입력 영역 */}
+      
       <div className={styles.videoDate}>
         <div className={`${styles.startDate} ${activeNav === "prev" ? styles.activeBtn : ""}`}>
           <div>{startDate}</div>
@@ -301,8 +301,7 @@ export default function VideoDateRange({
               setActiveNav("prev");
               setTimeout(() => setActiveNav(null), 200);
             }}
-          />
-            
+          />      
         </div>
         <div>~</div>
         <div className={`${styles.endDate} ${activeNav === "next" ? styles.activeBtn : ""}`}>
@@ -323,6 +322,7 @@ export default function VideoDateRange({
       {isCalendarOpen && (
         <div className={styles.calendarOverlay}>
           <div ref={wrapperRef} className={styles.calendarModal}>
+            
             {/* 헤더 */}
             <div className={styles.header}>
               <button
@@ -371,7 +371,7 @@ export default function VideoDateRange({
                       const cellDate = new Date(year, month, d);
                       cellDate.setHours(0, 0, 0, 0);
 
-                      // 🔹 가장 오래된 데이터 날짜 이전이면 비활성화
+                      // 가장 오래된 데이터 날짜 이전이면 비활성화
                       let isDisabled = false;
                       if (earliestVideoDate) {
                         const earliest = new Date(
@@ -397,7 +397,7 @@ export default function VideoDateRange({
                               : styles.day
                           }
                           onClick={() => {
-                            if (isDisabled) return; // 안전장치
+                            if (isDisabled) return;
 
                             const selected = new Date(year, month, d);
 

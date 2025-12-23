@@ -1,14 +1,14 @@
-// RobotSelector.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
 import type { RobotRowData } from '@/app/type';
 import styles from './Button.module.css';
 
 type RobotSelectBoxProps = {
   robots: RobotRowData[];
-  activeIndex: number;                         // 부모에서 내려주는 현재 선택된 로봇 index
-  onSelect: (index: number, robot: RobotRowData) => void; // 클릭 시 부모로 올려줄 콜백
+  activeIndex: number; 
+  onSelect: (index: number, robot: RobotRowData) => void;
   className?: string;
 };
 
@@ -18,8 +18,14 @@ export default function RobotSelectBox({
   onSelect,
   className
 }: RobotSelectBoxProps) {
+  
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -27,7 +33,7 @@ export default function RobotSelectBox({
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
       ) {
-        setIsOpen(false); // 외부 클릭 → 닫기
+        setIsOpen(false);
       }
     };
 
@@ -38,14 +44,25 @@ export default function RobotSelectBox({
     };
   }, []);
 
-  const selectedRobot = robots?.[activeIndex]; // 안전한 참조
+  const handleSelectRobot = (robot: RobotRowData) => {
+    setSelectedRobot(robot);
+    setIsOpen(false);
+  };
+
+  useCustomScrollbar({
+    enabled: isOpen,
+    scrollRef,
+    trackRef,
+    thumbRef,
+    minThumbHeight: 50,
+    deps: [robots.length],
+  });
 
   return (
 
     <div ref={wrapperRef} className={`${styles.seletWrapper} ${className ?? ""}`}>
-      <div className={styles.selete} 
-        onClick={() => setIsOpen(!isOpen)}>
-        <span>{selectedRobot?.no ?? "로봇을 선택하세요"}</span>
+      <div className={styles.selete} onClick={() => setIsOpen(!isOpen)}>
+        <span>{selectedRobot?.no ?? "로봇명 선택"}</span>
         {isOpen ? (
           <img src="/icon/arrow_up.png" alt="arrow_up" />
         ) : (
@@ -54,10 +71,17 @@ export default function RobotSelectBox({
       </div> 
       {isOpen && (
         <div className={styles.seletbox}>
+          <div ref={scrollRef} className={styles.inner} role="listbox">
           {robots.map((robot, idx) => (
-            <div key={robot.id} className={`${ activeIndex === idx ? styles["active"] : "" }`.trim()}
-            onClick={() => { onSelect(idx, robot); setIsOpen(false); }}>{robot.no}</div>
+            <div key={robot.id} className={`${styles.robotsLabel} ${ activeIndex === idx ? styles["active"] : "" }`.trim()}
+            onClick={() => handleSelectRobot(robot)}>{robot.no}
+            </div>
           ))}
+          </div>
+
+          <div ref={trackRef} className={styles.scrollTrack}>
+            <div ref={thumbRef} className={styles.scrollThumb} />
+          </div>
         </div>
       )}
     </div>

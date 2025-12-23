@@ -16,8 +16,9 @@ export type Camera = {
     webrtcUrl: string;
 };
 
-export type PrimaryViewType = 'camera' | 'map';
+export type PlusButtonType = "camera" | "map";
 
+export type PrimaryViewType = 'camera' | 'map';
 
 export type RobotRowData = {
     id: number;
@@ -25,6 +26,7 @@ export type RobotRowData = {
     info: string;
     type: "QUADRUPED" | "COBOT" | "AMR" | "HUMANOID";   
     battery: number;
+    return: number;
     isCharging: boolean;
     network: 'Online' | 'Offline' | 'Error';
     power: 'On' | 'Off';
@@ -106,7 +108,6 @@ export type LogItem = {
 export type Period = 'today' | '1week' | '1month' | '1year' | 'Total' | null;
 
 // 도넛 차트에 쓸 공통 타입
-
 export type RobotType = { 
     id: number;
     label: "QUADRUPED" | "COBOT" | "AMR" | "HUMANOID";
@@ -130,3 +131,14 @@ export type DonutCommonInfo = {
   percent: number;
   displayValue: string; 
 };
+
+// 탭 메뉴 관련 타입
+export type TabKey = string;
+
+export type Tab = { 
+  id: TabKey;
+  label: string;
+};
+
+// 캘린더 액티브 필드 타입
+export type ActiveField = "start" | "end" | null;

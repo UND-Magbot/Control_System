@@ -2,7 +2,7 @@
 
 import styles from './Modal.module.css';
 import React, { useState, useEffect, useRef } from 'react';
-import type { RobotRowData, Video, Camera, VideoItem } from '@/app/type';
+import type { VideoItem } from '@/app/type';
 
 
 type VideoPlayModalProps = {
@@ -15,9 +15,9 @@ type VideoPlayModalProps = {
 export default function VideoPlayModal({
     isOpen,
     onClose,
-    playedVideoId,
     playedVideo
 }: VideoPlayModalProps) {
+
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -25,34 +25,71 @@ export default function VideoPlayModal({
     const progressBarRef = useRef<HTMLInputElement | null>(null);
     const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // 재생
     const [isPlaying, setIsPlaying] = useState(false);
-    const [duration, setDuration] = useState(0);        // 총 길이 (초)
-    const [currentTime, setCurrentTime] = useState(0);  // 현재 재생 위치 (초)
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
     
+    // 볼륨
     const [isMuted, setIsMuted] = useState(false);
-    const [volume, setVolume] = useState(1);            // 0 ~ 1
-    const [prevVolume, setPrevVolume] = useState(1); // 음소거 직전 볼륨 저장
+    const [volume, setVolume] = useState(1);
+    const [prevVolume, setPrevVolume] = useState(1);
 
+    // 전체화면
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [showControls, setShowControls] = useState(true); // hover 감지
+    const [showControls, setShowControls] = useState(true);
 
+    // 재생 아이콘 표시
     const [showPlayButton, setShowPlayButton] = useState(false);
 
 
-    // 메타데이터 로딩 완료 시 길이 설정
+    // 실시간 progress bar 퍼센트 계산
+    const progressPercent = duration ? (currentTime / duration) * 100 : 0;
+    const volumePercent = volume * 100;  // volume: 0 ~ 1
+
+
+    // 재생 바 길이 설정
     const handleLoadedMetadata = () => {
+        
         const video = videoRef.current;
+
         if (video) {
         setDuration(video.duration || 0);
         }
     };
 
+    // 자동 재생 시작
+    const handleAutoPlayStart = () => {
+        // 재생 상태 업데이트
+        setIsPlaying(true);
+
+        // 아이콘 먼저 보이기
+        setShowPlayButton(true);
+        setShowControls(true);
+
+        // 기존 타이머 제거 후 새로운 타이머 시작
+        startHideTimer();
+    };
+
     // 재생 시 위치 업데이트
     const handleTimeUpdate = () => {
+        
         const video = videoRef.current;
+        
         if (video) {
         setCurrentTime(video.currentTime);
         }
+    };
+
+    // progress bar 드래그 → 재생 위치 변경
+    const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const value = Number(e.target.value); // 0 ~ 100 (%)
+        const newTime = (value / 100) * duration;
+        video.currentTime = newTime;
+        setCurrentTime(newTime);
     };
 
     // 재생 / 일시정지 토글
@@ -60,15 +97,10 @@ export default function VideoPlayModal({
         const video = videoRef.current;
         if (!video) return;
 
-        // ▶ 현재 재생 중이면 → "일시정지"로 전환
         if (!video.paused && !video.ended) {
             video.pause();
             setIsPlaying(false);
 
-            // 클릭으로 멈췄을 때:
-            // - 아이콘 항상 보이게
-            // - 컨트롤바 항상 보이게
-            // - 더 이상 숨기지 않도록 타이머 제거
             clearHideTimer();
             setShowPlayButton(true);
             setShowControls(true);
@@ -83,20 +115,7 @@ export default function VideoPlayModal({
         setShowPlayButton(true);
         setShowControls(true);
 
-        // 전체화면 + 재생중일 때만 자동 숨김을 쓰고 싶다면
-        // isFullscreen 체크 후에 호출해도 됨
         startHideTimer();
-    };
-
-    // progress bar 드래그 → 재생 위치 변경
-    const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const video = videoRef.current;
-        if (!video) return;
-
-        const value = Number(e.target.value); // 0 ~ 100 (%)
-        const newTime = (value / 100) * duration;
-        video.currentTime = newTime;
-        setCurrentTime(newTime);
     };
 
     // 볼륨 슬라이더 변경
@@ -104,16 +123,17 @@ export default function VideoPlayModal({
         const video = videoRef.current;
         if (!video) return;
 
-        const value = Number(e.target.value); // 0 ~ 1
+        const value = Number(e.target.value);
+
         video.volume = value;
         setVolume(value);
 
         if (value === 0) {
-        setIsMuted(true);
-        video.muted = true;
+            setIsMuted(true);
+            video.muted = true;
         } else {
-        setIsMuted(false);
-        video.muted = false;
+            setIsMuted(false);
+            video.muted = false;
         }
     };
 
@@ -147,9 +167,6 @@ export default function VideoPlayModal({
         setCurrentTime(0);
     };
 
-    // 시간이 바뀔 때마다 progress bar 퍼센트 계산
-    const progressPercent = duration ? (currentTime / duration) * 100 : 0;
-    const volumePercent = volume * 100;  // volume: 0 ~ 1
 
     // 시간 표시 포맷 (mm:ss)
     const formatTime = (time: number) => {
@@ -165,16 +182,15 @@ export default function VideoPlayModal({
         // 1) 비디오 플레이어 자체 초기화
         if (videoRef.current) {
             videoRef.current.pause();
-            videoRef.current.currentTime = 0; // ⬅ 실제 영상 위치 0초로
+            videoRef.current.currentTime = 0;
         }
 
         // 2) 상태 초기화
         setIsPlaying(false);
         setCurrentTime(0);
-        setDuration(prev => prev); // duration은 그대로 두거나, 원하면 0으로
+        setDuration(prev => prev);
 
     };
-
 
     // 전체화면 기능
     // ============================================================
@@ -183,7 +199,7 @@ export default function VideoPlayModal({
         if (!wrapper) return;
 
         if (!document.fullscreenElement) {
-            await wrapperRef.current?.requestFullscreen();   // div 전체를 전체화면
+            await wrapperRef.current?.requestFullscreen();
             setIsFullscreen(true);
         } else {
             await document.exitFullscreen();
@@ -260,23 +276,10 @@ export default function VideoPlayModal({
         `;
     }, [progressPercent]);
 
-    const handleAutoPlayStart = () => {
-        // 재생 상태 업데이트
-        setIsPlaying(true);
-
-        // 아이콘 먼저 보이기
-        setShowPlayButton(true);
-        setShowControls(true);
-
-        // 기존 타이머 제거 후 새로운 타이머 시작
-        startHideTimer();
-    };
 
     // ---------------------------
     // Close Modal
     // ---------------------------
-
-    
     const handleClosePopup = () => {
         // 재생 정보 초기화
         resetVideoState();
@@ -338,7 +341,6 @@ export default function VideoPlayModal({
                             onTimeUpdate={handleTimeUpdate}
                             onEnded={handleEnded}
                             onPlay={handleAutoPlayStart}  />
-                    {/* ▶ / ❚❚ 아이콘 */}
                     {showPlayButton && (
                         <div className={styles.videoViewIcon}>
                             <img
@@ -383,7 +385,6 @@ export default function VideoPlayModal({
                             <img src={isFullscreen ? "/icon/exit-full-screen.png" : "/icon/full-screen.png"} alt={isFullscreen ? "Fullscreen" : "Exit Full screen"} />
                         </button>
                     </div>
-
                 </div>
             </div>
         </div>

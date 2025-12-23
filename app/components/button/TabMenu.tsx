@@ -2,21 +2,20 @@
 
 import React from 'react';
 import styles from './Button.module.css';
-
-type TabKey = string;
-
-export type Tab = { 
-  id: TabKey;
-  label: string;
-};
+import type { TabKey, Tab } from '@/app/type';
 
 type TabMenuProps = {
   tabs: Tab[];
-  activeTab: TabKey;                 // 부모가 내려주는 현재 활성 탭
-  onChange: (tabId: TabKey) => void; // 부모에게 탭 변경 알림
+  activeTab: TabKey;                
+  onChange: (tabId: TabKey) => void; 
 };
 
-export default function TabMenu({ tabs, activeTab, onChange }: TabMenuProps) {
+export default function TabMenu({ 
+  tabs,
+  activeTab,
+  onChange 
+}: TabMenuProps) {
+
   return (
     <div className={styles["tab-buttons"]}>
       {tabs.map(tab => (

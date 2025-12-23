@@ -17,17 +17,14 @@ export default function VideoSelector ({
   }: VideoStatusProps) {
 
   const isMap = primaryView === "map"; 
-
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
   const [statusActiveIndex, setStatusActiveIndex] = useState<number>(0);
-  const [selectedStatus, setSelectedStatus] = useState<number>(0);
 
   return (
     <div className={`${styles.videoStatusBox} ${className}`}>
       {video.map((item, idx) => (
         <button key={item.id} type="button"
-          className={`${styles.videoStatusBtn} ${statusActiveIndex === idx ? styles["active"] : ""} ${ isMap ? styles.mapVideoStatusBtn : "" }`.trim()}
+          className={`${styles.videoStatusBtn} ${statusActiveIndex === idx ? styles["active"] : ""}`}
           onClick={() => setStatusActiveIndex(idx)}
           aria-pressed={statusActiveIndex === idx}
           onMouseEnter={() => setHoveredIndex(idx)}

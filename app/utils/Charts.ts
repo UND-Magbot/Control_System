@@ -26,7 +26,7 @@ function makeFixedPercents(counts: number[]): number[] {
 export function buildRobotTypeDonut({ robots }: DonutCommonProps) {
   const typeCount: Record<string, number> = {};
 
-  // ✅ 0개일 때 기본 그래프 유지
+  // 0개일 때 기본 그래프 유지
   if (robots.length === 0) {
     return [
       { id: 1, label: "QUADRUPED", value: 0, percent: 0, displayValue: "0 units" },
@@ -60,7 +60,6 @@ export function buildTimeDonut({ robots }: DonutCommonProps): DonutCommonInfo[] 
   let docking = 0;
 
   robots.forEach((r) => {
-    // taskTime 을 모두 "운영 시간"으로 가정
     operating += r.tasks.reduce((sum, t) => sum + t.taskTime, 0);
     standby += r.waitingTime ?? 0;
     charging += r.chargingTime ?? 0;

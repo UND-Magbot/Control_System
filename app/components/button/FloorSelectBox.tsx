@@ -1,7 +1,7 @@
-// RobotSelector.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
 import styles from './Button.module.css';
 import type { Floor } from "@/app/type";
 
@@ -9,20 +9,25 @@ import type { Floor } from "@/app/type";
 type FloorSelectBoxProps = {
   floors: Floor[];
   activeIndex: number;
-  onSelect: (index: number, floors: Floor) => void; // 클릭 시 부모로 올려줄 콜백
+  selectedFloor: Floor | null;
+  onSelect: (index: number, floors: Floor) => void;
   className?: string;
 };
 
 export default function FloorSelectBox({
   floors,
   activeIndex,
+  selectedFloor,
   onSelect,
   className
 }: FloorSelectBoxProps) {
+
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const selectedFloor = floors?.[activeIndex]; // 안전한 참조
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -30,7 +35,7 @@ export default function FloorSelectBox({
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
       ) {
-        setIsOpen(false); // 외부 클릭 → 닫기
+        setIsOpen(false);
       }
     };
 
@@ -41,28 +46,48 @@ export default function FloorSelectBox({
     };
   }, []);
 
+
+  useCustomScrollbar({
+    enabled: isOpen,
+    scrollRef,
+    trackRef,
+    thumbRef,
+    minThumbHeight: 50,
+    deps: [floors.length],
+  });
+
   
 
   return (
 
     <div ref={wrapperRef} className={`${styles.seletWrapper} ${className ?? ""}`}>
-      <div className={styles.selete} 
-        onClick={() => setIsOpen(!isOpen)}>
-        <span>{ selectedFloor?.label ?? "층을 선택하세요" }</span>
+      
+      <div className={styles.selete} onClick={() => setIsOpen(!isOpen)}>
+        <span>{ selectedFloor?.label ?? "층별 선택" }</span>
         {isOpen ? (
           <img src="/icon/arrow_up.png" alt="arrow_up" />
         ) : (
           <img src="/icon/arrow_down.png" alt="arrow_down" />
         )}
-      </div> 
+      </div>
+
       {isOpen && (
         <div className={styles.seletbox}>
+          <div ref={scrollRef} className={styles.inner} role="listbox">
           {floors.map((item, idx) => (
-            <div key={item.id} className={`${ activeIndex === idx ? styles["active"] : "" }`.trim()}
-            onClick={() => { onSelect(idx, item); setIsOpen(false); }}>{item.label}</div>
+            <div key={item.id} className={`${styles.floorLabel} ${ activeIndex === idx ? styles["active"] : "" }`.trim()}
+                 onClick={() => { onSelect(idx, item); setIsOpen(false); }}>
+                 {item.label}
+            </div>
           ))}
+          </div>
+
+          <div ref={trackRef} className={styles.scrollTrack}>
+            <div ref={thumbRef} className={styles.scrollThumb} />
+          </div>
         </div>
       )}
+
     </div>
   );
 }

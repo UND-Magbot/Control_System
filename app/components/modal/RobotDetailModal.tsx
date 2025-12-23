@@ -1,8 +1,7 @@
 'use client';
 
 import styles from './Modal.module.css';
-import React from 'react';
-import { useState, useEffect  } from 'react';
+import React, { useState, useEffect  } from 'react';
 import type { RobotRowData } from '@/app/type';
 import CancelConfirmModal from '@/app/components/modal/CancelConfirmModal';
 
@@ -43,39 +42,33 @@ export default function RobotDetailModal({
         
     if (!isOpen) return null;
 
+    // 삭제 버튼 클릭 핸들러
     const handleDelete = () => {
       setShowConfirm(true);   // 커스텀 confirm 열기
     };
   
+    // 삭제 재 확인 창 - confirm 창에서 확인 눌렀을 때
     const handleConfirmOk = () => {
       setShowConfirm(false);
-      onClose();   // 최종 모달 닫기
+      onClose();
     };
   
+     // 삭제 재 확인 창 - confirm 창만 닫기
     const handleConfirmCancel = () => {
-      setShowConfirm(false); // confirm 창만 닫기
+      setShowConfirm(false);
     };
-
-    
-
+ 
     const handleUdate = () => {
-        // const confirmed = window.confirm("작업을 취소하시겠습니까?");
-        // if (confirmed) {
-            console.log("수정되었습니다.");
-        // }
+        console.log("수정되었습니다.");
     };
 
     const handleCancel = () => {
-        // const confirmed = window.confirm("작업을 취소하시겠습니까?");
-        // if (confirmed) {
-            onClose();  // 모달 닫기
-        // }
+        onClose();
     };
     
     const handleSave = () => {
-        // 저장 처리 로직 (필요하면) 넣기
         console.log("저장되었습니다.");
-        onClose();  // 모달 닫기
+        onClose();
     };
     
     return (
@@ -85,7 +78,7 @@ export default function RobotDetailModal({
                 <button className={styles.detailCloseBtn} onClick={onClose}>✕</button>
                 <div className={styles.detailTitle}>
                     <img src="/icon/robot_status_w.png" alt="Robot Registeration" />
-                    <h2>Robot Information</h2>
+                    <h2>로봇 정보</h2>
                 </div>
                 <div className={`${styles.itemBoxContainer} ${styles.detailBoxFs}`}>
 
@@ -93,7 +86,7 @@ export default function RobotDetailModal({
                 <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
                     <div className={styles.detailItemBox}>
                     <div className={`${styles.itemTitleBox} ${styles.borderTl8}`}>
-                        Robot Type(Name)
+                        로봇명
                     </div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
                         {/* 예: Quadruped (Robot 1) */}
@@ -104,7 +97,7 @@ export default function RobotDetailModal({
                     </div>
 
                     <div className={styles.detailItemBox}>
-                    <div className={styles.itemTitleBox}>Operator</div>
+                    <div className={styles.itemTitleBox}>운영사</div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset} ${styles.borderTr8}`}>
                         {selectedRobot?.operator ?? "-"}
                     </div>
@@ -114,14 +107,14 @@ export default function RobotDetailModal({
                 {/* 2. Serial Number / Model */}
                 <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
                     <div className={styles.detailItemBox}>
-                    <div className={styles.itemTitleBox}>Serial Number</div>
+                    <div className={styles.itemTitleBox}>시리얼 넘버(SN)</div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
                         {selectedRobot?.serialNumber ?? "-"}
                     </div>
                     </div>
 
                     <div className={styles.detailItemBox}>
-                    <div className={styles.itemTitleBox}>Model</div>
+                    <div className={styles.itemTitleBox}>모델</div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
                         {selectedRobot?.model ?? "-"}
                     </div>
@@ -131,14 +124,14 @@ export default function RobotDetailModal({
                 {/* 3. Group / Software Version */}
                 <div className={`${styles.detailRowItemBox} ${styles.btnBline}`}>
                     <div className={styles.detailItemBox}>
-                    <div className={styles.itemTitleBox}>Group</div>
+                    <div className={styles.itemTitleBox}>그룹</div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
                         {selectedRobot?.group ?? "-"}
                     </div>
                     </div>
 
                     <div className={styles.detailItemBox}>
-                    <div className={styles.itemTitleBox}>Software Version</div>
+                    <div className={styles.itemTitleBox}>소프트웨어 버전</div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
                         {selectedRobot?.softwareVersion ?? "-"}
                     </div>
@@ -149,7 +142,7 @@ export default function RobotDetailModal({
                 <div className={styles.detailRowItemBox}>
                     <div className={styles.detailItemBox}>
                     <div className={`${styles.itemTitleBox} ${styles.borderBl8}`}>
-                        Site
+                        사이트
                     </div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset}`}>
                         {selectedRobot?.site ?? "-"}
@@ -158,8 +151,7 @@ export default function RobotDetailModal({
 
                     <div className={styles.detailItemBox}>
                     <div className={`${styles.itemTitleBox} ${styles.lhUnset}`}>
-                        <div>Robot Registration</div>
-                        <div>Date/Time</div>
+                        <div>로봇 등록 일시</div>
                     </div>
                     <div className={`${styles.itemContentBox} ${styles.lhUnset} ${styles.borderBr8}`}>
                         {selectedRobot?.registrationDateTime ?? "-"}
@@ -172,23 +164,23 @@ export default function RobotDetailModal({
                     <div className={styles.btnLeftBox}>
                         <div className={`${styles.btnItemCommon} ${styles.btnBgGray} ${styles.mr10}`} onClick={handleDelete} >
                             <img src="/icon/delete_icon.png" alt="delete"/>
-                            <div>Delete</div>
+                            <div>삭제</div>
                         </div>
                         <div className={`${styles.btnItemCommon} ${styles.btnBgGray}`} onClick={handleUdate}>
                             <img src="/icon/edit_icon.png" alt="edit" />
-                            <div>Edit</div>
+                            <div>수정</div>
                         </div>
                     </div>
-                    <div className={styles.btnRightBox}>
+                    {/* <div className={styles.btnRightBox}>
                         <div className={`${styles.btnItemCommon} ${styles.btnBgRed}`} onClick={handleCancel} >
                             <img src="/icon/close_btn.png" alt="cancel"/>
-                            <div>Cancel</div>
+                            <div>취소</div>
                         </div>
                         <div className={`${styles.btnItemCommon} ${styles.btnBgBlue}`}  onClick={handleSave}>
                             <img src="/icon/check.png" alt="save" />
-                            <div>Save</div>
+                            <div>저장</div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
