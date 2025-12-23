@@ -88,8 +88,6 @@ export default function RobotInsertModal({
     // 조건4: input에 15~30 밖 입력 시 알림 + 되돌리기
     const validateAndFix = () => {
         const raw = returnBatteryText.trim();
-        setBatteryAlertMsg(`복귀 배터리양은 ${MIN}~${MAX} 범위내에서 숫자만 직접 기입하거나 \n 최소 복귀 배터리양 조정바로 설정해 주세요.`);
-        setBatteryAlertOpen(true);
         // 빈값이면 마지막 정상값으로 복원
         if (raw === '') {
         commitByNumber(lastValidRef.current);
