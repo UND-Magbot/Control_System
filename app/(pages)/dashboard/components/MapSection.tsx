@@ -13,18 +13,16 @@ type FloorSelectBoxProps = {
   robots: RobotRowData[];
   video: Video[];
   cameras: Camera[];
-  selectedCam?: Camera | null;
+  // selectedCam?: Camera | null;
 };
 
 
-export default function MapSection({ floors, robots, video, cameras, selectedCam }:FloorSelectBoxProps) {
+export default function MapSection({ floors, robots, video, cameras }:FloorSelectBoxProps) {
 
     const [mapTabActiveIndex, setMapTabActiveIndex] = useState<number | null>(0);
     const [floorActiveIndex, setFloorActiveIndex] = useState<number>(2);
     const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
     const [selectedRobot, setSelectedRobot] = useState<RobotRowData | null>(null);
-    
-    if (!selectedCam) return 0;
     
     const handleFloorSelect = (idx: number, floors: Floor) => {
       setFloorActiveIndex(idx);
@@ -236,11 +234,11 @@ export default function MapSection({ floors, robots, video, cameras, selectedCam
       setMapTabActiveIndex(null);
     }, [floorActiveIndex]);
 
-    const selectedCamIndex = useMemo(() => {
-      if (!selectedCam) return 0;
-      const idx = cameras.findIndex((c) => c.id === selectedCam.id);
-      return idx >= 0 ? idx : 0;
-    }, [selectedCam, cameras]);
+    // const selectedCamIndex = useMemo(() => {
+    //   if (!selectedCam) return 0;
+    //   const idx = cameras.findIndex((c) => c.id === selectedCam.id);
+    //   return idx >= 0 ? idx : 0;
+    // }, [selectedCam, cameras]);
     
 
    return (
@@ -308,14 +306,12 @@ export default function MapSection({ floors, robots, video, cameras, selectedCam
       </div>
 
       <div className={styles["bottom-div"]}>
-        <FloorSelectBox floors={floors} activeIndex={floorActiveIndex} selectedFloor={selectedFloor} onSelect={handleFloorSelect} className={styles.customSelectBox} selectedCam={selectedCam} />
+        <FloorSelectBox floors={floors} activeIndex={floorActiveIndex} selectedFloor={selectedFloor} onSelect={handleFloorSelect} className={styles.customSelectBox} />
         <RobotPathBtn
           selectedRobots={selectedRobot}
           robots={robots}
           video={video}
           camera={cameras}
-          initialCam={selectedCam}
-          initialCamIndex={selectedCamIndex}
         />
       </div>
 

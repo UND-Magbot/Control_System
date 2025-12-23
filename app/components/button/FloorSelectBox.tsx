@@ -11,7 +11,6 @@ type FloorSelectBoxProps = {
   activeIndex: number;
   selectedFloor: Floor | null;
   onSelect: (index: number, floors: Floor) => void;
-  selectedCam: Camera | null;
   className?: string;
 };
 
@@ -20,7 +19,6 @@ export default function FloorSelectBox({
   activeIndex,
   selectedFloor,
   onSelect,
-  selectedCam,
   className
 }: FloorSelectBoxProps) {
 
