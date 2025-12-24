@@ -26,6 +26,17 @@ interface RobotStatusListProps {
   locationStatus: LocationItem[];
 }
 
+export type RobotDraft = {
+  operator: string;
+  serialNumber: string;
+  model: string;
+  group: string;
+  softwareVersion: string;
+  site: string;
+  registrationDateTime: string;
+  returnBattery: number;
+};
+
 export type PlaceItem = {
     id: number;
     robotNo: string;
@@ -686,6 +697,11 @@ const resetCurrentPage = () => {
               return (
                 <tr
                   key={r.no}
+                  className={
+                    checkedRobotIds.includes(r.id)
+                      ? styles.selectedRow
+                      : undefined
+                  }
                   style={
                     {
                       "--robot-color": robotColor,
@@ -771,53 +787,53 @@ const resetCurrentPage = () => {
             </tbody>
           </table>
         </div>
-        <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots}   />
+        <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots} />
         <div className={styles.pagePosition}>
           <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={getPageSetter()} pageSize={PAGE_SIZE} blockSize={5} />
         </div>
         <div className={styles.bottomPosition}>
-            <div  style={{pointerEvents: isCrudDisabled ? "none" : "auto", opacity: isCrudDisabled ? 0.4 : 1, }}
+            <div style={{pointerEvents: isCrudDisabled ? "none" : "auto", opacity: isCrudDisabled ? 0.4 : 1, cursor:"pointer" }}
                   aria-disabled={isCrudDisabled}>
               <RobotCrudBtn />
             </div>
             <div className={styles.robotWorkBox}>
               <div className={styles.robotWorkCommonBtn}
-  onClick={() => {
-    if (isWorkScheduleDisabled) return;
-    openWorkScheduleModal();
-  }}
-  aria-disabled={isWorkScheduleDisabled}
-  style={{
-    pointerEvents: isWorkScheduleDisabled ? "none" : "auto",
-    opacity: isWorkScheduleDisabled ? 0.4 : 1,
-  }}>
+                onClick={() => {
+                  if (isWorkScheduleDisabled) return;
+                  openWorkScheduleModal();
+                }}
+                aria-disabled={isWorkScheduleDisabled}
+                style={{
+                  pointerEvents: isWorkScheduleDisabled ? "none" : "auto",
+                  opacity: isWorkScheduleDisabled ? 0.4 : 1,
+                }}>
                 <img src="/icon/robot_schedule_w.png" alt="" />
                 작업일정 복귀
               </div>
               <div className={styles.robotWorkCommonBtn}
-  onClick={() => {
-    if (isPlaceMoveDisabled) return;
-    setPlacePathModalOpen(true);
-  }}
-  aria-disabled={isPlaceMoveDisabled}
-  style={{
-    pointerEvents: isPlaceMoveDisabled ? "none" : "auto",
-    opacity: isPlaceMoveDisabled ? 0.4 : 1,
-  }}>
+                onClick={() => {
+                  if (isPlaceMoveDisabled) return;
+                  setPlacePathModalOpen(true);
+                }}
+                aria-disabled={isPlaceMoveDisabled}
+                style={{
+                  pointerEvents: isPlaceMoveDisabled ? "none" : "auto",
+                  opacity: isPlaceMoveDisabled ? 0.4 : 1,
+                }}>
                 <img src="/icon/robot_place_w.png" alt="" />
                 장소 이동
               </div>
               <div className={styles.robotWorkCommonBtn}
-  onClick={() => {
-    if (isChargeMoveDisabled) return;
-    setShowConfirm(true);
-    console.log("충전소 이동 robots:", checkedRobotIds);
-  }}
-  aria-disabled={isChargeMoveDisabled}
-  style={{
-    pointerEvents: isChargeMoveDisabled ? "none" : "auto",
-    opacity: isChargeMoveDisabled ? 0.4 : 1,
-  }}>
+                onClick={() => {
+                  if (isChargeMoveDisabled) return;
+                  setShowConfirm(true);
+                  console.log("충전소 이동 robots:", checkedRobotIds);
+                }}
+                aria-disabled={isChargeMoveDisabled}
+                style={{
+                  pointerEvents: isChargeMoveDisabled ? "none" : "auto",
+                  opacity: isChargeMoveDisabled ? 0.4 : 1,
+                }}>
                 <img src="/icon/robot_battery_place_w.png" alt="" />
                 충전소 이동
               </div>

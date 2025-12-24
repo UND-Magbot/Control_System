@@ -22,14 +22,12 @@ export default async function DataPage() {
             <div className={styles.topPosition} >
                 <h1>Data Management</h1>
             </div>
-            <div className={styles.container}>
-                <VideoList 
-                    robots={robots}
-                    cameras={cameras}
-                    video={videoStatus}
-                    videoData={videoData}
-                    robotTypeData={robotTypeData}/>
-            </div>
+            <VideoList 
+                robots={robots}
+                cameras={cameras}
+                video={videoStatus}
+                videoData={videoData}
+                robotTypeData={robotTypeData}/>
         </div>
     )
 }

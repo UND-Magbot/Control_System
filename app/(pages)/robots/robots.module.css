@@ -29,9 +29,14 @@
     justify-content: center;
     align-items: center;
     gap: 5px;
+    
     padding: 5px 10px;
+
     border: 1px solid #bec2db;
     border-radius: 12px 0 0 12px;
+
+    background: #24273B;
+    
     width: 217px;
     height: 24px;
     font-size: 11px;
@@ -42,9 +47,14 @@
     justify-content: center;
     align-items: center;
     gap: 5px;
+
     padding: 5px 10px;
+    
     border: 1px solid #bec2db;
     border-radius: 0 12px 12px 0;
+
+    background: #31364F;
+
     width: 160px;
     height: 24px;
     font-size: 11px;

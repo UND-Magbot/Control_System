@@ -97,6 +97,10 @@
 .status tr:nth-child(2n) {
   background-color: rgba(51, 56, 76, 0.8);
 }
+
+.status tr.selectedRow td {
+  background: #214766;
+}
     
 .status th:nth-child(1) { width: 5%; }
 .status th:nth-child(2) { width: 12%; }
@@ -187,6 +191,8 @@
   background: #3F4256;
 
   font-size: 12px;
+
+  cursor: pointer;
 
   display: flex;
   align-items: center;

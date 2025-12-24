@@ -853,44 +853,63 @@
 }
 
 .detailModalContent {
-  width: 800px;
-  height: auto;
-  background: #1a1d2e;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
+  width: 907px;
+  height: 600px;
+
+  background: #292D43;
+
+  border-radius: 27px;
+  
   position: relative;
+  
   overflow: hidden;
-  padding: 25px;
+  padding: 27px 26px;
 }
 
 .detailCloseBtn {
-  width: 40px;
-  height: 40px;
+  width: 27px;
+  height: 27px;
+
   border: none;
   color: white;
+  
   background: transparent;
   font-size: 23px;
-  cursor: pointer;
+  
   position: absolute;
-  right: 20px;
-  top: 15px;
+  top: 35px;
+  right: 29px;
+
+  cursor: pointer;
 }
 
 .detailTitle {
   display: flex;
-  gap: 15px;
-  margin-top: 20px;
+  align-items: center;
 }
 
 .detailTitle img {
-  width: 25px;
+  width: 35px;
+  height: 46px;
+  
+  margin-right: 25px;
 }
 
 .detailTitle h2 {
   font-weight: 500;
-  margin: 0;
+  font-size: 28px;
   color: #ffffff;
+  
+  margin: 0;
+}
+
+.detailItemBoxContainer {
+  width: 100%;
+  height: 372px;
+
+  border-radius: 12px;
+
+  margin-top: 26px;
 }
 
 .detailBoxFs {
@@ -899,30 +918,127 @@
 
 .detailRowItemBox {
   display: flex;
+
+  width: 100%;
+  height: 75px;
+}
+
+.detailItemBox {
+  display: flex;
+  width: 427px;
 }
 
 .btnBline {
   border-bottom: 1px solid #7881a1;
 }
 
-.detailItemBox {
-  display: flex;
-  width: 50%;
-}
 
 .itemTitleBox {
-  width: 45%;
-  line-height: 70px;
+  width: 150px;
+  line-height: 75px;
+  
   background: #3c415f;
-  padding-left: 20px;
+  
+  padding-left: 30px;
+
   font-weight: 500;
 }
 
+
 .itemContentBox {
-  width: 55%;
+  width: 277px;
   background: #465376;
-  padding-left: 20px;
+  padding: 0 29px;
   font-weight: 300;
+}
+
+.plusPd11 {
+  padding: 0 29px;
+}
+
+.batteryBar input,
+.itemContentBox input {
+  width: 100%;
+  height: 33px;
+
+  background: transparent;
+
+  border-radius: 5px;
+  border: none;
+  color: #ffffff;
+}
+
+.editMode .batteryBar input,
+.editMode .itemContentBox input {
+  width: 100%;
+
+  background: #556082;
+
+  border-radius: 5px;
+  border: 1px solid #8AACC7;
+  padding: 0 11px;
+
+  color: #ffffff;
+}
+
+.editMode .batteryBar input:focus,
+.editMode .itemContentBox input:focus {
+  outline: none;
+}
+
+.editMode .itemContentBox input::placeholder {
+  color: #F2F2F2;
+}
+
+/* range 기본 스타일 제거 */
+.batteryBarInputBg {
+  border-radius: 0;
+
+  /* 중요: 활성(왼쪽) / 비활성(오른쪽) 분기 */
+  background: linear-gradient(
+    to right,
+    #A6A6A6 0%,
+    #A6A6A6 var(--percent),
+    #7F7F7F var(--percent),
+    #7F7F7F 100%
+  );
+}
+
+/* Webkit thumb */
+.batteryBarInputBg::-webkit-slider-thumb {
+  border-radius: 100%;
+  background: #A6A6A6;
+}
+
+/* Firefox thumb */
+.batteryBarInputBg::-moz-range-thumb {
+  border-radius: 100%;
+  background: #A6A6A6;
+}
+
+/* Firefox track 색이 별도라서 투명 처리 후 input background를 사용 */
+.batteryBarInputBg::-moz-range-track {
+  background: transparent;
+}
+
+.detailBattery {
+  width: 427px;
+
+  background: #465376;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  
+  padding-bottom: 10px;
+}
+
+.batteryBarInputBg {
+  background: #A6A6A6;
+}
+
+.batteryBarFc {
+  color: #A6A6A6;
 }
 
 .lhUnset {
@@ -949,21 +1065,28 @@
 }
 
 .insertBtnTotal {
-  display: flex;
   width: 100%;
+  display: flex;
   justify-content: flex-end;
 }
 
 .btnTotal {
-  display: flex;
   width: 100%;
-  justify-content: space-between;
   margin-top: 30px;
 }
 
-.btnLeftBox,
-.btnRightBox {
+.btnLeftBox {
+  width: 100%;
+  
   display: flex;
+  cursor: pointer;
+}
+
+.btnRightBox {
+  width: 100%;
+
+  display: flex;
+  justify-content: flex-end;
   cursor: pointer;
 }
 
@@ -1036,22 +1159,23 @@
 }
 
 .btnItemCommon {
-  width: 179px;
-  height: 50px;
+  width: 167px;
+  height: 48px;
 
   display: flex;
   align-items: center;
   justify-content: center;
   
-  border-radius: 8px;
+  border-radius: 9px;
+  border: none;
   cursor: pointer;
 
   color: #ffffff;
 }
 
 .btnItemCommon img {
-  width: 16px;
-  height: 15px;
+  width: 13px;
+  height: 14px;
 
   margin-right: 15px;
 }

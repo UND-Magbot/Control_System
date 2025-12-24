@@ -444,6 +444,16 @@ export default function VideoList({
         }
     };
 
+    // 영상 다운로드(임시)
+    const downloadSample = () => {
+        const a = document.createElement("a");
+        a.href = "/videos/control_system_sample.mp4";
+        a.download = "control_system_sample.mp4"; // 저장 파일명
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    };
+
   return (
     <>
     <div className={styles.videoListTab}>
@@ -598,7 +608,7 @@ export default function VideoList({
                                             <div>{r.cameraType}</div>
                                         </div>
                                     </div>
-                                    <div className={styles.videoExport}>
+                                    <div className={styles.videoExport} onClick={downloadSample}>
                                         <img src="/icon/download.png" alt="download" />
                                         <div>다운로드</div>
                                     </div>

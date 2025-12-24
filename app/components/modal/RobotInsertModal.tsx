@@ -143,15 +143,15 @@ export default function RobotInsertModal({
                     <div className={styles.itemBoxContainer}>
                         <div className={styles.insertItemBox}>
                             <div>로봇명</div>
-                            <input type="text" placeholder='20글자 이내로 작성해 주세요.' />
+                            <input type="text" maxLength={20} placeholder='20글자 이내로 작성해 주세요.' />
                         </div>
                         <div className={styles.insertItemBox}>
                             <div>MSM ID</div>
-                            <input type="text" placeholder='20글자 이내로 작성해 주세요.' />
+                            <input type="text" maxLength={20} placeholder='20글자 이내로 작성해 주세요.' />
                         </div>
                         <div className={styles.insertItemBox}>
                             <div>시리얼 넘버(SN)</div>
-                            <input type="text" placeholder='20글자 이내로 작성해 주세요.' />
+                            <input type="text" maxLength={20} placeholder='20글자 이내로 작성해 주세요.' />
                         </div>
                         <div className={styles.insertItemBox}>
                             <div>복귀 배터리양</div>
@@ -190,11 +190,11 @@ export default function RobotInsertModal({
                     <div className={styles.insertBtnTotal}>
                         <div className={`${styles.insertConfrimBtn} ${styles.btnBgRed}`} onClick={handleCancel} >
                             <img src="/icon/close_btn.png" alt="cancel"/>
-                            <div>Cancel</div>
+                            <div>취소</div>
                         </div>
                         <div className={`${styles.insertConfrimBtn} ${styles.btnBgBlue}`}  onClick={handleSave}>
                             <img src="/icon/check.png" alt="save" />
-                            <div>Save</div>
+                            <div>저장</div>
                         </div>
                     </div>
                 </div>

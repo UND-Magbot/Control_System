@@ -127,16 +127,44 @@ export default function VideoDateRange({
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth(); // 0~11
   const firstDay = new Date(year, month, 1).getDay(); // 0=일
-  const lastDate = new Date(year, month + 1, 0).getDate();
 
-  const days: (number | null)[] = [];
-  // 앞쪽 공백
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null);
+  type DayCell = {
+    day: number;
+    inMonth: boolean;
+    date: Date;
+  };
+
+  const days: DayCell[] = [];
+
+  // 이번달 1일의 요일(0=일)
+  const firstDow = new Date(year, month, 1).getDay();
+  // 이번달 마지막 일자
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  // 이전달 마지막 일자
+  const prevLastDate = new Date(year, month, 0).getDate();
+
+  // 1) 앞쪽(이전달)
+  for (let i = 0; i < firstDow; i++) {
+    const day = prevLastDate - (firstDow - 1 - i);
+    const date = new Date(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
+    days.push({ day, inMonth: false, date });
   }
-  // 실제 날짜
+
+  // 2) 이번달
   for (let d = 1; d <= lastDate; d++) {
-    days.push(d);
+    const date = new Date(year, month, d);
+    date.setHours(0, 0, 0, 0);
+    days.push({ day: d, inMonth: true, date });
+  }
+
+  // 3) 뒤쪽(다음달) - 42칸 채우기
+  let nextDay = 1;
+  while (days.length < 42) {
+    const date = new Date(year, month + 1, nextDay);
+    date.setHours(0, 0, 0, 0);
+    days.push({ day: nextDay, inMonth: false, date });
+    nextDay++;
   }
 
   const isSameDate = (a: Date | null, d: number) => {
@@ -363,56 +391,52 @@ export default function VideoDateRange({
 
             {/* 날짜 */}
             <div className={styles.daysGrid}>
-              {days.map((d, idx) =>
-                d === null ? (
-                  <div key={idx} className={styles.emptyCell} />
-                ) : (
-                   (() => {
-                      const cellDate = new Date(year, month, d);
-                      cellDate.setHours(0, 0, 0, 0);
+              {days.map((cell, idx) => {
+                // 가장 오래된 데이터 날짜 이전이면 비활성화
+                let isDisabled = false;
+                if (earliestVideoDate) {
+                  const earliest = new Date(
+                    earliestVideoDate.getFullYear(),
+                    earliestVideoDate.getMonth(),
+                    earliestVideoDate.getDate()
+                  );
+                  earliest.setHours(0, 0, 0, 0);
+                  isDisabled = cell.date < earliest;
+                }
 
-                      // 가장 오래된 데이터 날짜 이전이면 비활성화
-                      let isDisabled = false;
-                      if (earliestVideoDate) {
-                        const earliest = new Date(
-                          earliestVideoDate.getFullYear(),
-                          earliestVideoDate.getMonth(),
-                          earliestVideoDate.getDate()
-                        );
-                        isDisabled = cellDate < earliest;
-                      }
+                const isSelected =
+                  tempDate &&
+                  tempDate.getFullYear() === cell.date.getFullYear() &&
+                  tempDate.getMonth() === cell.date.getMonth() &&
+                  tempDate.getDate() === cell.date.getDate();
 
-                      const isSelected = isSameDate(tempDate, d);
+                const className = isDisabled
+                  ? styles.dayDisabled
+                  : isSelected
+                  ? styles.daySelected
+                  : cell.inMonth
+                  ? styles.day
+                  : styles.dayOutside; // 다른 달 날짜
 
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={isDisabled}
-                          className={
-                            isDisabled
-                              ? styles.dayDisabled
-                              : isSelected
-                              ? styles.daySelected
-                              : styles.day
-                          }
-                          onClick={() => {
-                            if (isDisabled) return;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    disabled={isDisabled}
+                    className={className}
+                    onClick={() => {
+                      if (isDisabled) return;
 
-                            const selected = new Date(year, month, d);
+                      setTempDate(cell.date);
 
-                            setTempDate(selected);
-
-                            const dateStr = formatDate(selected);
-                            handleDateSelect(dateStr);
-                          }}
-                        >
-                        {d}
-                      </button>
-                    );
-                  })()
-                )
-              )}
+                      const dateStr = formatDate(cell.date);
+                      handleDateSelect(dateStr);
+                    }}
+                  >
+                    {cell.day}
+                  </button>
+                );
+              })}
             </div>
 
             {/* 하단 버튼 */}
