@@ -1,6 +1,7 @@
 "use client";
 
 import styles from './Schedules.module.css';
+import WorkSchedule from '@/app/(pages)/schedules/components/WorkSchedule';
 
 export default function Page() {
 
@@ -8,12 +9,33 @@ export default function Page() {
       <>
         <div className={styles.topPosition}>
             <h1>Schedule Management</h1>
+            <div className={styles.legendContainer}>
+              <div className={styles.statusLegend}>
+                <div className={styles.statusItem}>
+                  <div className={`${styles.statusCircle} ${styles.waitingC}`}></div>
+                  <div>대기</div>
+                </div>
+                <div className={styles.statusItem}>
+                  <span className={`${styles.statusCircle} ${styles.workingC}`}></span>
+                  <span>작업중</span>
+                </div>
+                <div className={styles.statusItem}>
+                  <span className={`${styles.statusCircle} ${styles.errorC}`}></span>
+                  <span>작업중(오류)</span>
+                </div>
+                <div className={styles.statusItem}>
+                  <span className={`${styles.statusCircle} ${styles.completedC}`}></span>
+                  <span>작업완료</span>
+                </div>
+              </div>
+              <div className={styles.workLegend}>
+                <div>[환] 환자 모니터링</div>
+                <div>[순] 순찰/보안</div>
+                <div>[운] 물품/약품 운반</div>
+              </div>
+            </div>
         </div>
-        <div className={styles.container}>
-            <img src="/icon/coming-soon.png" alt="Coming Soon" />
-            <div className={styles.topTitle}>COMING SOON</div>
-            <div className={styles.contentText}>We Are Preparing This Service</div>
-        </div>
+        <WorkSchedule />
       </>
     )
 }

@@ -441,8 +441,7 @@ export default function VideoDateRange({
 
             {/* 하단 버튼 */}
             <div className={styles.footer}>
-              <button type="button" className={styles.today} onClick={handleToday}> Today </button>
-              <button type="button" className={styles.confirm} onClick={handleConfirm}> Confirm </button>
+              <button type="button" className={styles.today} onClick={handleToday}>오늘</button>
             </div>
           </div>
         </div>
