@@ -4,8 +4,7 @@ import styles from './CameraSection.module.css';
 import type { Camera, RobotRowData, Video } from '@/app/type'
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
-// import CameraSelector from '@/app/components/button/CameraSelector';
-import {RemoteBtn, RobotSelectBox, PlusBtn} from '@/app/components/button';
+import {RobotSelectBox, PlusBtn} from '@/app/components/button';
 import RemoteMapModal from "@/app/components/modal/RemoteMapModal";
 
 type CombinedProps = {

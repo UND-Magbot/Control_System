@@ -1,9 +1,13 @@
-"use client";
-
 import styles from './Schedules.module.css';
 import WorkSchedule from '@/app/(pages)/schedules/components/WorkSchedule';
+import RobotInfo from "@/app/lib/robotInfo";
 
-export default function Page() {
+export default async function Page() {
+
+    const [robots] = await Promise.all([
+        RobotInfo()
+    ]);
+  
 
     return (
       <>
@@ -35,7 +39,7 @@ export default function Page() {
               </div>
             </div>
         </div>
-        <WorkSchedule />
+        <WorkSchedule robots={robots} />
       </>
     )
 }

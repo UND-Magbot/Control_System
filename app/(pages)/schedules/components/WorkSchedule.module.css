@@ -391,8 +391,55 @@
   box-sizing: border-box;
 }
 
-/* 스크롤 */
+/* 필터 조건 영역 */
+.selectBoxContainer {
+  max-height: 355px;
 
+  overflow: hidden;
+  position: relative;
+}
+
+/* 실제 스크롤 영역: 네이티브 스크롤바는 숨김 */
+.filterInner {
+  max-height: inherit;
+  overflow-y: scroll;
+  padding-right: 3px; /* 오른쪽 커스텀 스크롤바 공간 */
+  padding-bottom: 10px;
+  box-sizing: border-box;
+
+  /* 스크롤바 숨김(네이티브) */
+  scrollbar-width: none; /* Firefox */
+}
+.filterInner::-webkit-scrollbar {
+  display: none; /* Chrome/Edge */
+}
+
+.filterScrollTrack {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  right: 3px;
+
+  width: 4px;
+  border-radius: 50px;
+  background:transparent;
+}
+
+/* 썸(움직이는 막대) */
+.filterScrollThumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 50%;            /* JS가 동적으로 조절 */
+  border-radius: 50px;
+  background: #EAEAED;     /* 요청 색상 */
+}
+
+
+
+/* 스크롤 */
 .inner {
   max-height: inherit;
   overflow-y: scroll;

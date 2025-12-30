@@ -1,14 +1,22 @@
 "use client";
 
 import styles from './WorkSchedule.module.css';
-import React, { useState, useRef, useEffect, useMemo  } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
 import MiniCalendar from './MiniCalendar';
+import ScheduleInsert from './ScheduleInsert';
+import ScheduleDetail from './ScheduleDetail';
+import type { RobotRowData } from '@/app/type';
 
 
 // 주간
 type WeekEvent = {
   id: string;
   title: string;
+
+  robotNo: string;     // 예: "Robot 3"
+  robotType: string;   // 예: "순찰/보안"
+
   dayIndex: number;   // 0=일 ... 6=토
   startMin: number;   // 0~1439
   endMin: number;     // 1~1440
@@ -44,6 +52,7 @@ type MonthEvent = {
   date: string; // "2025-01-09"
   color?: "green" | "yellow" | "blue" | "red";
 };
+
 
 const monthEvents: MonthEvent[] = [
   { id: "m1", title: "[완] Robot 3, 1층 순찰", date: "2025-01-09", color: "green" },
@@ -102,22 +111,97 @@ const monthColorClass: Record<NonNullable<MonthEvent["color"]>, string> = {
   red: styles.evRed,
 };
 
+interface RobotScheduleProps {
+  robots: RobotRowData[];
+}
+
 function monthEventsForDay(dateKey: string) {
   return monthEvents.filter(ev => ev.date === dateKey);
 }
 
-export default function Page() {
+export default function Page({ robots }: RobotScheduleProps) {
+    
+    // 필터 항목 드롭다운 구현
+    const [isRobotTypeSelected, setIsRobotTypeSelected] = useState(true);
+    const [isRobotNameSelected, setIsRobotNameSelected] = useState(true);
+    
+    // 필터 항목 다중 선택
+    const [selectedRobotTypes, setSelectedRobotTypes] = useState<string[]>([]);
+    const [selectedRobotNames, setSelectedRobotNames] = useState<string[]>([]);
+    const robotTypes = ["환자 모니터링", "순찰/보안", "물품/약품 운반"];
 
-    const [isRobotSelected, setIsRobotSelected] = useState(false);
+    const toggleRobotType = (label: string) => {
+        setSelectedRobotTypes((prev) =>
+            prev.includes(label) ? prev.filter((x) => x !== label) : [...prev, label]
+        );
+    };
+    const toggleRobotName = (name: string) => {
+        setSelectedRobotNames((prev) =>
+            prev.includes(name)
+            ? prev.filter((x) => x !== name)
+            : [...prev, name]
+        );
+    };
+
+    const isTypeFilterOn = selectedRobotTypes.length > 0;
+    const isNameFilterOn = selectedRobotNames.length > 0;
+
+    const mockEvents: WeekEvent[] = useMemo(() => {
+        return [
+            {
+            id: "e1",
+            title: "[완] Robot 3, 1층 순찰...",
+            robotNo: "Robot 3",
+            robotType: "순찰/보안",
+            dayIndex: 2,
+            startMin: 4 * 60 + 10,
+            endMin: 4 * 60 + 40,
+            color: "green",
+            },
+        ];
+    }, []);
+
+    /** ✅ 조건 1/2/3 실시간 반영 필터 */
+    const filteredWeekEvents = useMemo(() => {
+        // 필터가 하나도 없으면 전체 표시
+        if (!isTypeFilterOn && !isNameFilterOn) return mockEvents;
+
+        return mockEvents.filter((ev) => {
+            const typeOk = !isTypeFilterOn || selectedRobotTypes.includes(ev.robotType);
+            const nameOk = !isNameFilterOn || selectedRobotNames.includes(ev.robotNo);
+
+            // ✅ 조건3: 둘 다 선택된 경우 교집합(type AND name)
+            return typeOk && nameOk;
+        });
+    }, [mockEvents, isTypeFilterOn, isNameFilterOn, selectedRobotTypes, selectedRobotNames]);
+
+    const robotNameOptions = robots;
+
+    // 필터 조건 스크롤 뷰
+    const filterScrollRef = useRef<HTMLDivElement>(null);
+    const filterTrackRef = useRef<HTMLDivElement>(null);
+    const filterThumbRef = useRef<HTMLDivElement>(null);
+
+    useCustomScrollbar({
+        enabled: true,            // 기존 로직 유지 (원하면 필터 영역 조건으로 바꿔도 됨)
+        scrollRef: filterScrollRef,    // ✅ 키 이름만 훅 규격에 맞춤
+        trackRef: filterTrackRef,
+        thumbRef: filterThumbRef,
+        minThumbHeight: 50,
+        deps: [
+            selectedRobotTypes.length,
+            selectedRobotNames.length,
+            robotNameOptions.length,
+            isRobotTypeSelected,
+            isRobotNameSelected,
+        ],
+    });
     
     type ScheduleView = "week" | "month";
     const [viewType, setViewType] = useState<ScheduleView>("week");
     
     // 달력에서 보고 있는 기준 월
     const [viewDate, setViewDate] = useState(new Date());
-
-    // const year = viewDate.getFullYear();
-    // const month = viewDate.getMonth(); // 0~11
 
     const startOfWeek = (d: Date) => {
         const x = new Date(d);
@@ -198,16 +282,6 @@ export default function Page() {
     const trackRef = useRef<HTMLDivElement>(null);
     const thumbRef = useRef<HTMLDivElement>(null);
 
-    /** 3) 목업: 이벤트 목록 */
-    const mockEvents: WeekEvent[] = [
-        { id: "e1", title: "[완] Robot 3, 1층 순찰...", dayIndex: 2, startMin: 4 * 60 + 10, endMin: 4 * 60 + 40, color: "green" },
-        { id: "e2", title: "[완] Robot 2, 1층 순찰...", dayIndex: 2, startMin: 6 * 60 + 0, endMin: 6 * 60 + 20, color: "green" },
-        { id: "e3", title: "[완] Robot 4, 103호 환...", dayIndex: 2, startMin: 6 * 60 + 10, endMin: 6 * 60 + 30, color: "red" },
-        { id: "e4", title: "[완] Robot 5, 107호 환...", dayIndex: 2, startMin: 10 * 60 + 0, endMin: 10 * 60 + 25, color: "yellow" },
-        { id: "e5", title: "[진] Robot 1, 303호 환...", dayIndex: 5, startMin: 8 * 60 + 0, endMin: 8 * 60 + 35, color: "yellow" },
-        { id: "e6", title: "[완] Robot 2, 205호 환...", dayIndex: 5, startMin: 10 * 60 + 0, endMin: 10 * 60 + 25, color: "yellow" },
-        { id: "e7", title: "[완] Robot 3, 5층 순찰...", dayIndex: 6, startMin: 11 * 60 + 10, endMin: 11 * 60 + 40, color: "blue" },
-    ];
 
     /** 4) 시간 라벨 (24개) */
     const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
@@ -366,8 +440,6 @@ export default function Page() {
     ro.observe(track);
     window.addEventListener("resize", syncThumb);
 
-
-
     return () => {
         el.removeEventListener("scroll", onScroll);
         thumb.removeEventListener("pointerdown", onPointerDown);
@@ -380,12 +452,20 @@ export default function Page() {
     };
     }, [viewType, hourRowPx, gridHeight, heightPx]);
 
-    const todayKey = useMemo(() => {
-        const t = new Date();
-        t.setHours(0, 0, 0, 0);
-        return ymd(t);
-    }, []);
 
+    // 작업등록 모달 open/close 상태
+    const [isInsertModalOpen, setIsInsertModalOpen] = useState(false);
+
+    // 작업상세 모달 open/close 상태
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    // ✅ 클릭된 주간 이벤트 저장
+    const [selectedWeekEvent, setSelectedWeekEvent] = useState<WeekEvent | null>(null);
+
+    const handleClickWeekEvent = (event: WeekEvent) => {
+        setSelectedWeekEvent(event);
+        setIsDetailModalOpen(true);
+    };
 
     return (
       <>
@@ -397,36 +477,74 @@ export default function Page() {
                     <MiniCalendar value={selectedDate} onPickDate={handlePickDate} todayResetKey={todayResetKey} />
                 </div>
                 <div className={styles.whiteLine}></div>
-                <div className={styles.selectBoxGap}>
-                    <div className={styles.selecteBoxCommon}>
-                        <div>로봇 종류 선택</div>
-                        <img src="/icon/arrow_up.png" alt="" />
-                    </div>
-                    <div>
-                        <div className={styles.robotSelecteItem}>
-                            <img src={isRobotSelected ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"} alt="" />
-                            <span>환자 모니터링</span>
-                        </div>
-                        <div className={styles.robotSelecteItem}>
-                            <img src={isRobotSelected ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"} alt="" />
-                            <span>순찰/보안</span>
-                        </div>
-                        <div className={styles.robotSelecteItem}>
-                            <img src={isRobotSelected ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"} alt="" />
-                            <span>물품/약품 운반</span>
-                        </div>
-                    </div>
-                </div>
+                <div className={styles.selectBoxContainer}>
+                    <div ref={filterScrollRef} className={styles.filterInner}>
+                        <div className={styles.selectBoxGap}>
+                            <div className={styles.selecteBoxCommon} onClick={() => setIsRobotTypeSelected(prev => !prev)}>
+                                <div>로봇 종류 선택</div>
+                                <img src={isRobotTypeSelected ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                            </div>
+                            {isRobotTypeSelected && (
+                                <div>
+                                    {robotTypes.map((label) => {
+                                        const isSelected = selectedRobotTypes.includes(label);
 
-                <div>
-                    <div className={styles.selecteBoxCommon}>
-                        <div>로봇명 선택</div>
-                        <img src="/icon/arrow_up.png" alt="" />
+                                        return (
+                                            <div
+                                            key={label}
+                                            className={`${styles.robotSelecteItem} ${isSelected ? styles.active : ""}`}
+                                            onClick={() => toggleRobotType(label)}
+                                            >
+                                            <img
+                                                src={isSelected ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"}
+                                                alt=""
+                                            />
+                                            <span>{label}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <div className={styles.selecteBoxCommon} onClick={() => setIsRobotNameSelected(prev => !prev)}>
+                                <div>로봇명 선택</div>
+                                <img src={isRobotNameSelected ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                            </div>
+                            {isRobotNameSelected && (
+                            <div>
+                                {robotNameOptions.map((robot) => {
+                                const active = selectedRobotNames.includes(robot.no);
+
+                                return (
+                                    <div
+                                    key={robot.id}
+                                    className={`${styles.robotSelecteItem} ${
+                                        active ? styles.active : ""
+                                    }`}
+                                    onClick={() => toggleRobotName(robot.no)}
+                                    >
+                                    <img
+                                        src={
+                                        active
+                                            ? "/icon/robot_chk.png"
+                                            : "/icon/robot_none_chk.png"
+                                        }
+                                        alt=""
+                                    />
+                                    <span>{robot.no}</span>
+                                    </div>
+                                );
+                                })}
+                            </div>
+                            )}
+                        </div>
                     </div>
-                    <div>
-                        <div className={styles.robotSelecteItem}>
-                            <img src={isRobotSelected ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"} alt="" />
-                            <span>Robot 1</span>
+
+                    <div className={styles.selectBoxGutter}>
+                        <div ref={filterTrackRef} className={styles.filterScrollTrack}>
+                            <div ref={filterThumbRef} className={styles.filterScrollThumb} />
                         </div>
                     </div>
                 </div>
@@ -453,7 +571,7 @@ export default function Page() {
                     </div>
 
                     <div className={styles.scheduleControl}>
-                        <button type='button' className={styles.scheduleAddButton}>
+                        <button type='button' className={styles.scheduleAddButton} onClick={() => setIsInsertModalOpen(true)}>
                             <span>+</span>
                             <span>작업등록</span>
                         </button>
@@ -466,7 +584,16 @@ export default function Page() {
                         </div>
                     </div>
                 </div>
-                
+                {/* 작업등록 모달 */}
+
+                {isInsertModalOpen && (
+                    <ScheduleInsert
+                        isOpen={isInsertModalOpen}
+                        onClose={() => setIsInsertModalOpen(false)}
+                        robots={robots}
+                    />
+                )}
+
                 {viewType === "week" && (
                 <section className={styles.weekendGrid}>
                     <div className={styles.scroller} style={{ height: heightPx }}>
@@ -533,7 +660,7 @@ export default function Page() {
                                     })}
 
                                     {/* 이벤트 */}
-                                    {mockEvents.map((ev) => {
+                                    {filteredWeekEvents.map((ev) => {
                                         const start = Math.max(0, Math.min(totalMinutes, ev.startMin));
                                         const end = Math.max(0, Math.min(totalMinutes, ev.endMin));
                                         const dur = Math.max(10, end - start); // 최소 높이(가독성)
@@ -555,6 +682,7 @@ export default function Page() {
                                             width: `calc(${widthPct}% - 12px)`,
                                             }}
                                             title={ev.title}
+                                            onClick={() => handleClickWeekEvent(ev)}
                                         >
                                             {ev.title}
                                         </div>
@@ -562,6 +690,16 @@ export default function Page() {
                                     })}
                                     </div>
                                 </div>
+                                {isDetailModalOpen && selectedWeekEvent && (
+                                    <ScheduleDetail
+                                        isOpen={isDetailModalOpen}
+                                        onClose={() => {
+                                        setIsDetailModalOpen(false);
+                                        setSelectedWeekEvent(null);
+                                        }}
+                                        event={selectedWeekEvent}
+                                    />
+                                )}
 
                                 <div className={styles.scrollGutter}>
                                     <div ref={trackRef} className={styles.scrollTrack}>
@@ -595,44 +733,44 @@ export default function Page() {
                     className={styles.monthBody}
                     style={{ height: `calc(${heightPx}px - ${MONTH_HEADER_H}px)` }}
                     >
-                    <div
-                        className={styles.monthGrid}
-                        style={{ gridTemplateRows: `repeat(${weeks}, 1fr)` }}
-                    >
-                        {monthCells.map((cell) => {
-                            const events = monthEventsForDay(cell.key);
-                            const maxVisible = weeks >= 6 ? 1 : 2;
+                        <div
+                            className={styles.monthGrid}
+                            style={{ gridTemplateRows: `repeat(${weeks}, 1fr)` }}
+                        >
+                            {monthCells.map((cell) => {
+                                const events = monthEventsForDay(cell.key);
+                                const maxVisible = weeks >= 6 ? 1 : 2;
 
-                            const visible = events.slice(0, maxVisible);
-                            const remain = events.length - visible.length;
+                                const visible = events.slice(0, maxVisible);
+                                const remain = events.length - visible.length;
 
-                            const isToday = isSameYmd(cell.date, today0);
+                                const isToday = isSameYmd(cell.date, today0);
 
-                            return (
-                                <div
-                                key={cell.key}
-                                className={`${styles.monthCell} ${isToday ? styles.monthToday : ""}`}
-                                >
-                                    <div className={styles.dateNumber}>{cell.day}</div>
+                                return (
+                                    <div
+                                    key={cell.key}
+                                    className={`${styles.monthCell} ${isToday ? styles.monthToday : ""}`}
+                                    >
+                                        <div className={styles.dateNumber}>{cell.day}</div>
 
-                                    <div className={styles.cellEvents}>
-                                        {visible.map((ev) => (
-                                        <div
-                                            key={ev.id}
-                                            className={`${styles.cellEvent} ${
-                                            ev.color ? monthColorClass[ev.color] : styles.evGreen
-                                            }`}
-                                        >
-                                            {ev.title}
+                                        <div className={styles.cellEvents}>
+                                            {visible.map((ev) => (
+                                            <div
+                                                key={ev.id}
+                                                className={`${styles.cellEvent} ${
+                                                ev.color ? monthColorClass[ev.color] : styles.evGreen
+                                                }`}
+                                            >
+                                                {ev.title}
+                                            </div>
+                                            ))}
+
+                                            {remain > 0 && <div className={styles.more}>+{remain}개</div>}
                                         </div>
-                                        ))}
-
-                                        {remain > 0 && <div className={styles.more}>+{remain}개</div>}
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </section>
                 )}
