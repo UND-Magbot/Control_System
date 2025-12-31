@@ -212,7 +212,7 @@ export default function InsertModal({
     };
       
     const handleSave = () => {
-        onClose();
+        onClose(); 
     };
 
     return (
@@ -228,7 +228,7 @@ export default function InsertModal({
                         <div className={styles.itemBox}>
                             <div>로봇명</div>
                             <div ref={robotWrapperRef} className={`${styles.seletWrapper}`}>
-                                <div className={styles.itemSelectBox} onClick={() => setIsRobotOpen(!isOpen)}>
+                                <div className={styles.itemSelectBox} onClick={() => setIsRobotOpen((v) => !v)}>
                                     <span>{selectedRobot?.no ?? "로봇명 선택"}</span>
                                     <img src="/icon/arrow_down.png" alt="arrow_down" />
                                 </div> 
@@ -303,15 +303,15 @@ export default function InsertModal({
                                     2025-12-12
                                     <img src="/icon/search_calendar.png" alt="" />
                                 </div>
-                                <div className={styles.itemAmPm}>
+                                <div className={styles.createitemAmPm}>
                                     오전
                                     <img src="/icon/arrow_down.png" alt="" />
                                 </div>
-                                <div className={styles.itemHour}>
+                                <div className={styles.createitemHour}>
                                     09
                                     <img src="/icon/arrow_down.png" alt="" />
                                 </div>
-                                <div className={styles.itemMinute}>
+                                <div className={styles.createitemMinute}>
                                     00
                                     <img src="/icon/arrow_down.png" alt="" />
                                 </div>
@@ -325,15 +325,15 @@ export default function InsertModal({
                                     2025-12-12
                                     <img src="/icon/search_calendar.png" alt="" />
                                 </div>
-                                <div className={styles.itemAmPm}>
+                                <div className={styles.createitemAmPm}>
                                     오전
                                     <img src="/icon/arrow_down.png" alt="" />
                                 </div>
-                                <div className={styles.itemHour}>
+                                <div className={styles.createitemHour}>
                                     09
                                     <img src="/icon/arrow_down.png" alt="" />
                                 </div>
-                                <div className={styles.itemMinute}>
+                                <div className={styles.createitemMinute}>
                                     00
                                     <img src="/icon/arrow_down.png" alt="" />
                                 </div>
@@ -342,7 +342,7 @@ export default function InsertModal({
 
                         <div className={styles.itemBox}>
                             <div>작업상태</div>
-                            <div ref={workPathWrapperRef} className={`${styles.seletWrapper} ${styles.itemLeftMg}`}>
+                            <div ref={workStatusWrapperRef} className={`${styles.seletWrapper} ${styles.itemLeftMg}`}>
                                 <div
                                 className={styles.itemSelectBox}
                                 onClick={() => setIsWorkTypeOpen((v) => !v)}
@@ -355,7 +355,7 @@ export default function InsertModal({
                                     />
                                 </div>
 
-                                {isWorkPathOpen && (
+                                {isWorkStatusOpen && (
                                     <div className={styles.seletbox}>
                                         <div ref={workTypeScrollRef} className={styles.inner}>
                                             {WORK_TYPES.map((type) => (
@@ -390,6 +390,41 @@ export default function InsertModal({
                                 <div className={styles.radioBtnBox}>
                                     <img src="/icon/place_none_chk.png" alt="" />
                                     <span>반복 안함</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.itemBox}>
+                            <div>반복요일</div>
+                            <div className={styles.repeatDateFlex}>
+                                <div className={styles.dateItem}>월</div>
+                                <div className={styles.dateItem}>화</div>
+                                <div className={styles.dateItem}>수</div>
+                                <div className={styles.dateItem}>목</div>
+                                <div className={styles.dateItem}>금</div>
+                                <div className={styles.dateItem}>토</div>
+                                <div className={styles.dateItem}>일</div>
+                                <div className={styles.repeatDateItem}>
+                                    <img src="/icon/robot_none_chk.png" alt="" />
+                                    <span>매일</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.itemRadioBox}>
+                            <div>반복종료</div>
+                            <div className={`${styles.radioBtnFlex} ${styles.itemLeftMg}`}>
+                                <div className={styles.radioBtnBox}>
+                                    <img src="/icon/place_chk.png" alt="" />
+                                    <span>없음</span>
+                                </div>
+                                <div className={styles.radioBtnBox}>
+                                    <img src="/icon/place_none_chk.png" alt="" />
+                                    <span>종료 날짜</span>
+                                    <div className={styles.itemEndDateBox}>
+                                        <span>2025-12-13</span>
+                                        <img src="/icon/search_calendar.png" alt="" />
+                                    </div>
                                 </div>
                             </div>
                         </div>

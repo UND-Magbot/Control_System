@@ -481,7 +481,7 @@ export default function Page({ robots }: RobotScheduleProps) {
                     <div ref={filterScrollRef} className={styles.filterInner}>
                         <div className={styles.selectBoxGap}>
                             <div className={styles.selecteBoxCommon} onClick={() => setIsRobotTypeSelected(prev => !prev)}>
-                                <div>로봇 종류 선택</div>
+                                <div>작업유형 선택</div>
                                 <img src={isRobotTypeSelected ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
                             </div>
                             {isRobotTypeSelected && (
@@ -684,6 +684,7 @@ export default function Page({ robots }: RobotScheduleProps) {
                                             title={ev.title}
                                             onClick={() => handleClickWeekEvent(ev)}
                                         >
+                                            <span className={styles.eventCircle}></span>
                                             {ev.title}
                                         </div>
                                         );

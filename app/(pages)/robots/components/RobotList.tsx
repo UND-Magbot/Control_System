@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import styles from './RobotList.module.css';
 import Pagination from "@/app/components/pagination";
 import type { RobotRowData, BatteryItem, Camera, Floor, Video, NetworkItem, PowerItem, LocationItem } from '@/app/type';
@@ -12,8 +12,13 @@ import RobotWorkScheduleModal from "@/app/components/modal/WorkScheduleModal";
 import type { WorkScheduleCase } from "@/app/components/modal/WorkScheduleModal";
 import PlacePathModal from "@/app/components/modal/PlacePathModal";
 import BatteryPathModal from "@/app/components/modal/BatteryChargeModal";
+import { mockPlaceRows, type PlaceRow } from "@/app/mock/robotPlace_data";
+import PlaceCrudModal, { type PlaceRowData } from "./PlaceCrudModal";
+import PlaceDeleteConfirmModal from "./PlaceDeleteConfirmModal";
+import PlaceMapView from "./PlaceMapView";
 
-const PAGE_SIZE = 8;
+const ROBOT_PAGE_SIZE  = 8;
+const PLACE_PAGE_SIZE = 10;
 
 interface RobotStatusListProps {
   cameras: Camera[];
@@ -79,7 +84,7 @@ export default function RobotStatusList({
   const isCrudDisabled = checkedCount >= 1;       // (요구1) 1개라도 체크되면 CRUD 비활성
   const isSingleChecked = checkedCount === 1;     // (요구2) 정확히 1개일 때만 활성
   const isAnyChecked = checkedCount >= 1;         // (요구3) 1개 이상이면 활성
-
+  
   const isWorkScheduleDisabled = !isSingleChecked; // 0개 or 2개 이상 비활성
   const isPlaceMoveDisabled = !isSingleChecked;    // 0개 or 2개 이상 비활성
   const isChargeMoveDisabled = !isAnyChecked;      // 0개만 비활성
@@ -195,8 +200,8 @@ export default function RobotStatusList({
   }
 
   const totalItems = currentData.length;
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const currentItems = currentData.slice(startIndex, startIndex + PAGE_SIZE);
+  const startIndex = (currentPage - 1) * ROBOT_PAGE_SIZE;
+  const currentItems = currentData.slice(startIndex, startIndex + ROBOT_PAGE_SIZE);
 
   const handleTabClick = (tab: "robots" | "place" | "path") => {
     setActiveTab(tab);
@@ -445,6 +450,198 @@ const resetCurrentPage = () => {
   const handleSendLogCancel = () => {
     setShowConfirm(false);
   };
+
+   // 장소관리
+  const [placeRobotOpen, setPlaceRobotOpen] = useState(false);
+  const [placeFloorOpen, setPlaceFloorOpen] = useState(false);
+  const [placeRows, setPlaceRows] = useState<PlaceRow[]>(mockPlaceRows);
+  const placeRobotWrapperRef = useRef<HTMLDivElement>(null);
+  const placeFloorWrapperRef = useRef<HTMLDivElement>(null);
+
+  const [selectedPlaceRobot, setSelectedPlaceRobot] = useState<string | null>(null); // null=Total
+  const [selectedPlaceFloor, setSelectedPlaceFloor] = useState<string | null>(null); // null=Total
+  const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+
+  // ✅ 로봇 탭 checkedRobotIds와 동일 패턴
+  const [checkedPlaceIds, setCheckedPlaceIds] = useState<number[]>([]);
+  const placeCheckedCount = checkedPlaceIds.length;
+
+  // ✅ 조건4 정책 (요구대로)
+  const isPlaceCreateEnabled = placeCheckedCount === 0;
+  const isPlaceEditEnabled = placeCheckedCount === 1;
+  const isPlaceDeleteEnabled = placeCheckedCount >= 1;
+
+  // ✅ 체크 1개일 때만 선택 장소(단일) 계산
+  const singleCheckedPlaceRow = useMemo(() => {
+    if (checkedPlaceIds.length !== 1) return null;
+    const id = checkedPlaceIds[0];
+    return placeRows.find((r) => r.id === id) ?? null;
+  }, [checkedPlaceIds, placeRows]);
+
+  const [places, setPlaces] = useState<PlaceRowData[]>([
+    {
+      id: 1,
+      robotNo: "Robot 1",
+      floor: "1F",
+      name: "병원대기 2",
+      x: "62.2803218070417",
+      y: "51.71609980765794",
+      desc: "대학병원 대기공간",
+      updatedAt: "2025.12.12 오전 10:35:47",
+    },
+  ]);
+
+  const placeRobotOptions = useMemo(() => {
+    const set = new Set(mockPlaceRows.map(r => r.robotNo));
+    return Array.from(set);
+  }, []);
+
+  const placeFloorOptions = useMemo(() => {
+    const set = new Set(mockPlaceRows.map(r => r.floor));
+    // 층 정렬(원하면 커스텀)
+    return Array.from(set);
+  }, []);
+
+  // 외부 클릭 닫기(useEffect 기존 핸들러에 추가)
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      // ...기존 robots/battery/... 닫기 로직들
+
+      if (placeRobotWrapperRef.current && !placeRobotWrapperRef.current.contains(e.target as Node)) {
+        setPlaceRobotOpen(false);
+      }
+      if (placeFloorWrapperRef.current && !placeFloorWrapperRef.current.contains(e.target as Node)) {
+        setPlaceFloorOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  const toPlaceRowData = (row: PlaceRow): PlaceRowData => ({
+    id: row.id,
+    robotNo: row.robotNo,
+    floor: row.floor,
+    name: row.placeName,
+    x: String(row.x),
+    y: String(row.y),
+    desc: "",
+    updatedAt: row.updatedAt,
+  });
+
+  // place 탭 데이터 필터
+  const filteredPlaceRows = useMemo(() => {
+    return placeRows.filter((r) => {
+      const robotOk = !selectedPlaceRobot || r.robotNo === selectedPlaceRobot;
+      const floorOk = !selectedPlaceFloor || r.floor === selectedPlaceFloor;
+      return robotOk && floorOk;
+    });
+  }, [placeRows, selectedPlaceRobot, selectedPlaceFloor]);
+
+  const selectedPlaceRow = useMemo(() => {
+    if (selectedPlaceId == null) return null;
+    return filteredPlaceRows.find(r => r.id === selectedPlaceId) ?? null;
+  }, [selectedPlaceId, filteredPlaceRows]);
+
+  const selectedPlace = useMemo(
+    () => places.find((p) => p.id === selectedPlaceId) ?? null,
+    [places, selectedPlaceId]
+  );
+
+  // 모달 open/close
+  const [placeCreateOpen, setPlaceCreateOpen] = useState(false);
+  const [placeEditOpen, setPlaceEditOpen] = useState(false);
+  const [placeDeleteConfirmOpen, setPlaceDeleteConfirmOpen] = useState(false);
+
+  const FLOORS = ["B1", "1F", "2F", "3F", "4F"];
+
+  const openPlaceCreate = () => {
+    if (!isPlaceCreateEnabled) return;
+    setPlaceCreateOpen(true);
+  };
+
+  const openPlaceEdit = () => {
+    if (!isPlaceEditEnabled) {return;}
+    setPlaceEditOpen(true);
+  };
+
+  const openPlaceDelete = () => {
+    if (!isPlaceDeleteEnabled) {return;}
+    setPlaceDeleteConfirmOpen(true);
+  };
+
+  const upsertPlace = (payload: PlaceRowData) => {
+    const nextRow: PlaceRow = {
+      id: payload.id,
+      robotNo: payload.robotNo,
+      floor: payload.floor,
+      placeName: payload.name,
+      x: Number(payload.x),
+      y: Number(payload.y),
+      updatedAt: payload.updatedAt,
+    };
+
+    setPlaceRows((prev) => {
+      const exists = prev.some((p) => p.id === nextRow.id);
+      if (exists) return prev.map((p) => (p.id === nextRow.id ? nextRow : p));
+      return [nextRow, ...prev];
+    });
+
+    // 수정/등록 후 선택 정책(원하면 1건만 선택 상태로)
+    setCheckedPlaceIds([nextRow.id]);
+
+    setPlaceCreateOpen(false);
+    setPlaceEditOpen(false);
+  };
+
+  const confirmDeletePlace = () => {
+    if (checkedPlaceIds.length === 0) return;
+    const del = new Set(checkedPlaceIds);
+
+    setPlaceRows((prev) => prev.filter((p) => !del.has(p.id)));
+    setCheckedPlaceIds([]);
+    setPlaceDeleteConfirmOpen(false);
+  };
+
+  const placeTotalItems = filteredPlaceRows.length;
+  const placeStartIndex = (placePage - 1) * PLACE_PAGE_SIZE;
+  const currentPlaceItems = filteredPlaceRows.slice(
+    placeStartIndex,
+    placeStartIndex + PLACE_PAGE_SIZE
+  );
+
+  const togglePlaceChecked = (placeId: number, checked: boolean) => {
+    setCheckedPlaceIds((prev) => {
+      const next = checked
+        ? Array.from(new Set([...prev, placeId]))
+        : prev.filter((id) => id !== placeId);
+
+      // 1개만 체크됐을 때만 “선택 장소”로 인정
+      setSelectedPlaceId(next.length === 1 ? next[0] : null);
+
+      return next;
+    });
+  };
+
+  const toggleAllCurrentPlaceItems = (checked: boolean) => {
+    const currentPageIds = currentPlaceItems.map((r) => r.id);
+
+    setCheckedPlaceIds((prev) => {
+      const next = checked
+        ? Array.from(new Set([...prev, ...currentPageIds]))
+        : prev.filter((id) => !currentPageIds.includes(id));
+
+      setSelectedPlaceId(next.length === 1 ? next[0] : null);
+      return next;
+    });
+  };
+
+  const isAllCurrentPlaceItemsChecked = currentPlaceItems.length > 0 && currentPlaceItems.every((r) => checkedPlaceIds.includes(r.id));
+
+
+
+
 
   return (
     <>
@@ -789,7 +986,7 @@ const resetCurrentPage = () => {
         </div>
         <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots} />
         <div className={styles.pagePosition}>
-          <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={getPageSetter()} pageSize={PAGE_SIZE} blockSize={5} />
+          <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={getPageSetter()} pageSize={ROBOT_PAGE_SIZE} blockSize={5} />
         </div>
         <div className={styles.bottomPosition}>
             <div style={{pointerEvents: isCrudDisabled ? "none" : "auto", opacity: isCrudDisabled ? 0.4 : 1, cursor:"pointer" }}
@@ -842,20 +1039,20 @@ const resetCurrentPage = () => {
         <div></div>
       </div>
       <RobotWorkScheduleModal
-  isOpen={robotWorkScheduleModalOpen}
-  onClose={() => setRobotWorkScheduleModalOpen(false)}
-  selectedRobotIds={checkedRobotIds}
-  scheduleCase={workScheduleCase}
-  completedPathText={completedPathText}
-  onConfirmReturn={() => {
-    // TODO: 실제 “작업스케줄 복귀” 명령 API/WS 호출
-    console.log("작업스케줄 복귀 실행:", selectedRobotId);
-  }}
-  onConfirmWhenNone={() => {
-    // TODO: 작업일정 등록 페이지 이동 등
-    console.log("등록된 작업일정 없음 확인");
-  }}
-/>
+        isOpen={robotWorkScheduleModalOpen}
+        onClose={() => setRobotWorkScheduleModalOpen(false)}
+        selectedRobotIds={checkedRobotIds}
+        scheduleCase={workScheduleCase}
+        completedPathText={completedPathText}
+        onConfirmReturn={() => {
+          // TODO: 실제 “작업스케줄 복귀” 명령 API/WS 호출
+          console.log("작업스케줄 복귀 실행:", selectedRobotId);
+        }}
+        onConfirmWhenNone={() => {
+          // TODO: 작업일정 등록 페이지 이동 등
+          console.log("등록된 작업일정 없음 확인");
+          }}
+      />
       <PlacePathModal isOpen={placePathModalOpen} onClose={() => setPlacePathModalOpen(false)} selectedRobotIds={checkedRobotIds}/>
       {showConfirm && (
         <BatteryPathModal
@@ -881,16 +1078,232 @@ const resetCurrentPage = () => {
     </div>
   )}
 
-  {activeTab === "place" && (
-    <div className={styles.place}>
-        <div className={styles.container}>
-            <img src="/icon/coming-soon.png" alt="Coming Soon" />
-            <div className={styles.topTitle}>COMING SOON</div>
-            <div className={styles.contentText}>We Are Preparing This Service</div>
+{activeTab === "place" && (
+    <div className={styles.placeWrap}>
+      {/* LEFT: 장소 목록 */}
+      <div className={styles.placeLeft}>
+        <div className={styles.placeTopBar}>
+          <h2>장소 목록</h2>
+
+          <div className={styles.placeFilters}>
+            {/* 로봇명 선택 */}
+            <div ref={placeRobotWrapperRef} className={styles.selecteWrapper}>
+              <div className={styles.selecte} onClick={() => setPlaceRobotOpen(v => !v)}>
+                <span>{selectedPlaceRobot ?? "로봇명 선택"}</span>
+                <img src={placeRobotOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+              </div>
+              {placeRobotOpen && (
+                <div className={styles.selectebox}>
+                  <div
+                    className={!selectedPlaceRobot ? styles.active : ""}
+                    onClick={() => { setSelectedPlaceRobot(null); setPlaceRobotOpen(false); setSelectedPlaceId(null); }}
+                  >
+                    Total
+                  </div>
+                  {placeRobotOptions.map((no) => (
+                    <div
+                      key={no}
+                      className={selectedPlaceRobot === no ? styles.active : ""}
+                      onClick={() => { setSelectedPlaceRobot(no); setPlaceRobotOpen(false); setSelectedPlaceId(null); }}
+                    >
+                      {no}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 층별 선택 */}
+            <div ref={placeFloorWrapperRef} className={styles.selecteWrapper}>
+              <div className={styles.selecte} onClick={() => setPlaceFloorOpen(v => !v)}>
+                <span>{selectedPlaceFloor ?? "층별 선택"}</span>
+                <img src={placeFloorOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+              </div>
+              {placeFloorOpen && (
+                <div className={styles.selectebox}>
+                  <div
+                    className={!selectedPlaceFloor ? styles.active : ""}
+                    onClick={() => { setSelectedPlaceFloor(null); setPlaceFloorOpen(false); setSelectedPlaceId(null); }}
+                  >
+                    Total
+                  </div>
+                  {placeFloorOptions.map((f) => (
+                    <div
+                      key={f}
+                      className={selectedPlaceFloor === f ? styles.active : ""}
+                      onClick={() => { setSelectedPlaceFloor(f); setPlaceFloorOpen(false); setSelectedPlaceId(null); }}
+                    >
+                      {f}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <div className={styles.pagenationPosition}>
-            {/* <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={setCurrentPage} pageSize={PAGE_SIZE} blockSize={5} /> */}
+
+        <div className={styles.placeListBox}>
+          <table className={`${styles.status} ${styles.placeTable}`}>
+            <thead>
+              <tr>
+                <th>
+                    <img
+                      src={
+                        isAllCurrentPlaceItemsChecked
+                          ? "/icon/robot_chk.png"
+                          : "/icon/robot_none_chk.png"
+                      }
+                      alt="현재 페이지 장소 전체 선택"
+                      role="button"
+                      tabIndex={0}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => toggleAllCurrentPlaceItems(!isAllCurrentPlaceItemsChecked)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          toggleAllCurrentPlaceItems(!isAllCurrentPlaceItemsChecked);
+                        }
+                      }}
+                    />
+                </th>
+                <th>로봇명</th>
+                <th>층별</th>
+                <th>장소명</th>
+                <th>좌표(X, Y)</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {currentPlaceItems.map((row) => {
+                const checked = checkedPlaceIds.includes(row.id);
+
+                return (
+                  <tr
+                    key={row.id}
+                    className={checked ? styles.selectedRow : undefined}
+                  >
+                    <td>
+                      <img
+                        src={checked ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"}
+                        alt=""
+                        role="button"
+                        tabIndex={0}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => togglePlaceChecked(row.id, !checked)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            togglePlaceChecked(row.id, !checked);
+                          }
+                        }}
+                      />
+                    </td>
+                    <td>{row.robotNo}</td>
+                    <td>{row.floor}</td>
+                    <td>{row.placeName}</td>
+                    <td>X {row.x.toFixed(2)}, Y {row.y.toFixed(2)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
+
+        {/* pagination(필요 시 Robot 탭과 동일 Pagination 컴포넌트 연결) */}
+        <div className={styles.placePagination}>
+          <Pagination totalItems={placeTotalItems} currentPage={placePage} onPageChange={setPlacePage} pageSize={PLACE_PAGE_SIZE} blockSize={5} />
+        </div>
+
+        <div className={`${styles.bottomPosition} ${styles.placeBottomPosition}`}>
+          <div
+            className={styles.placePrimaryBtn}
+            aria-disabled={!isPlaceCreateEnabled}
+            style={{
+              pointerEvents: isPlaceCreateEnabled ? "auto" : "none",
+              opacity: isPlaceCreateEnabled ? 1 : 0.4,
+            }}
+            onClick={openPlaceCreate}
+          >
+            <img src="/icon/check.png" alt="check" />
+            <span>장소 등록</span>
+          </div>
+
+          <div className={styles.robotWorkBox}>
+            <div
+              className={styles.robotWorkCommonBtn}
+              onClick={openPlaceDelete}
+              aria-disabled={selectedPlaceId == null}
+              style={{
+                pointerEvents: selectedPlaceId == null ? "none" : "auto",
+                opacity: selectedPlaceId == null ? 0.4 : 1,
+              }}
+            >
+              {/* 아이콘이 있으면 img로 교체 */}
+              <img src="/icon/delete_icon.png" alt="" />
+              장소 삭제
+            </div>
+
+            <div
+              className={styles.robotWorkCommonBtn}
+              onClick={openPlaceEdit}
+              aria-disabled={selectedPlaceId == null}
+              style={{
+                pointerEvents: selectedPlaceId == null ? "none" : "auto",
+                opacity: selectedPlaceId == null ? 0.4 : 1,
+              }}
+            >
+              <img src="/icon/edit_icon.png" alt="" />
+              장소 수정
+            </div>
+          </div>
+        </div>
+      </div>
+      <PlaceCrudModal
+        isOpen={placeCreateOpen}
+        mode="create"
+        robots={robots}
+        floors={FLOORS}
+        initial={null}
+        onClose={() => setPlaceCreateOpen(false)}
+        onSubmit={upsertPlace}
+      />
+
+      <PlaceCrudModal
+        isOpen={placeEditOpen}
+        mode="edit"
+        robots={robots}
+        floors={FLOORS}
+        initial={singleCheckedPlaceRow ? toPlaceRowData(singleCheckedPlaceRow) : null}
+        onClose={() => setPlaceEditOpen(false)}
+        onSubmit={upsertPlace}
+      />
+
+      <PlaceDeleteConfirmModal
+        isOpen={placeDeleteConfirmOpen}
+        message={
+          checkedPlaceIds.length <= 1
+            ? "선택한 장소를 정말 삭제하시겠습니까?"
+            : `${checkedPlaceIds.length}개의 장소를 정말 삭제하시겠습니까?`
+        }
+        onCancel={() => setPlaceDeleteConfirmOpen(false)}
+        onConfirm={confirmDeletePlace}
+      />
+
+      {/* RIGHT: 위치 맵 */}
+      <div className={styles.placeRight}>
+        <div className={styles.robotPlaceBox}>
+          <h2>위치 맵</h2>
+        </div>
+
+        <div className={styles.placeMapCard}>
+          <PlaceMapView
+            selectedPlaceId={selectedPlaceId}
+            selectedPlace={singleCheckedPlaceRow}   // 이미 memo로 계산해둔 값
+            placeRows={placeRows}                   // 전체 장소 목록
+          />
+        </div>
+          <div className={styles.placeHint}>
+            • 해당 장소의 좌표(X, Y) 입력은 “장소 등록” 화면에서 작성하실 수 있습니다.
+          </div>
+      </div>
     </div>
   )}
 

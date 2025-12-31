@@ -35,8 +35,7 @@
 .RobotStatusTopPosition {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 7px;
   height: 40px;
 }
 
@@ -46,7 +45,7 @@
 }
 
 .statusListBox {
-  height: 480px;
+  height: 552px;
 }
 
 .status {
@@ -173,7 +172,12 @@
 
 .pagePosition {
   justify-items: center;
-  margin-bottom: 33px;
+  margin-bottom: 15px;
+}
+
+.placePagination {
+  justify-items: center;
+  margin-bottom: 8px;
 }
 
 .robotWorkBox {
@@ -182,10 +186,10 @@
 }
 
 .robotWorkCommonBtn {
-  width: 110px;
-  height: 29px;
+  width: 120px;
+  height: 39px;
 
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 12px;
 
   background: #3F4256;
@@ -310,13 +314,25 @@
 
 
 .RobotStatusList h2,
-.cameraMapView h2 {
+.cameraMapView h2,
+.robotPlaceBox h2,
+.placeTopBar h2 {
   font-weight: 500;
   margin: 0;
   color: #92d4f4;
 }
 
-.cameraMapView h2 {
+.cameraMapView {
+  margin-bottom: 15px;
+}
+
+.robotPlaceBox {
+  margin-bottom: 15px;
+  height: 40px;
+}
+
+.cameraMapView h2,
+.robotPlaceBox h2 {
   margin-bottom: 15px;
 }
 
@@ -440,4 +456,235 @@
     font-size: 15px;
     font-weight: 400;
     color: #aaadbf;
+}
+
+/* 장소관리 css */
+
+/* place 탭 레이아웃: 좌(리스트) + 우(맵) */
+.placeWrap {
+  width: 100%;
+  height: 730px;
+  background: #282d43;
+  border-radius: 10px;
+  padding: 20px;
+
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.placeLeft {
+  flex: 1 1 40%;
+  min-width: 0;
+}
+
+.placeRight {
+  flex: 1 1 60%;
+  min-width: 0;
+}
+
+/* 타이틀 라인: h2 + 필터 2개 */
+.placeTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  height: 40px;
+}
+
+.placeFilters {
+  display: flex;
+  gap: 10px;
+}
+
+/* 장소 테이블: 기존 status 톤 유지, 열 폭만 별도 지정 */
+.placeTable th:nth-child(1) { width: 6%; }
+.placeTable th:nth-child(2) { width: 18%; } /* 로봇명 */
+.placeTable th:nth-child(3) { width: 12%; } /* 층별 */
+.placeTable th:nth-child(4) { width: 34%; } /* 장소명 */
+.placeTable th:nth-child(5) { width: 30%; } /* 좌표 */
+
+/* 맵 카드: 기존 commonBox 톤을 기반으로 스크린샷 형태에 맞춤 */
+.placeMapCard {
+  width: 928px;
+  height: 522px;
+
+  border-radius: 18px;
+  
+  background: #262A3E;
+  
+  overflow: hidden;
+  position: relative;
+  
+  box-sizing: border-box;
+}
+
+.placeRobotMarkerLabel {
+  background: #FF0000;
+  border-radius: 10px;
+  padding: 2px 8px;
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* 하단 안내 문구 */
+.placeHint {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #9DADCB;
+  opacity: 0.9;
+  text-align: right;
+}
+
+.placePrimaryBtn {
+  width: 120px;
+  height: 35px;
+  border-radius: 8px;
+  padding: 8px 14px;
+
+  background: #284A68;   /* 첨부 이미지의 장소 등록 버튼 톤 */
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.placePrimaryBtn:disabled {
+  opacity: 0.4;
+  background: #3a3f55; /* 기존 톤 유지 */
+}
+
+/* 아이콘을 이미지로 쓰지 않고 체크 문자로 처리할 때 */
+.placePrimaryBtn img {
+  width: 11px;
+  height: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== 장소 관리 탭 ===== */
+.placeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+}
+
+.placeActions {
+  display: flex;
+  gap: 10px;
+}
+
+.placeAddBtn {
+  width: 110px;
+  height: 29px;
+  border-radius: 6px;
+  padding: 8px 12px;
+
+  background: #196188;
+  border: 1px solid #0D86B9;
+
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.placeAddBtn img {
+  height: 12px;
+}
+
+.placeGrayBtn {
+  width: 110px;
+  height: 29px;
+  border-radius: 6px;
+  padding: 8px 12px;
+
+  background: #3F4256;
+  border: 1px solid rgba(255,255,255,0.25);
+
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.placeGrayBtn img {
+  height: 12px;
+}
+
+.placeListBox {
+  height: 565px;
+}
+
+.placeTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.placeTable thead tr {
+  background: #202334;
+}
+
+.placeTable th,
+.placeTable td {
+  padding: 5px 0;
+  height: 50px;
+}
+
+.placeTable th {
+  position: relative;
+  color: #9DADCB;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.placeTable tbody td {
+  color: #b9c1cb;
+  font-size: 14px;
+}
+
+.placeTable thead th:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.placeTable tr:nth-child(2n) {
+  background-color: rgba(51, 56, 76, 0.8);
+}
+
+.selectedPlaceRow td {
+  background: #214766;
+}
+
+.coordText {
+  display: inline-block;
+  margin: 0 6px;
+  font-size: 12px;
+  color: #cfd6e6;
 }

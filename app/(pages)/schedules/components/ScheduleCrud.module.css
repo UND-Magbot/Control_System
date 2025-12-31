@@ -12,7 +12,7 @@
 .scheduleModalContainer {
 
   width: 600px;
-  height: 757px;
+  height: auto;
   border-radius: 17px;
 
   padding: 25px 31px;
@@ -64,7 +64,7 @@
 
 .itemContainer {
     width: 100%;
-    height: 562px;
+    height: auto;
 
     border-radius: 15px;
 
@@ -105,6 +105,60 @@
     color: #FFFFFF;
 }
 
+.repeatDateFlex {
+  display: grid;
+  grid-template-columns: repeat(7, 34px) 40px;
+  justify-items: center;
+  align-items: center;
+  gap: 8px;
+
+  width: 373px;
+  height: 100%;
+
+  font-size: 12px;
+}
+
+.repeatDateFlex .dateItem {
+  width: 100%;
+  line-height: 25px;
+
+  border-radius: 5px;
+  border: 1px solid #8AACC7;
+
+  text-align: center;
+
+  background: #454B67;
+
+  cursor: pointer;
+}
+
+.itemEndDateBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 120px;
+  height: 30px;
+  
+  border-radius: 5px;
+  border: 1px solid #8AACC7;
+  
+  padding: 0 10px;
+  margin-left: 15px;
+  
+  font-size: 13px;
+}
+
+.repeatDateFlex .repeatDateItem img {
+  width: 11px;
+  height: 11px;
+
+  margin-right: 5px;
+
+  cursor: pointer;
+}
+
+
 .itemBox input {
     width: 373px;
     height: 35px;
@@ -127,10 +181,15 @@
 }
 
 .seletWrapper {
-    position: relative;
+  position: relative;
+ 
+  width: 373px;
+  height: 100%;
+}
 
-    width: 373px;
-    height: 35px;
+.editSeletWrapper {
+  position: relative;
+  height: 100%;
 }
 
 .itemSelectBox {
@@ -192,6 +251,8 @@
   height: 12px;
 
   margin-right: 5px;
+
+  cursor: pointer;
 }
 
 .itemDateBox {
@@ -220,15 +281,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    cursor: pointer;
 }
 
-.itemDateBox .itemAmPm,
-.itemDateBox .itemHour,
-.itemDateBox .itemMinute {
+.itemDateBox .createitemAmPm,
+.itemDateBox .createitemHour,
+.itemDateBox .createitemMinute {
     width: 63px;
     height: 35px;
-
-    background: #454B67;
 
     border-radius: 4px;
     border: 1px solid #8AACC7;
@@ -238,11 +299,29 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    cursor: pointer;
+}
+
+.itemDateBox .itemAmPm,
+.itemDateBox .itemHour,
+.itemDateBox .itemMinute {
+    width: 63px;
+    height: 35px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    cursor: pointer;
 }
 
 .itemDateBox .itemAmPm img,
 .itemDateBox .itemHour img,
-.itemDateBox .itemMinute img {
+.itemDateBox .itemMinute img,
+.itemDateBox .createitemAmPm img,
+.itemDateBox .createitemHour img,
+.itemDateBox .createitemMinute img {
     width: 13px;
     height: 8px;
 }
@@ -424,4 +503,137 @@
 .itemScroll {
     padding: 12px 10px;
     line-height: 150%;
+}
+
+/* ====== (추가) 수정모드: 작업일시 레이아웃 보정 ====== */
+.itemDateBoxRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* itemDateBox 내부 첫 라벨(시작/종료) 폭 고정 */
+.itemDateLabel {
+  width: 32px;
+  text-align: left;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+/* ====== (추가) 수정모드: 반복요일 버튼 ====== */
+.repeatDayBtn {
+  width: 35px;
+  height: 35px;
+  border-radius: 6px;
+  border: 1px solid #8AACC7;
+  background: #454B67;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.repeatDayBtnActive {
+  background: #196189;
+  border-color: #0E85B7;
+}
+
+/* ====== (추가) 수정모드: '매일' 체크 UI를 이미지 톤으로 ====== */
+.everydayBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #ffffff;
+}
+
+/* 기본 체크박스는 숨기고 아이콘으로 표현하려면(선택) */
+.everydayBox input {
+  width: 14px;
+  height: 14px;
+
+  background: transparent;
+  border: none;
+}
+
+/* ====== (추가) 수정모드: 반복종료 '종료 날짜' 박스 ====== */
+.repeatEndDateBox {
+  width: 118px;
+  height: 35px;
+
+  background: #454B67;
+  border: 1px solid #8AACC7;
+  border-radius: 4px;
+
+  padding: 0 7px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.repeatEndDateBoxDisabled {
+  opacity: 0.6;
+}
+
+.repeatEndDateText {
+  white-space: nowrap;
+}
+
+.repeatEndDateBox img {
+  width: 14px;
+  height: 14px;
+}
+
+/* 수정모드 input 텍스트 색상 */
+.editInput {
+  color: #ffffff;
+}
+
+/* placeholder는 가독성을 위해 살짝 톤 다운 권장 */
+.editInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+
+/* itemSelectBox도 높이를 wrapper에 맞추고, 폰트/패딩은 유지 */
+.itemSelectBox {
+  width: 373px;
+  height: 100%;
+
+
+  padding: 0 11px;
+  font-weight: 400;
+  font-size: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  cursor: pointer;
+}
+
+/* 드롭다운도 wrapper 폭을 그대로 쓰게 */
+.seletbox {
+  width: 100%;
+  max-height: 200px;
+  font-size: 13px;
+
+  padding: 9px;
+  background: #202334;
+  border-radius: 5px;
+
+  position: absolute;
+  top: calc(100% + 10px);
+
+  cursor: pointer;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.noMb {
+  margin-bottom: unset;
 }

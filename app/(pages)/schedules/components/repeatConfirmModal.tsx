@@ -11,6 +11,7 @@ import { mockPlaces } from '@/app/mock/place_data';
 type WorkModalProps = {
     isOpen: boolean;
     onClose: () => void;
+    onCancel?: () => void;
     selectedRobotIds: number[];
 }
 
@@ -25,6 +26,8 @@ type Place = {
 export default function RobotDetailModal({
     isOpen,
     onClose,
+    selectedRobotIds,
+    onCancel
 }:WorkModalProps ){
 
 

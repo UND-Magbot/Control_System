@@ -380,15 +380,24 @@
 .event {
   position: absolute;
   z-index: 3;
-  border-radius: 6px;
   padding: 6px 8px;
   font-size: 11px;
   color: #e8ebf2;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  border: 1px solid rgba(255, 255, 255, 0.16);
   box-sizing: border-box;
+
+  cursor: pointer;
+}
+
+.eventCircle {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #92D050;
+  border-radius: 50%;
+  margin-right: 6px;
 }
 
 /* 필터 조건 영역 */
