@@ -88,9 +88,9 @@ export default function CameraView({
     -------------------------------------------------- */
     const mapResolution = 0.1;
     const mapOriginX = -19.9;
-    const mapOriginY = -15.5;
+    const mapOriginY = -18.4;
     const mapPixelWidth = 427;
-    const mapPixelHeight = 240;
+    const mapPixelHeight = 319;
 
     const worldToPixel = (x: number, y: number) => {
         const px = (x - mapOriginX) / mapResolution;
@@ -178,7 +178,7 @@ export default function CameraView({
        JSX
     -------------------------------------------------- */
     // const mapCurrentImage = "/map/occ_grid.png";
-      const mapCurrentImage = "/map/map_test_6_800x450.png";
+      const mapCurrentImage = "/map/occ_grid.png";
 
     return (
         <div className={styles.commonBox}>

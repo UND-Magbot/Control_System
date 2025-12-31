@@ -92,7 +92,7 @@ export default function RemoteModal({
   const innerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<HTMLImageElement | null>(null);
   // const mapImage = "/map/occ_grid.png";
-  const mapImage = "/map/map_test_3_240x240.png";
+  const mapImage = "/map/occ_grid.png";
 
 
   // map.yaml 정보
@@ -196,9 +196,9 @@ export default function RemoteModal({
   /* --- world → pixel --- */
   const mapResolution = 0.1;
   const mapOriginX = -19.9;
-  const mapOriginY = -14.9;
+  const mapOriginY = -18.4;
   const mapPixelWidth = 427;
-  const mapPixelHeight = 240;
+  const mapPixelHeight = 319;
 
   const offsetX = 0;
   const offsetY = 0;
@@ -452,28 +452,22 @@ type FlashTarget = "front" | "rear";
 type FlashValue = "on" | "off";
 
 const sendFlashCommand = async (target: FlashTarget, value: FlashValue) => {
-  // try {
-  //   const res = await fetch(`http://localhost:8000/robot/flash/${target}`, {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify({ value }),
-  //   });
-
-  //   if (!res.ok) {
-  //     throw new Error(`Flash ${target} ${value} failed`);
-  //   }
-
-  //   console.log(`FLASH ${target.toUpperCase()} → ${value.toUpperCase()}`);
-  // } catch (err) {
-  //   console.error(err);
-  // }
+  if(target == "front")
+  {
+    console.log("front");
+    if(value == "on") { fetch("http://localhost:8000/robot/front_on", { method: "POST" }); }
+    else{ fetch("http://localhost:8000/robot/front_off", { method: "POST" }); }
+  }
+  else
+  {
+    console.log("rear");
+    if(value == "on") { fetch("http://localhost:8000/robot/rear_on", { method: "POST" }); }
+    else{ fetch("http://localhost:8000/robot/rear_off", { method: "POST" }); }
+  }
 };
 
 const handleFlashFront = (value: FlashValue) => {
   if (flashFront === value) return; // 동일 값 클릭 방지
-
   setFlashFront(value);
   sendFlashCommand("front", value);
 };

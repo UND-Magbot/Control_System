@@ -32,7 +32,7 @@ export default function MapSection({ floors, robots, video, cameras }:FloorSelec
 
     const defaultFloorName = selectedFloor?.label || "1F";
     // const mapCurrentImage = "/map/occ_grid.png";
-    const mapCurrentImage = "/map/map_test_11_1200x1200.png";
+    const mapCurrentImage = "/map/occ_grid.png";
 
     // --- [2] FastAPI에서 로봇 좌표 실시간 가져오기 ---
       const [robotPos, setRobotPos] = useState({ x: 0, y: 0, yaw: 0 });
@@ -92,10 +92,10 @@ export default function MapSection({ floors, robots, video, cameras }:FloorSelec
       // --- [4] 로봇 좌표 → 이미지 픽셀 좌표 변환 --- 
       const mapResolution = 0.1;
       const mapOriginX = -19.9;
-      const mapOriginY = -13;
+      const mapOriginY = -18.4;
 
       const mapPixelWidth = 427;  // PGM 원본
-      const mapPixelHeight = 200;
+      const mapPixelHeight = 319;
 
       // FastAPI에서 가져온 실시간 로봇 좌표
 
