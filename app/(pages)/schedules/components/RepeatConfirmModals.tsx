@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from "react";
-import styles from "./RepeatConfirmModal.module.css";
+import styles from "./RepeatConfirmModals.module.css";
 
 export type RepeatConfirmMode = "edit" | "delete";
 export type RepeatConfirmScope = "this" | "thisAndFuture" | "all";
