@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useSearchParams } from "next/navigation";
 import styles from './RobotList.module.css';
 import Pagination from "@/app/components/pagination";
 import type { RobotRowData, BatteryItem, Camera, Floor, Video, NetworkItem, PowerItem, LocationItem } from '@/app/type';
@@ -13,12 +14,110 @@ import type { WorkScheduleCase } from "@/app/components/modal/WorkScheduleModal"
 import PlacePathModal from "@/app/components/modal/PlacePathModal";
 import BatteryPathModal from "@/app/components/modal/BatteryChargeModal";
 import { mockPlaceRows, type PlaceRow } from "@/app/mock/robotPlace_data";
+import { mockPathRows } from "@/app/mock/robotPath_data";
 import PlaceCrudModal, { type PlaceRowData } from "./PlaceCrudModal";
 import PlaceDeleteConfirmModal from "./PlaceDeleteConfirmModal";
 import PlaceMapView from "./PlaceMapView";
+import PathCrudModal from "@/app/(pages)/robots/components/PathCrudModal";
+import PathDeleteConfirmModal from "@/app/(pages)/robots/components/PathDeleteConfirmModal";
 
-const ROBOT_PAGE_SIZE  = 8;
+type FixedScrollbarArgs = {
+  enabled: boolean;
+  scrollRef: React.RefObject<HTMLElement | null>;
+  trackRef: React.RefObject<HTMLElement | null>;
+  thumbRef: React.RefObject<HTMLElement | null>;
+  thumbHeight?: number;
+  deps?: any[];
+};
+
+const robotTypes = ["환자 모니터링", "순찰/보안", "물품/약품 운반"];
+
+const parseUpdatedAt = (value: string) => {
+  const trimmed = value.trim();
+  const m = trimmed.match(
+    /^(\d{4})\.(\d{2})\.(\d{2})\s+(오전|오후)\s+(\d{2}):(\d{2}):(\d{2})$/
+  );
+  if (m) {
+    const yyyy = Number(m[1]);
+    const mm = Number(m[2]) - 1;
+    const dd = Number(m[3]);
+    const ampm = m[4];
+    let hh = Number(m[5]);
+    const mi = Number(m[6]);
+    const ss = Number(m[7]);
+    if (ampm === "오전") {
+      if (hh === 12) hh = 0;
+    } else {
+      if (hh !== 12) hh += 12;
+    }
+    return new Date(yyyy, mm, dd, hh, mi, ss).getTime();
+  }
+
+  const fallback = Date.parse(trimmed.replace(/\./g, "-"));
+  return Number.isNaN(fallback) ? 0 : fallback;
+};
+
+const useFixedSelectScrollbar = ({
+  enabled,
+  scrollRef,
+  trackRef,
+  thumbRef,
+  thumbHeight = 30,
+  deps = [],
+}: FixedScrollbarArgs) => {
+  useEffect(() => {
+    if (!enabled) return;
+
+    const scrollEl = scrollRef.current;
+    const trackEl = trackRef.current;
+    const thumbEl = thumbRef.current;
+    if (!scrollEl || !trackEl || !thumbEl) return;
+
+    const resizeThumb = () => {
+      const h = Math.min(thumbHeight, trackEl.clientHeight);
+      thumbEl.style.height = `${h}px`;
+      thumbEl.style.opacity =
+        scrollEl.scrollHeight > scrollEl.clientHeight ? "1" : "0";
+    };
+
+    const syncThumb = () => {
+      const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
+      const maxTop = trackEl.clientHeight - thumbEl.clientHeight;
+
+      if (maxScroll <= 0) {
+        thumbEl.style.top = "0px";
+        return;
+      }
+
+      const ratio = scrollEl.scrollTop / maxScroll;
+      thumbEl.style.top = `${ratio * maxTop}px`;
+    };
+
+    resizeThumb();
+    syncThumb();
+
+    scrollEl.addEventListener("scroll", syncThumb);
+    window.addEventListener("resize", resizeThumb);
+
+    const ro = new ResizeObserver(() => {
+      resizeThumb();
+      syncThumb();
+    });
+    ro.observe(scrollEl);
+    ro.observe(trackEl);
+
+    return () => {
+      scrollEl.removeEventListener("scroll", syncThumb);
+      window.removeEventListener("resize", resizeThumb);
+      ro.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, thumbHeight, ...deps]);
+};
+
+const ROBOT_PAGE_SIZE  = 10;
 const PLACE_PAGE_SIZE = 10;
+const PATH_PAGE_SIZE  = 10;
 
 interface RobotStatusListProps {
   cameras: Camera[];
@@ -54,6 +153,16 @@ export type PathItem = {
     cameraNo: string;
 }
 
+export type PathRow = {
+  id: number;
+  robotNo: string;
+  workType: string;
+  pathName: string;
+  pathOrder: string;
+  updatedAt: string;
+};
+
+
 export default function RobotStatusList({ 
   cameras,
   robots,
@@ -67,8 +176,6 @@ export default function RobotStatusList({
 
   const [robotActiveIndex, setRobotActiveIndex] = useState<number>(0);
   
-  const [isSelected, setIsSelected] = useState<number>(0);
-
   const [robotsActiveIndex, setRobotsActiveIndex] = useState<number>(0);
   const [batteryActiveIndex, setBatteryActiveIndex] = useState<number>(0);
   const [networkActiveIndex, setNetworkActiveIndex] = useState<number>(0);
@@ -106,18 +213,33 @@ export default function RobotStatusList({
 
   const [robotsIsOpen, setRobotsIsOpen] = useState(false);
   const robotsWrapperRef = useRef<HTMLDivElement>(null);
+  const robotsScrollRef = useRef<HTMLDivElement>(null);
+  const robotsTrackRef = useRef<HTMLDivElement>(null);
+  const robotsThumbRef = useRef<HTMLDivElement>(null);
 
   const [batteryIsOpen, setBatteryIsOpen] = useState(false);
   const batteryWrapperRef = useRef<HTMLDivElement>(null);
+  const batteryScrollRef = useRef<HTMLDivElement>(null);
+  const batteryTrackRef = useRef<HTMLDivElement>(null);
+  const batteryThumbRef = useRef<HTMLDivElement>(null);
 
   const [networkIsOpen, setNetworkIsOpen] = useState(false);
   const networkWrapperRef = useRef<HTMLDivElement>(null);
+  const networkScrollRef = useRef<HTMLDivElement>(null);
+  const networkTrackRef = useRef<HTMLDivElement>(null);
+  const networkThumbRef = useRef<HTMLDivElement>(null);
 
   const [powerIsOpen, setPowerIsOpen] = useState(false);
   const powerWrapperRef = useRef<HTMLDivElement>(null);
+  const powerScrollRef = useRef<HTMLDivElement>(null);
+  const powerTrackRef = useRef<HTMLDivElement>(null);
+  const powerThumbRef = useRef<HTMLDivElement>(null);
 
   const [locationIsOpen, setLocationIsOpen] = useState(false);
   const locationWrapperRef = useRef<HTMLDivElement>(null);
+  const locationScrollRef = useRef<HTMLDivElement>(null);
+  const locationTrackRef = useRef<HTMLDivElement>(null);
+  const locationThumbRef = useRef<HTMLDivElement>(null);
   
   // 여기 추가: 선택된 로봇 id (또는 전체 데이터)
   const [selectedRobotId, setSelectedRobotId] = useState<number | null>(null);
@@ -172,11 +294,25 @@ export default function RobotStatusList({
 
   // 탭메뉴
   const [activeTab, setActiveTab] = useState<"robots" | "place" | "path">("robots");
+  const searchParams = useSearchParams();
   
   // 탭별 페이지 상태
   const [robotsPage, setRobotsPage] = useState(1);
   const [placePage, setPlacePage] = useState(1);
   const [pathPage, setPathPage] = useState(1);
+  const handleRobotsPageChange = (page: number) => {
+    setRobotsPage(page);
+    setCheckedRobotIds([]);
+  };
+  const handlePlacePageChange = (page: number) => {
+    setPlacePage(page);
+    setCheckedPlaceIds([]);
+    setSelectedPlaceId(null);
+  };
+  const handlePathPageChange = (page: number) => {
+    setPathPage(page);
+    setCheckedPathIds([]);
+  };
 
   const placeData:PlaceItem[] = [];
   const pathData:PathItem[] = [];
@@ -212,10 +348,24 @@ export default function RobotStatusList({
     } else if (tab === "place" && activeTab !== "place") {
         setPlacePage(1);
 
-    } else if (tab === "path") {
+      } else if (tab === "path") {
         setPathPage(1);
+      }
+  };
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "robots" || tab === "place" || tab === "path") {
+      setActiveTab(tab);
+      if (tab === "robots") {
+        setRobotsPage(1);
+      } else if (tab === "place") {
+        setPlacePage(1);
+      } else if (tab === "path") {
+        setPathPage(1);
+      }
     }
-};
+  }, [searchParams]);
 
 const getPageSetter = () => {
     switch (activeTab) {
@@ -367,51 +517,6 @@ const resetCurrentPage = () => {
 
   const isAllCurrentItemsChecked = currentItems.length > 0 && currentItems.every((r) => checkedRobotIds.includes(r.id));
 
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        robotsWrapperRef.current &&
-        !robotsWrapperRef.current.contains(e.target as Node)
-      ) {
-        setRobotsIsOpen(false); // 외부 클릭 → 닫기
-      }
-
-      if (
-        batteryWrapperRef.current &&
-        !batteryWrapperRef.current.contains(e.target as Node)
-      ) {
-        setBatteryIsOpen(false); // 외부 클릭 → 닫기
-      }
-
-      if (
-        networkWrapperRef.current &&
-        !networkWrapperRef.current.contains(e.target as Node)
-      ) {
-        setNetworkIsOpen(false); // 외부 클릭 → 닫기
-      }
-
-      if (
-        powerWrapperRef.current &&
-        !powerWrapperRef.current.contains(e.target as Node)
-      ) {
-        setPowerIsOpen(false); // 외부 클릭 → 닫기
-      }
-
-      if (
-        locationWrapperRef.current &&
-        !locationWrapperRef.current.contains(e.target as Node)
-      ) {
-        setLocationIsOpen(false); // 외부 클릭 → 닫기
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, []);
-
   // 작업일정 복귀 시 조건에 따라 분기 처리
   const openWorkScheduleModal = () => {
 
@@ -457,6 +562,12 @@ const resetCurrentPage = () => {
   const [placeRows, setPlaceRows] = useState<PlaceRow[]>(mockPlaceRows);
   const placeRobotWrapperRef = useRef<HTMLDivElement>(null);
   const placeFloorWrapperRef = useRef<HTMLDivElement>(null);
+  const placeRobotScrollRef = useRef<HTMLDivElement>(null);
+  const placeRobotTrackRef = useRef<HTMLDivElement>(null);
+  const placeRobotThumbRef = useRef<HTMLDivElement>(null);
+  const placeFloorScrollRef = useRef<HTMLDivElement>(null);
+  const placeFloorTrackRef = useRef<HTMLDivElement>(null);
+  const placeFloorThumbRef = useRef<HTMLDivElement>(null);
 
   const [selectedPlaceRobot, setSelectedPlaceRobot] = useState<string | null>(null); // null=Total
   const [selectedPlaceFloor, setSelectedPlaceFloor] = useState<string | null>(null); // null=Total
@@ -492,32 +603,79 @@ const resetCurrentPage = () => {
   ]);
 
   const placeRobotOptions = useMemo(() => {
-    const set = new Set(mockPlaceRows.map(r => r.robotNo));
+    const set = new Set(robots.map((r) => r.no));
     return Array.from(set);
-  }, []);
+  }, [robots]);
 
   const placeFloorOptions = useMemo(() => {
-    const set = new Set(mockPlaceRows.map(r => r.floor));
+    const set = new Set(floors.map((f) => f.label));
     // 층 정렬(원하면 커스텀)
     return Array.from(set);
-  }, []);
+  }, [floors]);
 
-  // 외부 클릭 닫기(useEffect 기존 핸들러에 추가)
-  useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      // ...기존 robots/battery/... 닫기 로직들
+  const shouldShowPlaceRobotScroll = placeRobotOptions.length + 1 >= 5;
+  const shouldShowPlaceFloorScroll = placeFloorOptions.length + 1 >= 5;
+  const shouldShowRobotFilterScroll = robots.length + 1 >= 5;
+  const shouldShowBatteryFilterScroll = batteryStatus.length + 1 >= 5;
+  const shouldShowNetworkFilterScroll = networkStatus.length + 1 >= 5;
+  const shouldShowPowerFilterScroll = powerStatus.length + 1 >= 5;
+  const shouldShowLocationFilterScroll = locationStatus.length + 1 >= 5;
 
-      if (placeRobotWrapperRef.current && !placeRobotWrapperRef.current.contains(e.target as Node)) {
-        setPlaceRobotOpen(false);
-      }
-      if (placeFloorWrapperRef.current && !placeFloorWrapperRef.current.contains(e.target as Node)) {
-        setPlaceFloorOpen(false);
-      }
-    };
+  useFixedSelectScrollbar({
+    enabled: placeRobotOpen && shouldShowPlaceRobotScroll,
+    scrollRef: placeRobotScrollRef,
+    trackRef: placeRobotTrackRef,
+    thumbRef: placeRobotThumbRef,
+    deps: [placeRobotOptions.length, placeRobotOpen],
+  });
 
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
+  useFixedSelectScrollbar({
+    enabled: placeFloorOpen && shouldShowPlaceFloorScroll,
+    scrollRef: placeFloorScrollRef,
+    trackRef: placeFloorTrackRef,
+    thumbRef: placeFloorThumbRef,
+    deps: [placeFloorOptions.length, placeFloorOpen],
+  });
+
+  useFixedSelectScrollbar({
+    enabled: robotsIsOpen && shouldShowRobotFilterScroll,
+    scrollRef: robotsScrollRef,
+    trackRef: robotsTrackRef,
+    thumbRef: robotsThumbRef,
+    deps: [robots.length, robotsIsOpen],
+  });
+
+  useFixedSelectScrollbar({
+    enabled: batteryIsOpen && shouldShowBatteryFilterScroll,
+    scrollRef: batteryScrollRef,
+    trackRef: batteryTrackRef,
+    thumbRef: batteryThumbRef,
+    deps: [batteryStatus.length, batteryIsOpen],
+  });
+
+  useFixedSelectScrollbar({
+    enabled: networkIsOpen && shouldShowNetworkFilterScroll,
+    scrollRef: networkScrollRef,
+    trackRef: networkTrackRef,
+    thumbRef: networkThumbRef,
+    deps: [networkStatus.length, networkIsOpen],
+  });
+
+  useFixedSelectScrollbar({
+    enabled: powerIsOpen && shouldShowPowerFilterScroll,
+    scrollRef: powerScrollRef,
+    trackRef: powerTrackRef,
+    thumbRef: powerThumbRef,
+    deps: [powerStatus.length, powerIsOpen],
+  });
+
+  useFixedSelectScrollbar({
+    enabled: locationIsOpen && shouldShowLocationFilterScroll,
+    scrollRef: locationScrollRef,
+    trackRef: locationTrackRef,
+    thumbRef: locationThumbRef,
+    deps: [locationStatus.length, locationIsOpen],
+  });
 
   const toPlaceRowData = (row: PlaceRow): PlaceRowData => ({
     id: row.id,
@@ -532,11 +690,15 @@ const resetCurrentPage = () => {
 
   // place 탭 데이터 필터
   const filteredPlaceRows = useMemo(() => {
-    return placeRows.filter((r) => {
-      const robotOk = !selectedPlaceRobot || r.robotNo === selectedPlaceRobot;
-      const floorOk = !selectedPlaceFloor || r.floor === selectedPlaceFloor;
-      return robotOk && floorOk;
-    });
+    return placeRows
+      .filter((r) => {
+        const robotOk = !selectedPlaceRobot || r.robotNo === selectedPlaceRobot;
+        const floorOk = !selectedPlaceFloor || r.floor === selectedPlaceFloor;
+        return robotOk && floorOk;
+      })
+      .sort((a, b) => {
+        return parseUpdatedAt(b.updatedAt) - parseUpdatedAt(a.updatedAt);
+      });
   }, [placeRows, selectedPlaceRobot, selectedPlaceFloor]);
 
   const selectedPlaceRow = useMemo(() => {
@@ -639,8 +801,251 @@ const resetCurrentPage = () => {
 
   const isAllCurrentPlaceItemsChecked = currentPlaceItems.length > 0 && currentPlaceItems.every((r) => checkedPlaceIds.includes(r.id));
 
+  // =========================
+  // 경로 관리 (Path)
+  // =========================
+  const [pathRows, setPathRows] = useState<PathRow[]>(mockPathRows);
 
+  const [pathRobotOpen, setPathRobotOpen] = useState(false);
+  const [pathWorkTypeOpen, setPathWorkTypeOpen] = useState(false);
+  const pathRobotWrapperRef = useRef<HTMLDivElement>(null);
+  const pathWorkTypeWrapperRef = useRef<HTMLDivElement>(null);
+  const pathRobotScrollRef = useRef<HTMLDivElement>(null);
+  const pathRobotTrackRef = useRef<HTMLDivElement>(null);
+  const pathRobotThumbRef = useRef<HTMLDivElement>(null);
+  const pathWorkTypeScrollRef = useRef<HTMLDivElement>(null);
+  const pathWorkTypeTrackRef = useRef<HTMLDivElement>(null);
+  const pathWorkTypeThumbRef = useRef<HTMLDivElement>(null);
 
+  const [selectedPathRobot, setSelectedPathRobot] = useState<string | null>(null);   // null=Total
+  const [selectedPathWorkType, setSelectedPathWorkType] = useState<string | null>(null); // null=Total
+
+  const [checkedPathIds, setCheckedPathIds] = useState<number[]>([]);
+  const pathCheckedCount = checkedPathIds.length;
+
+  // 버튼 정책(이미지 동일)
+  // - 등록: 아무것도 선택 안했을 때만 활성
+  // - 수정: 1개 선택일 때만 활성
+  // - 삭제: 1개 이상 선택일 때 활성
+  const isPathCreateEnabled = pathCheckedCount === 0;
+  const isPathEditEnabled = pathCheckedCount === 1;
+  const isPathDeleteEnabled = pathCheckedCount >= 1;
+
+  // 옵션 리스트
+  const pathRobotOptions = useMemo(() => {
+    const set = new Set(robots.map(r => r.no));
+    return Array.from(set);
+  }, [robots]);
+
+  const pathWorkTypeOptions = useMemo(() => {
+    const set = new Set(robotTypes);
+    return Array.from(set);
+  }, [robotTypes]);
+
+  const shouldShowPathRobotScroll = pathRobotOptions.length + 1 >= 5;
+  const shouldShowPathWorkTypeScroll = pathWorkTypeOptions.length + 1 >= 5;
+
+  // 필터 적용
+  const filteredPathRows = useMemo(() => {
+    return pathRows
+      .filter((r) => {
+        const robotOk = !selectedPathRobot || r.robotNo === selectedPathRobot;
+        const typeOk = !selectedPathWorkType || r.workType === selectedPathWorkType;
+        return robotOk && typeOk;
+      })
+      .sort((a, b) => {
+        return parseUpdatedAt(b.updatedAt) - parseUpdatedAt(a.updatedAt);
+      });
+  }, [pathRows, selectedPathRobot, selectedPathWorkType]);
+
+  // 페이지 데이터
+  const pathTotalItems = filteredPathRows.length;
+  const pathStartIndex = (pathPage - 1) * PATH_PAGE_SIZE;
+  const currentPathItems = filteredPathRows.slice(pathStartIndex, pathStartIndex + PATH_PAGE_SIZE);
+
+  // 체크 토글
+  const togglePathChecked = (pathId: number, checked: boolean) => {
+    setCheckedPathIds((prev) => {
+      const next = checked
+        ? Array.from(new Set([...prev, pathId]))
+        : prev.filter((id) => id !== pathId);
+      return next;
+    });
+  };
+
+  const toggleAllCurrentPathItems = (checked: boolean) => {
+    const currentPageIds = currentPathItems.map((r) => r.id);
+
+    setCheckedPathIds((prev) => {
+      const next = checked
+        ? Array.from(new Set([...prev, ...currentPageIds]))
+        : prev.filter((id) => !currentPageIds.includes(id));
+      return next;
+    });
+  };  // ✅ 체크 1개일 때만 수정용 단일 row
+  const singleCheckedPathRow = useMemo(() => {
+    if (checkedPathIds.length !== 1) return null;
+    const id = checkedPathIds[0];
+    return pathRows.find((r) => r.id === id) ?? null;
+  }, [checkedPathIds, pathRows]);
+
+  // ✅ 모달 상태
+  const [pathCreateOpen, setPathCreateOpen] = useState(false);
+  const [pathEditOpen, setPathEditOpen] = useState(false);
+  const [pathDeleteConfirmOpen, setPathDeleteConfirmOpen] = useState(false);
+
+  // ✅ 등록/수정 저장
+  const upsertPath = (payload: { id?: number; robotNo: string; workType: string; pathName: string; pathOrder: string; }) => {
+    setPathRows((prev) => {
+      const updatedAt = (new Date()).toISOString(); // 내부용
+      const nowText = (() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const hh = String(d.getHours()).padStart(2, "0");
+        const mi = String(d.getMinutes()).padStart(2, "0");
+        const ss = String(d.getSeconds()).padStart(2, "0");
+        return `${yyyy}.${mm}.${dd} ${hh}:${mi}:${ss}`;
+      })();
+
+      if (payload.id != null) {
+        return prev.map((r) =>
+          r.id === payload.id
+            ? { ...r, ...payload, updatedAt: nowText }
+            : r
+        );
+      }
+
+      const nextId = prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1;
+      const nextRow: PathRow = {
+        id: nextId,
+        robotNo: payload.robotNo,
+        workType: payload.workType,
+        pathName: payload.pathName,
+        pathOrder: payload.pathOrder,
+        updatedAt: nowText,
+      };
+      return [nextRow, ...prev];
+    });
+
+    // ✅ 저장 후 선택 정책(1개만 선택되도록)
+    setCheckedPathIds([]);
+    setPathPage(1);
+    setPathCreateOpen(false);
+    setPathEditOpen(false);
+  };
+
+  // ✅ 삭제 확정
+  const confirmDeletePath = () => {
+    if (checkedPathIds.length === 0) return;
+    const del = new Set(checkedPathIds);
+    setPathRows((prev) => prev.filter((p) => !del.has(p.id)));
+    setCheckedPathIds([]);
+    setPathDeleteConfirmOpen(false);
+  };
+
+  // ✅ 버튼 핸들러 교체
+  const openPathCreate = () => {
+    if (!isPathCreateEnabled) return;
+    setPathCreateOpen(true);
+  };
+
+  const openPathEdit = () => {
+    if (!isPathEditEnabled) return;
+    setPathEditOpen(true);
+  };
+
+  const openPathDelete = () => {
+    if (!isPathDeleteEnabled) return;
+    setPathDeleteConfirmOpen(true);
+  };
+
+  const isAllCurrentPathItemsChecked =
+    currentPathItems.length > 0 && currentPathItems.every((r) => checkedPathIds.includes(r.id));
+
+  // 필터 변경 시 페이지/체크 초기화
+  const resetPathSelection = () => {
+    setCheckedPathIds([]);
+    setPathPage(1);
+  };
+
+  useFixedSelectScrollbar({
+    enabled: pathRobotOpen && shouldShowPathRobotScroll,
+    scrollRef: pathRobotScrollRef,
+    trackRef: pathRobotTrackRef,
+    thumbRef: pathRobotThumbRef,
+    deps: [pathRobotOptions.length, pathRobotOpen],
+  });
+
+  useFixedSelectScrollbar({
+    enabled: pathWorkTypeOpen && shouldShowPathWorkTypeScroll,
+    scrollRef: pathWorkTypeScrollRef,
+    trackRef: pathWorkTypeTrackRef,
+    thumbRef: pathWorkTypeThumbRef,
+    deps: [pathWorkTypeOptions.length, pathWorkTypeOpen],
+  });
+
+    useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        robotsWrapperRef.current &&
+        !robotsWrapperRef.current.contains(e.target as Node)
+      ) {
+        setRobotsIsOpen(false); // 외부 클릭 → 닫기
+      }
+
+      if (
+        batteryWrapperRef.current &&
+        !batteryWrapperRef.current.contains(e.target as Node)
+      ) {
+        setBatteryIsOpen(false); // 외부 클릭 → 닫기
+      }
+
+      if (
+        networkWrapperRef.current &&
+        !networkWrapperRef.current.contains(e.target as Node)
+      ) {
+        setNetworkIsOpen(false); // 외부 클릭 → 닫기
+      }
+
+      if (
+        powerWrapperRef.current &&
+        !powerWrapperRef.current.contains(e.target as Node)
+      ) {
+        setPowerIsOpen(false); // 외부 클릭 → 닫기
+      }
+
+      if (
+        locationWrapperRef.current &&
+        !locationWrapperRef.current.contains(e.target as Node)
+      ) {
+        setLocationIsOpen(false); // 외부 클릭 → 닫기
+      }
+
+      if (placeRobotWrapperRef.current && !placeRobotWrapperRef.current.contains(e.target as Node)) {
+        setPlaceRobotOpen(false);
+      }
+      
+      if (placeFloorWrapperRef.current && !placeFloorWrapperRef.current.contains(e.target as Node)) {
+        setPlaceFloorOpen(false);
+      }
+
+      if (pathRobotWrapperRef.current && !pathRobotWrapperRef.current.contains(e.target as Node)) {
+        setPathRobotOpen(false);
+      }
+
+      if (pathWorkTypeWrapperRef.current && !pathWorkTypeWrapperRef.current.contains(e.target as Node)) {
+        setPathWorkTypeOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, []);
 
 
   return (
@@ -670,28 +1075,35 @@ const resetCurrentPage = () => {
                   </div> 
                   {robotsIsOpen && (
                     <div className={styles.selectebox}>
-                      {/* Total을 맨 위에 직접 추가 */}
-                      <div
-                        className={robotsActiveIndex === -1 ? styles.active : ""}
-                        onClick={() => {
-                          setRobotsActiveIndex(-1);
-                          setSelectedRobots(null);   // null → 전체 조건 의미
-                          setRobotsIsOpen(false);
-                        }}
-                      >
-                        Total
-                      </div>
-
-                      {/* 실제 옵션들 */}
-                      {robots.map((item, idx) => (
+                      <div ref={robotsScrollRef} className={styles.selecteInner} role="listbox">
+                        {/* Total을 맨 위에 직접 추가 */}
                         <div
-                          key={item.id}
-                          className={robotsActiveIndex === idx ? styles.active : ""}
-                          onClick={ () => { robotsClick(idx, item); } }
+                          className={robotsActiveIndex === -1 ? styles.active : ""}
+                          onClick={() => {
+                            setRobotsActiveIndex(-1);
+                            setSelectedRobots(null);   // null → 전체 조건 의미
+                            setRobotsIsOpen(false);
+                          }}
                         >
-                          {item.no}
+                          Total
                         </div>
-                      ))}
+
+                        {/* 실제 옵션들 */}
+                        {robots.map((item, idx) => (
+                          <div
+                            key={item.id}
+                            className={robotsActiveIndex === idx ? styles.active : ""}
+                            onClick={ () => { robotsClick(idx, item); } }
+                          >
+                            {item.no}
+                          </div>
+                        ))}
+                      </div>
+                      {shouldShowRobotFilterScroll && (
+                        <div ref={robotsTrackRef} className={styles.selecteScrollTrack}>
+                          <div ref={robotsThumbRef} className={styles.selecteScrollThumb} />
+                        </div>
+                      )}
                   </div>
                   )}
               </div>
@@ -708,28 +1120,35 @@ const resetCurrentPage = () => {
                   </div> 
                   {batteryIsOpen && (
                     <div className={styles.selectebox}>
-                      {/* Total을 맨 위에 직접 추가 */}
-                      <div
-                        className={batteryActiveIndex === -1 ? styles.active : ""}
-                        onClick={() => {
-                          setBatteryActiveIndex(-1);
-                          setSelectedBattery(null);   // null → 전체 조건 의미
-                          setBatteryIsOpen(false);
-                        }}
-                      >
-                        Total
-                      </div>
-
-                      {/* 실제 옵션들 */}
-                      {batteryStatus.map((item, idx) => (
+                      <div ref={batteryScrollRef} className={styles.selecteInner} role="listbox">
+                        {/* Total을 맨 위에 직접 추가 */}
                         <div
-                          key={item.id}
-                          className={batteryActiveIndex === idx ? styles.active : ""}
-                          onClick={ () => { batteryStatusClick(idx, item); } }
+                          className={batteryActiveIndex === -1 ? styles.active : ""}
+                          onClick={() => {
+                            setBatteryActiveIndex(-1);
+                            setSelectedBattery(null);   // null → 전체 조건 의미
+                            setBatteryIsOpen(false);
+                          }}
                         >
-                          {item.label}
+                          Total
                         </div>
-                      ))}
+
+                        {/* 실제 옵션들 */}
+                        {batteryStatus.map((item, idx) => (
+                          <div
+                            key={item.id}
+                            className={batteryActiveIndex === idx ? styles.active : ""}
+                            onClick={ () => { batteryStatusClick(idx, item); } }
+                          >
+                            {item.label}
+                          </div>
+                        ))}
+                      </div>
+                      {shouldShowBatteryFilterScroll && (
+                        <div ref={batteryTrackRef} className={styles.selecteScrollTrack}>
+                          <div ref={batteryThumbRef} className={styles.selecteScrollThumb} />
+                        </div>
+                      )}
                   </div>
                   )}
               </div>
@@ -747,29 +1166,36 @@ const resetCurrentPage = () => {
                     </div> 
                     {networkIsOpen && (
                       <div className={styles.selectebox}>
-                        {/* Total */}
-                        <div
-                          className={networkActiveIndex === -1 ? styles.active : ""}
-                          onClick={() => {
-                            setNetworkActiveIndex(-1);
-                            setSelectedNetwork(null); // 전체
-                            setNetworkIsOpen(false);
-                            resetCurrentPage();
-                          }}
-                        >
-                          Total
-                        </div>
-
-                        {/* 실제 네트워크 옵션들 */}
-                        {networkStatus.map((item, idx) => (
+                        <div ref={networkScrollRef} className={styles.selecteInner} role="listbox">
+                          {/* Total */}
                           <div
-                            key={item.id}
-                            className={networkActiveIndex === idx ? styles.active : ""}
-                            onClick={ () => { networkStatusClick(idx, item); } }
+                            className={networkActiveIndex === -1 ? styles.active : ""}
+                            onClick={() => {
+                              setNetworkActiveIndex(-1);
+                              setSelectedNetwork(null); // 전체
+                              setNetworkIsOpen(false);
+                              resetCurrentPage();
+                            }}
                           >
-                            {item.label}
+                            Total
                           </div>
-                        ))}
+
+                          {/* 실제 네트워크 옵션들 */}
+                          {networkStatus.map((item, idx) => (
+                            <div
+                              key={item.id}
+                              className={networkActiveIndex === idx ? styles.active : ""}
+                              onClick={ () => { networkStatusClick(idx, item); } }
+                            >
+                              {item.label}
+                            </div>
+                          ))}
+                        </div>
+                        {shouldShowNetworkFilterScroll && (
+                          <div ref={networkTrackRef} className={styles.selecteScrollTrack}>
+                            <div ref={networkThumbRef} className={styles.selecteScrollThumb} />
+                          </div>
+                        )}
                       </div>
                     )}
               </div>
@@ -786,29 +1212,36 @@ const resetCurrentPage = () => {
                   </div> 
                   {powerIsOpen && (
                     <div className={styles.selectebox}>
-                      {/* Total */}
-                      <div
-                        className={powerActiveIndex === -1 ? styles.active : ""}
-                        onClick={() => {
-                          setPowerActiveIndex(-1);
-                          setSelectedPower(null);
-                          setPowerIsOpen(false);
-                          resetCurrentPage();
-                        }}
-                      >
-                        Total
-                      </div>
-
-                      {/* 실제 전원 옵션들 */}
-                      {powerStatus.map((item, idx) => (
+                      <div ref={powerScrollRef} className={styles.selecteInner} role="listbox">
+                        {/* Total */}
                         <div
-                          key={item.id}
-                          className={powerActiveIndex === idx ? styles.active : ""}
-                          onClick={ () => { powerStatusClick(idx, item); } }
+                          className={powerActiveIndex === -1 ? styles.active : ""}
+                          onClick={() => {
+                            setPowerActiveIndex(-1);
+                            setSelectedPower(null);
+                            setPowerIsOpen(false);
+                            resetCurrentPage();
+                          }}
                         >
-                          {item.label}
+                          Total
                         </div>
-                      ))}
+
+                        {/* 실제 전원 옵션들 */}
+                        {powerStatus.map((item, idx) => (
+                          <div
+                            key={item.id}
+                            className={powerActiveIndex === idx ? styles.active : ""}
+                            onClick={ () => { powerStatusClick(idx, item); } }
+                          >
+                            {item.label}
+                          </div>
+                        ))}
+                      </div>
+                      {shouldShowPowerFilterScroll && (
+                        <div ref={powerTrackRef} className={styles.selecteScrollTrack}>
+                          <div ref={powerThumbRef} className={styles.selecteScrollThumb} />
+                        </div>
+                      )}
                     </div>
                   )}
               </div>
@@ -825,29 +1258,36 @@ const resetCurrentPage = () => {
                 </div> 
                 {locationIsOpen && (
                   <div className={styles.selectebox}>
-                    {/* Total */}
-                    <div
-                      className={locationActiveIndex === -1 ? styles.active : ""}
-                      onClick={() => {
-                        setLocationActiveIndex(-1);
-                        setSelectedLocation(null);
-                        setLocationIsOpen(false);
-                        resetCurrentPage();
-                      }}
-                    >
-                      Total
-                    </div>
-
-                    {/* 실제 위치 옵션들 */}
-                    {locationStatus.map((item, idx) => (
+                    <div ref={locationScrollRef} className={styles.selecteInner} role="listbox">
+                      {/* Total */}
                       <div
-                        key={item.id}
-                        className={locationActiveIndex === idx ? styles.active : ""}
-                        onClick={ () => { locationStatusClick(idx, item);} }
+                        className={locationActiveIndex === -1 ? styles.active : ""}
+                        onClick={() => {
+                          setLocationActiveIndex(-1);
+                          setSelectedLocation(null);
+                          setLocationIsOpen(false);
+                          resetCurrentPage();
+                        }}
                       >
-                        {item.label}
+                        Total
                       </div>
-                    ))}
+
+                      {/* 실제 위치 옵션들 */}
+                      {locationStatus.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className={locationActiveIndex === idx ? styles.active : ""}
+                          onClick={ () => { locationStatusClick(idx, item);} }
+                        >
+                          {item.label}
+                        </div>
+                      ))}
+                    </div>
+                    {shouldShowLocationFilterScroll && (
+                      <div ref={locationTrackRef} className={styles.selecteScrollTrack}>
+                        <div ref={locationThumbRef} className={styles.selecteScrollThumb} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -986,7 +1426,7 @@ const resetCurrentPage = () => {
         </div>
         <RobotDetailModal isOpen={robotDetailModalOpen} onClose={() => setRobotDetailModalOpen(false)}  selectedRobotId={selectedRobotId} selectedRobot={selectedRobot} robots={robots} />
         <div className={styles.pagePosition}>
-          <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={getPageSetter()} pageSize={ROBOT_PAGE_SIZE} blockSize={5} />
+          <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={handleRobotsPageChange} pageSize={ROBOT_PAGE_SIZE} blockSize={5} />
         </div>
         <div className={styles.bottomPosition}>
             <div style={{pointerEvents: isCrudDisabled ? "none" : "auto", opacity: isCrudDisabled ? 0.4 : 1, cursor:"pointer" }}
@@ -1078,109 +1518,379 @@ const resetCurrentPage = () => {
     </div>
   )}
 
-{activeTab === "place" && (
-    <div className={styles.placeWrap}>
-      {/* LEFT: 장소 목록 */}
-      <div className={styles.placeLeft}>
-        <div className={styles.placeTopBar}>
-          <h2>장소 목록</h2>
+  {activeTab === "place" && (
+      <div className={styles.placeWrap}>
+        {/* LEFT: 장소 목록 */}
+        <div className={styles.placeLeft}>
+          <div className={styles.placeTopBar}>
+            <h2>장소 목록</h2>
 
-          <div className={styles.placeFilters}>
-            {/* 로봇명 선택 */}
-            <div ref={placeRobotWrapperRef} className={styles.selecteWrapper}>
-              <div className={styles.selecte} onClick={() => setPlaceRobotOpen(v => !v)}>
-                <span>{selectedPlaceRobot ?? "로봇명 선택"}</span>
-                <img src={placeRobotOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
-              </div>
-              {placeRobotOpen && (
-                <div className={styles.selectebox}>
-                  <div
-                    className={!selectedPlaceRobot ? styles.active : ""}
-                    onClick={() => { setSelectedPlaceRobot(null); setPlaceRobotOpen(false); setSelectedPlaceId(null); }}
-                  >
-                    Total
-                  </div>
-                  {placeRobotOptions.map((no) => (
-                    <div
-                      key={no}
-                      className={selectedPlaceRobot === no ? styles.active : ""}
-                      onClick={() => { setSelectedPlaceRobot(no); setPlaceRobotOpen(false); setSelectedPlaceId(null); }}
-                    >
-                      {no}
+            <div className={styles.placeFilters}>
+              {/* 로봇명 선택 */}
+              <div ref={placeRobotWrapperRef} className={styles.selecteWrapper}>
+                <div className={styles.selecte} onClick={() => setPlaceRobotOpen(v => !v)}>
+                  <span>{selectedPlaceRobot ?? "로봇명 선택"}</span>
+                  <img src={placeRobotOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                </div>
+                {placeRobotOpen && (
+                  <div className={styles.selectebox}>
+                    <div ref={placeRobotScrollRef} className={styles.selecteInner} role="listbox">
+                      <div
+                        className={!selectedPlaceRobot ? styles.active : ""}
+                        onClick={() => { setSelectedPlaceRobot(null); setPlaceRobotOpen(false); setSelectedPlaceId(null); }}
+                      >
+                        Total
+                      </div>
+                      {placeRobotOptions.map((no) => (
+                        <div
+                          key={no}
+                          className={selectedPlaceRobot === no ? styles.active : ""}
+                          onClick={() => { setSelectedPlaceRobot(no); setPlaceRobotOpen(false); setSelectedPlaceId(null); }}
+                        >
+                          {no}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                    {shouldShowPlaceRobotScroll && (
+                      <div ref={placeRobotTrackRef} className={styles.selecteScrollTrack}>
+                        <div ref={placeRobotThumbRef} className={styles.selecteScrollThumb} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 층별 선택 */}
+              <div ref={placeFloorWrapperRef} className={styles.selecteWrapper}>
+                <div className={styles.selecte} onClick={() => setPlaceFloorOpen(v => !v)}>
+                  <span>{selectedPlaceFloor ?? "층별 선택"}</span>
+                  <img src={placeFloorOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                </div>
+                {placeFloorOpen && (
+                  <div className={styles.selectebox}>
+                    <div ref={placeFloorScrollRef} className={styles.selecteInner} role="listbox">
+                      <div
+                        className={!selectedPlaceFloor ? styles.active : ""}
+                        onClick={() => { setSelectedPlaceFloor(null); setPlaceFloorOpen(false); setSelectedPlaceId(null); }}
+                      >
+                        Total
+                      </div>
+                      {placeFloorOptions.map((f) => (
+                        <div
+                          key={f}
+                          className={selectedPlaceFloor === f ? styles.active : ""}
+                          onClick={() => { setSelectedPlaceFloor(f); setPlaceFloorOpen(false); setSelectedPlaceId(null); }}
+                        >
+                          {f}
+                        </div>
+                      ))}
+                    </div>
+                    {shouldShowPlaceFloorScroll && (
+                      <div ref={placeFloorTrackRef} className={styles.selecteScrollTrack}>
+                        <div ref={placeFloorThumbRef} className={styles.selecteScrollThumb} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.placeListBox}>
+            <table className={`${styles.status} ${styles.placeTable}`}>
+              <thead>
+                <tr>
+                  <th>
+                      <img
+                        src={
+                          isAllCurrentPlaceItemsChecked
+                            ? "/icon/robot_chk.png"
+                            : "/icon/robot_none_chk.png"
+                        }
+                        alt="현재 페이지 장소 전체 선택"
+                        role="button"
+                        tabIndex={0}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => toggleAllCurrentPlaceItems(!isAllCurrentPlaceItemsChecked)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            toggleAllCurrentPlaceItems(!isAllCurrentPlaceItemsChecked);
+                          }
+                        }}
+                      />
+                  </th>
+                  <th>로봇명</th>
+                  <th>층별</th>
+                  <th>장소명</th>
+                  <th>좌표(X, Y)</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {currentPlaceItems.map((row) => {
+                  const checked = checkedPlaceIds.includes(row.id);
+
+                  return (
+                    <tr
+                      key={row.id}
+                      className={checked ? styles.selectedRow : undefined}
+                    >
+                      <td>
+                        <img
+                          src={checked ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"}
+                          alt=""
+                          role="button"
+                          tabIndex={0}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => togglePlaceChecked(row.id, !checked)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              togglePlaceChecked(row.id, !checked);
+                            }
+                          }}
+                        />
+                      </td>
+                      <td>{row.robotNo}</td>
+                      <td>{row.floor}</td>
+                      <td>{row.placeName}</td>
+                      <td>X {row.x.toFixed(2)}, Y {row.y.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* pagination(필요 시 Robot 탭과 동일 Pagination 컴포넌트 연결) */}
+          <div className={styles.placePagination}>
+            <Pagination totalItems={placeTotalItems} currentPage={placePage} onPageChange={handlePlacePageChange} pageSize={PLACE_PAGE_SIZE} blockSize={5} />
+          </div>
+
+          <div className={`${styles.bottomPosition} ${styles.placeBottomPosition}`}>
+            <div
+              className={styles.placePrimaryBtn}
+              aria-disabled={!isPlaceCreateEnabled}
+              style={{
+                pointerEvents: isPlaceCreateEnabled ? "auto" : "none",
+                opacity: isPlaceCreateEnabled ? 1 : 0.4,
+              }}
+              onClick={openPlaceCreate}
+            >
+              <img src="/icon/check.png" alt="check" />
+              <span>장소 등록</span>
+            </div>
+
+            <div className={styles.robotWorkBox}>
+              <div
+                className={styles.robotWorkCommonBtn}
+                onClick={openPlaceDelete}
+                aria-disabled={!isPlaceDeleteEnabled}
+                style={{
+                  pointerEvents: isPlaceDeleteEnabled ? "auto" : "none",
+                  opacity: isPlaceDeleteEnabled ? 1 : 0.4,
+                }}
+              >
+                {/* 아이콘이 있으면 img로 교체 */}
+                <img src="/icon/delete_icon.png" alt="" />
+                장소 삭제
+              </div>
+
+              <div
+                className={styles.robotWorkCommonBtn}
+                onClick={openPlaceEdit}
+                aria-disabled={selectedPlaceId == null}
+                style={{
+                  pointerEvents: selectedPlaceId == null ? "none" : "auto",
+                  opacity: selectedPlaceId == null ? 0.4 : 1,
+                }}
+              >
+                <img src="/icon/edit_icon.png" alt="" />
+                장소 수정
+              </div>
+            </div>
+          </div>
+        </div>
+        <PlaceCrudModal
+          isOpen={placeCreateOpen}
+          mode="create"
+          robots={robots}
+          floors={FLOORS}
+          initial={null}
+          onClose={() => setPlaceCreateOpen(false)}
+          onSubmit={upsertPlace}
+        />
+
+        <PlaceCrudModal
+          isOpen={placeEditOpen}
+          mode="edit"
+          robots={robots}
+          floors={FLOORS}
+          initial={singleCheckedPlaceRow ? toPlaceRowData(singleCheckedPlaceRow) : null}
+          onClose={() => setPlaceEditOpen(false)}
+          onSubmit={upsertPlace}
+        />
+
+        <PlaceDeleteConfirmModal
+          isOpen={placeDeleteConfirmOpen}
+          message={
+            checkedPlaceIds.length <= 1
+              ? "선택한 장소를 정말 삭제하시겠습니까?"
+              : `${checkedPlaceIds.length}개의 장소를 정말 삭제하시겠습니까?`
+          }
+          onCancel={() => setPlaceDeleteConfirmOpen(false)}
+          onConfirm={confirmDeletePlace}
+        />
+
+        {/* RIGHT: 위치 맵 */}
+        <div className={styles.placeRight}>
+          <div className={styles.robotPlaceBox}>
+            <h2>위치 맵</h2>
+          </div>
+
+          <div className={styles.placeMapCard}>
+            <PlaceMapView
+              selectedPlaceId={selectedPlaceId}
+              selectedPlace={singleCheckedPlaceRow}   // 이미 memo로 계산해둔 값
+              placeRows={placeRows}                   // 전체 장소 목록
+            />
+          </div>
+            <div className={styles.placeHint}>
+              • 해당 장소의 좌표(X, Y) 입력은 “장소 등록” 화면에서 작성하실 수 있습니다.
+            </div>
+        </div>
+      </div>
+    )}
+
+    {activeTab === "path" && (
+      <div className={styles.pathWrap}>
+        <div className={styles.pathTopBar}>
+          <h2>경로 목록</h2>
+
+          <div className={styles.pathFilters}>
+            {/* 로봇명 선택 */}
+            <div ref={pathRobotWrapperRef} className={styles.selecteWrapper}>
+              <div className={styles.selecte} onClick={() => setPathRobotOpen(v => !v)}>
+                <span>{selectedPathRobot ?? "로봇명 선택"}</span>
+                <img src={pathRobotOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+              </div>
+
+              {pathRobotOpen && (
+                <div className={styles.selectebox}>
+                  <div ref={pathRobotScrollRef} className={styles.selecteInner} role="listbox">
+                    <div
+                      className={!selectedPathRobot ? styles.active : ""}
+                      onClick={() => {
+                        setSelectedPathRobot(null);
+                        setPathRobotOpen(false);
+                        resetPathSelection();
+                      }}
+                    >
+                      Total
+                    </div>
+
+                    {pathRobotOptions.map((no) => (
+                      <div
+                        key={no}
+                        className={selectedPathRobot === no ? styles.active : ""}
+                        onClick={() => {
+                          setSelectedPathRobot(no);
+                          setPathRobotOpen(false);
+                          resetPathSelection();
+                        }}
+                      >
+                        {no}
+                      </div>
+                    ))}
+                  </div>
+                  {shouldShowPathRobotScroll && (
+                    <div ref={pathRobotTrackRef} className={styles.selecteScrollTrack}>
+                      <div ref={pathRobotThumbRef} className={styles.selecteScrollThumb} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* 층별 선택 */}
-            <div ref={placeFloorWrapperRef} className={styles.selecteWrapper}>
-              <div className={styles.selecte} onClick={() => setPlaceFloorOpen(v => !v)}>
-                <span>{selectedPlaceFloor ?? "층별 선택"}</span>
-                <img src={placeFloorOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+            {/* 작업유형 선택 */}
+            <div ref={pathWorkTypeWrapperRef} className={styles.selecteWrapper}>
+              <div className={styles.selecte} onClick={() => setPathWorkTypeOpen(v => !v)}>
+                <span>{selectedPathWorkType ?? "작업유형 선택"}</span>
+                <img src={pathWorkTypeOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
               </div>
-              {placeFloorOpen && (
+
+              {pathWorkTypeOpen && (
                 <div className={styles.selectebox}>
-                  <div
-                    className={!selectedPlaceFloor ? styles.active : ""}
-                    onClick={() => { setSelectedPlaceFloor(null); setPlaceFloorOpen(false); setSelectedPlaceId(null); }}
-                  >
-                    Total
-                  </div>
-                  {placeFloorOptions.map((f) => (
+                  <div ref={pathWorkTypeScrollRef} className={styles.selecteInner} role="listbox">
                     <div
-                      key={f}
-                      className={selectedPlaceFloor === f ? styles.active : ""}
-                      onClick={() => { setSelectedPlaceFloor(f); setPlaceFloorOpen(false); setSelectedPlaceId(null); }}
+                      className={!selectedPathWorkType ? styles.active : ""}
+                      onClick={() => {
+                        setSelectedPathWorkType(null);
+                        setPathWorkTypeOpen(false);
+                        resetPathSelection();
+                      }}
                     >
-                      {f}
+                      Total
                     </div>
-                  ))}
+
+                    {pathWorkTypeOptions.map((t) => (
+                      <div
+                        key={t}
+                        className={selectedPathWorkType === t ? styles.active : ""}
+                        onClick={() => {
+                          setSelectedPathWorkType(t);
+                          setPathWorkTypeOpen(false);
+                          resetPathSelection();
+                        }}
+                      >
+                        {t}
+                      </div>
+                    ))}
+                  </div>
+                  {shouldShowPathWorkTypeScroll && (
+                    <div ref={pathWorkTypeTrackRef} className={styles.selecteScrollTrack}>
+                      <div ref={pathWorkTypeThumbRef} className={styles.selecteScrollThumb} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className={styles.placeListBox}>
-          <table className={`${styles.status} ${styles.placeTable}`}>
+        {/* table */}
+        <div className={styles.pathListBox}>
+          <table className={`${styles.status} ${styles.pathTable}`}>
             <thead>
               <tr>
                 <th>
-                    <img
-                      src={
-                        isAllCurrentPlaceItemsChecked
-                          ? "/icon/robot_chk.png"
-                          : "/icon/robot_none_chk.png"
+                  <img
+                    src={isAllCurrentPathItemsChecked ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"}
+                    alt="현재 페이지 경로 전체 선택"
+                    role="button"
+                    tabIndex={0}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => toggleAllCurrentPathItems(!isAllCurrentPathItemsChecked)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        toggleAllCurrentPathItems(!isAllCurrentPathItemsChecked);
                       }
-                      alt="현재 페이지 장소 전체 선택"
-                      role="button"
-                      tabIndex={0}
-                      style={{ cursor: "pointer" }}
-                      onClick={() => toggleAllCurrentPlaceItems(!isAllCurrentPlaceItemsChecked)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          toggleAllCurrentPlaceItems(!isAllCurrentPlaceItemsChecked);
-                        }
-                      }}
-                    />
+                    }}
+                  />
                 </th>
                 <th>로봇명</th>
-                <th>층별</th>
-                <th>장소명</th>
-                <th>좌표(X, Y)</th>
+                <th>작업유형</th>
+                <th>경로명</th>
+                <th>경로순서</th>
+                <th>변경일시</th>
               </tr>
             </thead>
 
             <tbody>
-              {currentPlaceItems.map((row) => {
-                const checked = checkedPlaceIds.includes(row.id);
+              {currentPathItems.map((row) => {
+                const checked = checkedPathIds.includes(row.id);
 
                 return (
-                  <tr
-                    key={row.id}
-                    className={checked ? styles.selectedRow : undefined}
-                  >
+                  <tr key={row.id} className={checked ? styles.selectedRow : undefined}>
                     <td>
                       <img
                         src={checked ? "/icon/robot_chk.png" : "/icon/robot_none_chk.png"}
@@ -1188,18 +1898,21 @@ const resetCurrentPage = () => {
                         role="button"
                         tabIndex={0}
                         style={{ cursor: "pointer" }}
-                        onClick={() => togglePlaceChecked(row.id, !checked)}
+                        onClick={() => togglePathChecked(row.id, !checked)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
-                            togglePlaceChecked(row.id, !checked);
+                            togglePathChecked(row.id, !checked);
                           }
                         }}
                       />
                     </td>
                     <td>{row.robotNo}</td>
-                    <td>{row.floor}</td>
-                    <td>{row.placeName}</td>
-                    <td>X {row.x.toFixed(2)}, Y {row.y.toFixed(2)}</td>
+                    <td>{row.workType}</td>
+                    <td>{row.pathName}</td>
+                    <td className={styles.pathOrderCell}>
+                      <div className={styles.pathOrderText}>{row.pathOrder}</div>
+                    </td>
+                    <td>{row.updatedAt}</td>
                   </tr>
                 );
               })}
@@ -1207,118 +1920,94 @@ const resetCurrentPage = () => {
           </table>
         </div>
 
-        {/* pagination(필요 시 Robot 탭과 동일 Pagination 컴포넌트 연결) */}
-        <div className={styles.placePagination}>
-          <Pagination totalItems={placeTotalItems} currentPage={placePage} onPageChange={setPlacePage} pageSize={PLACE_PAGE_SIZE} blockSize={5} />
+        {/* pagination */}
+        <div className={styles.pathPagination}>
+          <Pagination
+            totalItems={pathTotalItems}
+            currentPage={pathPage}
+            onPageChange={handlePathPageChange}
+            pageSize={PATH_PAGE_SIZE}
+            blockSize={5}
+          />
         </div>
 
-        <div className={`${styles.bottomPosition} ${styles.placeBottomPosition}`}>
+        {/* bottom buttons */}
+        <div className={styles.pathBottomBar}>
           <div
-            className={styles.placePrimaryBtn}
-            aria-disabled={!isPlaceCreateEnabled}
+            className={styles.pathPrimaryBtn}
+            aria-disabled={!isPathCreateEnabled}
             style={{
-              pointerEvents: isPlaceCreateEnabled ? "auto" : "none",
-              opacity: isPlaceCreateEnabled ? 1 : 0.4,
+              pointerEvents: isPathCreateEnabled ? "auto" : "none",
+              opacity: isPathCreateEnabled ? 1 : 0.4,
             }}
-            onClick={openPlaceCreate}
+            onClick={openPathCreate}
           >
             <img src="/icon/check.png" alt="check" />
-            <span>장소 등록</span>
+            <span>경로 등록</span>
           </div>
 
           <div className={styles.robotWorkBox}>
             <div
               className={styles.robotWorkCommonBtn}
-              onClick={openPlaceDelete}
-              aria-disabled={selectedPlaceId == null}
+              onClick={openPathDelete}
+              aria-disabled={!isPathDeleteEnabled}
               style={{
-                pointerEvents: selectedPlaceId == null ? "none" : "auto",
-                opacity: selectedPlaceId == null ? 0.4 : 1,
+                pointerEvents: isPathDeleteEnabled ? "auto" : "none",
+                opacity: isPathDeleteEnabled ? 1 : 0.4,
               }}
             >
-              {/* 아이콘이 있으면 img로 교체 */}
               <img src="/icon/delete_icon.png" alt="" />
-              장소 삭제
+              경로 삭제
             </div>
 
             <div
               className={styles.robotWorkCommonBtn}
-              onClick={openPlaceEdit}
-              aria-disabled={selectedPlaceId == null}
+              onClick={openPathEdit}
+              aria-disabled={!isPathEditEnabled}
               style={{
-                pointerEvents: selectedPlaceId == null ? "none" : "auto",
-                opacity: selectedPlaceId == null ? 0.4 : 1,
+                pointerEvents: isPathEditEnabled ? "auto" : "none",
+                opacity: isPathEditEnabled ? 1 : 0.4,
               }}
             >
               <img src="/icon/edit_icon.png" alt="" />
-              장소 수정
+              경로 수정
             </div>
           </div>
         </div>
       </div>
-      <PlaceCrudModal
-        isOpen={placeCreateOpen}
-        mode="create"
-        robots={robots}
-        floors={FLOORS}
-        initial={null}
-        onClose={() => setPlaceCreateOpen(false)}
-        onSubmit={upsertPlace}
-      />
+    )}
+    <PathCrudModal
+      isOpen={pathCreateOpen}
+      mode="create"
+      placeRows={placeRows}
+      initial={null}
+      onClose={() => setPathCreateOpen(false)}
+      onSubmit={upsertPath}
+      robots={robots}
+      floors={floors}
+    />
 
-      <PlaceCrudModal
-        isOpen={placeEditOpen}
-        mode="edit"
-        robots={robots}
-        floors={FLOORS}
-        initial={singleCheckedPlaceRow ? toPlaceRowData(singleCheckedPlaceRow) : null}
-        onClose={() => setPlaceEditOpen(false)}
-        onSubmit={upsertPlace}
-      />
+    <PathCrudModal
+      isOpen={pathEditOpen}
+      mode="edit"
+      placeRows={placeRows}
+      robots={robots}
+      floors={floors}
+      initial={singleCheckedPathRow}
+      onClose={() => setPathEditOpen(false)}
+      onSubmit={upsertPath}
+    />
 
-      <PlaceDeleteConfirmModal
-        isOpen={placeDeleteConfirmOpen}
-        message={
-          checkedPlaceIds.length <= 1
-            ? "선택한 장소를 정말 삭제하시겠습니까?"
-            : `${checkedPlaceIds.length}개의 장소를 정말 삭제하시겠습니까?`
-        }
-        onCancel={() => setPlaceDeleteConfirmOpen(false)}
-        onConfirm={confirmDeletePlace}
-      />
-
-      {/* RIGHT: 위치 맵 */}
-      <div className={styles.placeRight}>
-        <div className={styles.robotPlaceBox}>
-          <h2>위치 맵</h2>
-        </div>
-
-        <div className={styles.placeMapCard}>
-          <PlaceMapView
-            selectedPlaceId={selectedPlaceId}
-            selectedPlace={singleCheckedPlaceRow}   // 이미 memo로 계산해둔 값
-            placeRows={placeRows}                   // 전체 장소 목록
-          />
-        </div>
-          <div className={styles.placeHint}>
-            • 해당 장소의 좌표(X, Y) 입력은 “장소 등록” 화면에서 작성하실 수 있습니다.
-          </div>
-      </div>
-    </div>
-  )}
-
-  {activeTab === "path" && (
-    <div className={styles.path}>
-        <div className={styles.container}>
-            <img src="/icon/coming-soon.png" alt="Coming Soon" />
-            <div className={styles.topTitle}>COMING SOON</div>
-            <div className={styles.contentText}>We Are Preparing This Service</div>
-        </div>
-        <div className={styles.pagenationPosition}>
-            {/* <Pagination totalItems={totalItems} currentPage={currentPage} onPageChange={setCurrentPage} pageSize={PAGE_SIZE} blockSize={5} /> */}
-        </div>
-    </div>
-  )}
+    <PathDeleteConfirmModal
+      isOpen={pathDeleteConfirmOpen}
+      message={
+        checkedPathIds.length <= 1
+          ? "선택한 경로를 정말 삭제하시겠습니까?"
+          : `${checkedPathIds.length}개의 경로를 정말 삭제하시겠습니까?`
+      }
+      onCancel={() => setPathDeleteConfirmOpen(false)}
+      onConfirm={confirmDeletePath}
+    />
     </>
   );
 }

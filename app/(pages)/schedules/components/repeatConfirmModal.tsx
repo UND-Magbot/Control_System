@@ -1,151 +1,131 @@
-// 흐름: 장소 리스트 클릭 → selectedPlaceId state 저장 → img 경로 자동 변경 → 확인 버튼 클릭 → 선택값 검증 → 로봇 이동 이벤트 실행
 'use client';
 
-import styles from './Modal.module.css';
-import React, { useEffect, useRef, useState } from 'react';
-import type { RobotRowData } from '@/app/type';
-import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
-import { mockPlaces } from '@/app/mock/place_data';
+import React, { useEffect, useMemo, useState } from "react";
+import styles from "./RepeatConfirmModal.module.css";
 
+export type RepeatConfirmMode = "edit" | "delete";
+export type RepeatConfirmScope = "this" | "thisAndFuture" | "all";
 
-type WorkModalProps = {
-    isOpen: boolean;
-    onClose: () => void;
-    onCancel?: () => void;
-    selectedRobotIds: number[];
-}
-
-type Place = {
-  id: number;
-  name: string;
-  // 추후 좌표, 노드ID, 맵ID 등 확장 가능
-  x?: number;
-  y?: number;
+type RepeatConfirmModalProps = {
+  isOpen: boolean;
+  mode: RepeatConfirmMode;                // "edit" | "delete"
+  defaultScope?: RepeatConfirmScope;      // 기본 선택값 (이미지: 삭제=첫번째, 수정=두번째)
+  onClose: () => void;                    // X 버튼 / overlay 클릭 / ESC
+  onCancel: () => void;                   // 하단 "취소"
+  onConfirm: (scope: RepeatConfirmScope) => void; // 하단 "확인"
 };
 
-export default function RobotDetailModal({
-    isOpen,
-    onClose,
-    selectedRobotIds,
-    onCancel
-}:WorkModalProps ){
+export default function RepeatConfirmModal({
+  isOpen,
+  mode,
+  defaultScope,
+  onClose,
+  onCancel,
+  onConfirm,
+}: RepeatConfirmModalProps) {
+  const title = useMemo(() => {
+    return mode === "delete"
+      ? "반복 설정된 정규 작업일정을 삭제하시겠습니까?"
+      : "반복 설정된 정규 작업일정을 수정하시겠습니까?";
+  }, [mode]);
 
+  const options = useMemo(() => {
+    if (mode === "delete") {
+      return [
+        { value: "this" as const, label: "이 정규 작업일정만 삭제" },
+        { value: "thisAndFuture" as const, label: "이 정규 작업일정 및 이후 정규 작업일정 전체 삭제" },
+        { value: "all" as const, label: "반복 정규 작업일정 전체 삭제" },
+      ];
+    }
+    return [
+      { value: "this" as const, label: "이 정규 작업일정만 수정" },
+      { value: "thisAndFuture" as const, label: "이 정규 작업일정 및 이후 정규 작업일정 전체 수정" },
+      { value: "all" as const, label: "반복 정규 작업일정 전체 수정" },
+    ];
+  }, [mode]);
 
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const trackRef = useRef<HTMLDivElement>(null);
-    const thumbRef = useRef<HTMLDivElement>(null);
+  const initial = defaultScope ?? (mode === "edit" ? "thisAndFuture" : "this");
+  const [scope, setScope] = useState<RepeatConfirmScope>(initial);
 
-    const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+  // 열릴 때마다 기본값으로 리셋
+  useEffect(() => {
+    if (!isOpen) return;
+    setScope(initial);
+  }, [isOpen, initial]);
 
-    // ESC 키로 모달 닫기
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        
-        if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'hidden'; // 스크롤 방지
-        }
-        
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen, onClose]);
+  // ESC 닫기 + body 스크롤 잠금
+  useEffect(() => {
+    if (!isOpen) return;
 
-    const handleCancel = () => {
-        onClose();
-    };
-    
-    const handleOk = () => {
-        if (selectedPlaceId === null) {
-            alert("이동할 장소를 선택해 주세요.");
-            return;
-        }
-
-        const selectedPlace = mockPlaces.find(
-            (p) => p.id === selectedPlaceId
-        );
-
-        if (!selectedPlace) return;
-
-            console.log("로봇 이동 시작 → 장소:", selectedPlace);
-            
-            // 실제 로봇 이동 명령 수행 로직
-
-            onClose();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
     };
 
-    //선택된 장소 id 저장
-    const handleSelectPlace = (placeId: number) => {
-        setSelectedPlaceId(placeId);
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "unset";
     };
+  }, [isOpen, onClose]);
 
-    useEffect(() => {
-      if (isOpen) setSelectedPlaceId(null);
-    }, [isOpen]);
+  if (!isOpen) return null;
 
-    useCustomScrollbar({
-        enabled: isOpen,
-        scrollRef,
-        trackRef,
-        thumbRef,
-        minThumbHeight: 50,
-        deps: [mockPlaces.length],
-    });
+  return (
+    <div className={styles.repeatOverlay} onClick={onClose}>
+      <div className={styles.repeatModal} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.repeatCloseBtn} onClick={onClose} aria-label="close">
+          ✕
+        </button>
 
-    if (!isOpen) return null;
+        <div className={styles.repeatTitle}>{title}</div>
 
-    return (
-        <>
-        <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.placePathModalContent} onClick={(e) => e.stopPropagation()}>
-                <button className={styles.placeCloseBtn} onClick={onClose}>✕</button>
-                <div className={styles.placeTitle}>
-                    아래 이동할 장소를 먼저 선택해 주세요.
-                </div>
+        <div className={styles.repeatOptionBox} role="radiogroup" aria-label="repeat-scope">
+          {options.map((opt) => {
+            const active = scope === opt.value;
 
-                <div className={styles.placePathBox}>
-                    <div ref={scrollRef} className={styles.placeInner} role="listbox">
-                        {mockPlaces.map((place) => {
-                            const isSelected = selectedPlaceId === place.id;
-
-                            return (
-                                <div
-                                key={place.id}
-                                className={`${styles.placePathItem} ${isSelected ? styles.active : ""}`}
-                                role="option"
-                                aria-selected={isSelected}
-                                onClick={() => handleSelectPlace(place.id)}
-                                >
-                                <img
-                                    src={isSelected ? "/icon/place_chk.png" : "/icon/place_none_chk.png"}
-                                    alt=""
-                                />
-                                <div className={styles.placePathTitle}>{place.name}</div>
-                                </div>
-                            );
-                        })}
-                        <div ref={trackRef} className={styles.placeScrollTrack}>
-                            <div ref={thumbRef} className={styles.placeScrollThumb} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className={styles.workBtnBox}>
-                    <button className={`${styles.workBtnCommon} ${styles.workBtnBgRed}`} onClick={handleCancel} >
-                        <img src="/icon/close_btn.png" alt="cancel"/>
-                        <div>취소</div>
-                    </button>
-                    <button className={`${styles.workBtnCommon} ${styles.workBtnBgBlue}`}  onClick={handleOk}>
-                        <img src="/icon/check.png" alt="save" />
-                        <div>확인</div>
-                    </button>
-                </div>
-            </div>
+            return (
+              <div
+                key={opt.value}
+                className={`${styles.repeatOptionRow} ${active ? styles.active : ""}`}
+                role="radio"
+                aria-checked={active}
+                tabIndex={0}
+                onClick={() => setScope(opt.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setScope(opt.value);
+                }}
+              >
+                <span className={styles.repeatRadio}>
+                  <span className={`${styles.repeatRadioDot} ${active ? styles.on : ""}`} />
+                </span>
+                <span className={styles.repeatOptionLabel}>{opt.label}</span>
+              </div>
+            );
+          })}
         </div>
-        </>
-    );
-    
+
+        <div className={styles.repeatBtnRow}>
+          <button
+            type="button"
+            className={`${styles.repeatBtn} ${styles.repeatBtnRed}`}
+            onClick={onCancel}
+          >
+            <img src="/icon/close_btn.png" alt="cancel" />
+            <span>취소</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.repeatBtn} ${styles.repeatBtnBlue}`}
+            onClick={() => onConfirm(scope)}
+          >
+            <img src="/icon/check.png" alt="ok" />
+            <span>확인</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -2,8 +2,12 @@
 
 import styles from './ScheduleCrud.module.css';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import DeleteConfirmModal from '@/app/components/modal/CancelConfirmModal';
 import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
+import RepeatConfirmModal, { type RepeatConfirmMode, type RepeatConfirmScope } from './RepeatConfirmModal';
+import MiniCalendar from './MiniCalendar';
+
 
 type ScheduleDetailProps = {
   isOpen: boolean;
@@ -238,6 +242,13 @@ const MINUTE_OPTIONS = [0, 10, 20, 30, 40, 50].map((m, i) => ({
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function minToHm(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
@@ -357,6 +368,7 @@ export default function ScheduleDetail({
   onUpdate,
   onDelete,
 }: ScheduleDetailProps) {
+  const router = useRouter();
     const [mode, setMode] = useState<Mode>('view');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -365,6 +377,8 @@ export default function ScheduleDetail({
 
     const initialForm = useMemo(() => buildInitialForm(event), [event]);
     const [form, setForm] = useState<FormState>(initialForm);
+    const [startDateText, setStartDateText] = useState(formatDate(new Date()));
+    const [endDateText, setEndDateText] = useState(formatDate(new Date()));
 
     // 모달 열릴 때 초기화
     useEffect(() => {
@@ -372,6 +386,12 @@ export default function ScheduleDetail({
         setMode('view');
         setShowDeleteConfirm(false);
         setForm(initialForm);
+        const normalized = formatDate(parseDateText(initialForm.dateText));
+        setStartDateText(normalized);
+        setEndDateText(normalized);
+        setIsStartDateOpen(false);
+        setIsEndDateOpen(false);
+        setIsRepeatEndDateOpen(false);
     }, [isOpen, initialForm]);
 
     // ESC 키로 모달 닫기
@@ -395,8 +415,40 @@ export default function ScheduleDetail({
 
     const isEditMode = mode === 'edit';
 
+    const parseDateText = (text: string) => {
+      const normalized = text.replace(/\./g, "-");
+      const parsed = new Date(normalized);
+      if (Number.isNaN(parsed.getTime())) {
+        const fallback = new Date();
+        fallback.setHours(0, 0, 0, 0);
+        return fallback;
+      }
+      return parsed;
+    };
+
+    const [repeatConfirmOpen, setRepeatConfirmOpen] = useState(false);
+    const [repeatConfirmMode, setRepeatConfirmMode] = useState<RepeatConfirmMode>("delete");
+    const [repeatScope, setRepeatScope] = useState<RepeatConfirmScope>("this");
+
     // ===== actions =====
-    const handleEditStart = () => setMode('edit');
+    const openRepeatConfirm = (mode: RepeatConfirmMode) => {
+      setRepeatConfirmMode(mode);
+
+      // 이미지 기본 선택값: 삭제=첫번째, 수정=두번째
+      const def: RepeatConfirmScope = mode === "edit" ? "thisAndFuture" : "this";
+      setRepeatScope(def);
+
+      setRepeatConfirmOpen(true);
+    };
+
+    const handleEditStart = () => {
+      // ✅ 반복 작업이면: 범위 선택 모달 먼저
+      if (form.repeatEnabled) {
+        openRepeatConfirm("edit");
+        return;
+      }
+      setMode('edit');
+    };
 
     const handleEditCancel = () => {
         setForm(initialForm);
@@ -429,7 +481,14 @@ export default function ScheduleDetail({
         setMode('view');
     };
 
-    const handleDelete = () => setShowDeleteConfirm(true);
+    const handleDelete = () => {
+      // ✅ 반복 작업이면: 범위 선택 모달 먼저
+      if (form.repeatEnabled) {
+        openRepeatConfirm("delete");
+        return;
+      }
+      setShowDeleteConfirm(true);
+    };
 
     const handleDeleteCancel = () => setShowDeleteConfirm(false);
 
@@ -438,6 +497,30 @@ export default function ScheduleDetail({
         setShowDeleteConfirm(false);
         onClose();
     };
+
+    const handleRepeatConfirmCancel = () => {
+      setRepeatConfirmOpen(false);
+    };
+
+    const handleRepeatConfirmOk = (scope: RepeatConfirmScope) => {
+      setRepeatConfirmOpen(false);
+
+      // 선택 범위 저장(추후 API payload로 사용)
+      setRepeatScope(scope);
+
+      if (repeatConfirmMode === "edit") {
+        console.log("[repeat edit scope]", scope);
+        setMode("edit");
+        return;
+      }
+
+      // delete
+      console.log("[repeat delete scope]", scope);
+      onDelete?.(event.id);
+      onClose();
+    };
+
+
 
     // ===== view helpers =====
     const workTypeTitle = useMemo(() => form.workType.replace(' / ', '/'), [form.workType]);
@@ -496,10 +579,16 @@ export default function ScheduleDetail({
     const [isEndAmpmOpen, setIsEndAmpmOpen] = useState(false);
     const [isEndHourOpen, setIsEndHourOpen] = useState(false);
     const [isEndMinOpen, setIsEndMinOpen] = useState(false);
+    const [isStartDateOpen, setIsStartDateOpen] = useState(false);
+    const [isEndDateOpen, setIsEndDateOpen] = useState(false);
+    const [isRepeatEndDateOpen, setIsRepeatEndDateOpen] = useState(false);
 
     const endAmpmWrapperRef = useRef<HTMLDivElement>(null);
     const endHourWrapperRef = useRef<HTMLDivElement>(null);
     const endMinWrapperRef = useRef<HTMLDivElement>(null);
+    const startDateWrapperRef = useRef<HTMLDivElement>(null);
+    const endDateWrapperRef = useRef<HTMLDivElement>(null);
+    const repeatEndDateWrapperRef = useRef<HTMLDivElement>(null);
 
     const endAmpmScrollRef = useRef<HTMLDivElement>(null);
     const endHourScrollRef = useRef<HTMLDivElement>(null);
@@ -532,18 +621,21 @@ export default function ScheduleDetail({
     };
 
     const setRepeatEnabled = (enabled: boolean) => {
-    setForm((p) => ({
-        ...p,
-        repeatEnabled: enabled,
-        // 반복 안함으로 바꾸면 하위값 정리(선택)
-        ...(enabled
-        ? {}
-        : {
-            repeatDays: [],
-            repeatEveryday: false,
-            repeatEndType: 'none',
-            }),
-    }));
+      setForm((p) => ({
+          ...p,
+          repeatEnabled: enabled,
+          // 반복 안함으로 바꾸면 하위값 정리(선택)
+          ...(enabled
+          ? {}
+          : {
+              repeatDays: [],
+              repeatEveryday: false,
+              repeatEndType: 'none',
+              }),
+      }));
+      if (!enabled) {
+        setIsRepeatEndDateOpen(false);
+      }
     };
 
     useEffect(() => {
@@ -560,11 +652,21 @@ export default function ScheduleDetail({
             if (endAmpmWrapperRef.current && !endAmpmWrapperRef.current.contains(t)) setIsEndAmpmOpen(false);
             if (endHourWrapperRef.current && !endHourWrapperRef.current.contains(t)) setIsEndHourOpen(false);
             if (endMinWrapperRef.current && !endMinWrapperRef.current.contains(t)) setIsEndMinOpen(false);
+            if (startDateWrapperRef.current && !startDateWrapperRef.current.contains(t)) setIsStartDateOpen(false);
+            if (endDateWrapperRef.current && !endDateWrapperRef.current.contains(t)) setIsEndDateOpen(false);
+            if (repeatEndDateWrapperRef.current && !repeatEndDateWrapperRef.current.contains(t)) setIsRepeatEndDateOpen(false);
         };
 
         document.addEventListener("mousedown", handleOutsideClick);
         return () => document.removeEventListener("mousedown", handleOutsideClick);
     }, []);
+
+    const shouldShowStartAmpmScroll = AMPM_OPTIONS.length >= 5;
+    const shouldShowStartHourScroll = HOUR_OPTIONS.length >= 5;
+    const shouldShowStartMinScroll = MINUTE_OPTIONS.length >= 5;
+    const shouldShowEndAmpmScroll = AMPM_OPTIONS.length >= 5;
+    const shouldShowEndHourScroll = HOUR_OPTIONS.length >= 5;
+    const shouldShowEndMinScroll = MINUTE_OPTIONS.length >= 5;
 
     useCustomScrollbar({
     enabled: isWorkTypeOpen,
@@ -585,27 +687,57 @@ export default function ScheduleDetail({
     });
 
     useCustomScrollbar({
-    enabled: isStartAmpmOpen,
+    enabled: isStartAmpmOpen && shouldShowStartAmpmScroll,
     scrollRef: startAmpmScrollRef,
     trackRef: startAmpmTrackRef,
     thumbRef: startAmpmThumbRef,
-    deps: [AMPM_OPTIONS.length],
+    minThumbHeight: 30,
+    deps: [AMPM_OPTIONS.length, isStartAmpmOpen],
     });
 
     useCustomScrollbar({
-    enabled: isStartHourOpen,
+    enabled: isStartHourOpen && shouldShowStartHourScroll,
     scrollRef: startHourScrollRef,
     trackRef: startHourTrackRef,
     thumbRef: startHourThumbRef,
-    deps: [HOUR_OPTIONS.length],
+    minThumbHeight: 30,
+    deps: [HOUR_OPTIONS.length, isStartHourOpen],
     });
 
     useCustomScrollbar({
-    enabled: isStartMinOpen,
+    enabled: isStartMinOpen && shouldShowStartMinScroll,
     scrollRef: startMinScrollRef,
     trackRef: startMinTrackRef,
     thumbRef: startMinThumbRef,
-    deps: [MINUTE_OPTIONS.length],
+    minThumbHeight: 30,
+    deps: [MINUTE_OPTIONS.length, isStartMinOpen],
+    });
+
+    useCustomScrollbar({
+    enabled: isEndAmpmOpen && shouldShowEndAmpmScroll,
+    scrollRef: endAmpmScrollRef,
+    trackRef: endAmpmTrackRef,
+    thumbRef: endAmpmThumbRef,
+    minThumbHeight: 30,
+    deps: [AMPM_OPTIONS.length, isEndAmpmOpen],
+    });
+
+    useCustomScrollbar({
+    enabled: isEndHourOpen && shouldShowEndHourScroll,
+    scrollRef: endHourScrollRef,
+    trackRef: endHourTrackRef,
+    thumbRef: endHourThumbRef,
+    minThumbHeight: 30,
+    deps: [HOUR_OPTIONS.length, isEndHourOpen],
+    });
+
+    useCustomScrollbar({
+    enabled: isEndMinOpen && shouldShowEndMinScroll,
+    scrollRef: endMinScrollRef,
+    trackRef: endMinTrackRef,
+    thumbRef: endMinThumbRef,
+    minThumbHeight: 30,
+    deps: [MINUTE_OPTIONS.length, isEndMinOpen],
     });
 
     // 작업경로
@@ -655,15 +787,7 @@ export default function ScheduleDetail({
           {/* 본문 */}
           <div className={styles.itemContainer}>
             <FieldRow label="로봇명">
-              {isEditMode ? (
-                <input
-                    className={styles.editInput}
-                  value={form.robotNo}
-                  onChange={(e) => setForm((p) => ({ ...p, robotNo: e.target.value }))}
-                />
-              ) : (
-                <ViewText value={form.robotNo} />
-              )}
+              <ViewText value={form.robotNo} />
             </FieldRow>
 
             <FieldRow label="작업명">
@@ -706,53 +830,129 @@ export default function ScheduleDetail({
                     <div className={styles.itemDateBox}>
                         <div className={styles.itemDateLabel}>시작</div>
 
-                        <div className={styles.itemDate}>
-                            {form.dateText.replace(/\./g, "-")}
-                            <img src="/icon/search_calendar.png" alt="" />
+                        <div ref={startDateWrapperRef} className={styles.itemDate}>
+                            {startDateText}
+                            <img
+                              src="/icon/search_calendar.png"
+                              alt=""
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsStartDateOpen((v) => !v);
+                              }}
+                            />
+                            {isStartDateOpen && (
+                              <div className={styles.calendarPopover} onClick={(e) => e.stopPropagation()}>
+                                <MiniCalendar
+                                  value={parseDateText(startDateText)}
+                                  showTodayButton
+                                  size="modal"
+                                  onPickDate={(date) => {
+                                    const next = formatDate(date);
+                                    setStartDateText(next);
+                                    setForm((p) => ({ ...p, dateText: next }));
+                                    setIsStartDateOpen(false);
+                                  }}
+                                />
+                              </div>
+                            )}
+                        </div>
+                        <div ref={startAmpmWrapperRef} className={`${styles.selecteWrapper} ${styles.selecteCompact}`}>
+                          <div
+                            className={`${styles.selecte} ${styles.selecteCompact} ${styles.timeSelecte}`}
+                            onClick={() => setIsStartAmpmOpen((v) => !v)}
+                          >
+                            <span>{form.startAmpm}</span>
+                            <img src={isStartAmpmOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                          </div>
+                          {isStartAmpmOpen && (
+                            <div className={`${styles.selectebox} ${styles.selecteboxCompact}`}>
+                              <div ref={startAmpmScrollRef} className={styles.selecteInner} role="listbox">
+                                {AMPM_OPTIONS.map((opt) => (
+                                  <div
+                                    key={opt.id}
+                                    className={`${styles.selecteOption} ${form.startAmpm === opt.label ? styles.selecteOptionActive : ""}`.trim()}
+                                    onClick={() => {
+                                      setForm((p) => ({ ...p, startAmpm: opt.label as FormState["startAmpm"] }));
+                                      setIsStartAmpmOpen(false);
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                              {shouldShowStartAmpmScroll && (
+                              <div ref={startAmpmTrackRef} className={styles.selecteScrollTrack}>
+                                <div ref={startAmpmThumbRef} className={styles.selecteScrollThumb} />
+                              </div>
+                            )}
+                            </div>
+                          )}
                         </div>
 
-                        <div className={styles.itemAmPm} ref={startAmpmWrapperRef}>
-                        <HeadlessSelect
-                            placeholder="오전/오후"
-                            value={form.startAmpm}
-                            options={AMPM_OPTIONS}
-                            isOpen={isStartAmpmOpen}
-                            setIsOpen={setIsStartAmpmOpen}
-                            onSelect={(opt) =>
-                            setForm((p) => ({ ...p, startAmpm: opt.label as "오전" | "오후" }))
-                            }
-                            scrollRef={startAmpmScrollRef}
-                            trackRef={startAmpmTrackRef}
-                            thumbRef={startAmpmThumbRef}
-                        />
+                        <div ref={startHourWrapperRef} className={`${styles.selecteWrapper} ${styles.selecteCompact}`}>
+                          <div
+                            className={`${styles.selecte} ${styles.selecteCompact} ${styles.timeSelecte}`}
+                            onClick={() => setIsStartHourOpen((v) => !v)}
+                          >
+                            <span>{String(form.startHour).padStart(2, "0")}</span>
+                            <img src={isStartHourOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                          </div>
+                          {isStartHourOpen && (
+                            <div className={`${styles.selectebox} ${styles.selecteboxCompact}`}>
+                              <div ref={startHourScrollRef} className={styles.selecteInner} role="listbox">
+                                {HOUR_OPTIONS.map((opt) => (
+                                  <div
+                                    key={opt.id}
+                                    className={`${styles.selecteOption} ${String(form.startHour).padStart(2, "0") === opt.label ? styles.selecteOptionActive : ""}`.trim()}
+                                    onClick={() => {
+                                      setForm((p) => ({ ...p, startHour: Number(opt.label) }));
+                                      setIsStartHourOpen(false);
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                              {shouldShowStartHourScroll && (
+                              <div ref={startHourTrackRef} className={styles.selecteScrollTrack}>
+                                <div ref={startHourThumbRef} className={styles.selecteScrollThumb} />
+                              </div>
+                            )}
+                            </div>
+                          )}
                         </div>
 
-                        <div className={styles.itemHour} ref={startHourWrapperRef}>
-                        <HeadlessSelect
-                            placeholder="시"
-                            value={String(form.startHour).padStart(2, "0")}
-                            options={HOUR_OPTIONS}
-                            isOpen={isStartHourOpen}
-                            setIsOpen={setIsStartHourOpen}
-                            onSelect={(opt) => setForm((p) => ({ ...p, startHour: Number(opt.label) }))}
-                            scrollRef={startHourScrollRef}
-                            trackRef={startHourTrackRef}
-                            thumbRef={startHourThumbRef}
-                        />
-                        </div>
-
-                        <div className={styles.itemMinute} ref={startMinWrapperRef}>
-                        <HeadlessSelect
-                            placeholder="분"
-                            value={String(form.startMin).padStart(2, "0")}
-                            options={MINUTE_OPTIONS}
-                            isOpen={isStartMinOpen}
-                            setIsOpen={setIsStartMinOpen}
-                            onSelect={(opt) => setForm((p) => ({ ...p, startMin: Number(opt.label) }))}
-                            scrollRef={startMinScrollRef}
-                            trackRef={startMinTrackRef}
-                            thumbRef={startMinThumbRef}
-                        />
+                        <div ref={startMinWrapperRef} className={`${styles.selecteWrapper} ${styles.selecteCompact}`}>
+                          <div
+                            className={`${styles.selecte} ${styles.selecteCompact} ${styles.timeSelecte}`}
+                            onClick={() => setIsStartMinOpen((v) => !v)}
+                          >
+                            <span>{String(form.startMin).padStart(2, "0")}</span>
+                            <img src={isStartMinOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                          </div>
+                          {isStartMinOpen && (
+                            <div className={`${styles.selectebox} ${styles.selecteboxCompact}`}>
+                              <div ref={startMinScrollRef} className={styles.selecteInner} role="listbox">
+                                {MINUTE_OPTIONS.map((opt) => (
+                                  <div
+                                    key={opt.id}
+                                    className={`${styles.selecteOption} ${String(form.startMin).padStart(2, "0") === opt.label ? styles.selecteOptionActive : ""}`.trim()}
+                                    onClick={() => {
+                                      setForm((p) => ({ ...p, startMin: Number(opt.label) }));
+                                      setIsStartMinOpen(false);
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                              {shouldShowStartMinScroll && (
+                              <div ref={startMinTrackRef} className={styles.selecteScrollTrack}>
+                                <div ref={startMinThumbRef} className={styles.selecteScrollThumb} />
+                              </div>
+                            )}
+                            </div>
+                          )}
                         </div>
                     </div>
 
@@ -761,59 +961,128 @@ export default function ScheduleDetail({
                     <div className={styles.itemDateBox}>
                         <div className={styles.itemDateLabel}>종료</div>
 
-                        <div className={styles.itemDate}>
-                        {form.dateText.replace(/\./g, "-")}
-                        <img src="/icon/search_calendar.png" alt="" />
+                        <div ref={endDateWrapperRef} className={styles.itemDate}>
+                        {endDateText}
+                        <img
+                          src="/icon/search_calendar.png"
+                          alt=""
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEndDateOpen((v) => !v);
+                          }}
+                        />
+                        {isEndDateOpen && (
+                          <div className={styles.calendarPopover} onClick={(e) => e.stopPropagation()}>
+                            <MiniCalendar
+                              value={parseDateText(endDateText)}
+                              showTodayButton
+                              size="modal"
+                              onPickDate={(date) => {
+                                const next = formatDate(date);
+                                setEndDateText(next);
+                                setIsEndDateOpen(false);
+                              }}
+                            />
+                          </div>
+                        )}
+                        </div>
+                        <div ref={endAmpmWrapperRef} className={`${styles.selecteWrapper} ${styles.selecteCompact}`}>
+                          <div
+                            className={`${styles.selecte} ${styles.selecteCompact} ${styles.timeSelecte}`}
+                            onClick={() => setIsEndAmpmOpen((v) => !v)}
+                          >
+                            <span>{form.endAmpm}</span>
+                            <img src={isEndAmpmOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                          </div>
+                          {isEndAmpmOpen && (
+                            <div className={`${styles.selectebox} ${styles.selecteboxCompact}`}>
+                              <div ref={endAmpmScrollRef} className={styles.selecteInner} role="listbox">
+                                {AMPM_OPTIONS.map((opt) => (
+                                  <div
+                                    key={opt.id}
+                                    className={`${styles.selecteOption} ${form.endAmpm === opt.label ? styles.selecteOptionActive : ""}`.trim()}
+                                    onClick={() => {
+                                      setForm((p) => ({ ...p, endAmpm: opt.label as FormState["endAmpm"] }));
+                                      setIsEndAmpmOpen(false);
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                              {shouldShowEndAmpmScroll && (
+                              <div ref={endAmpmTrackRef} className={styles.selecteScrollTrack}>
+                                <div ref={endAmpmThumbRef} className={styles.selecteScrollThumb} />
+                              </div>
+                            )}
+                            </div>
+                          )}
                         </div>
 
-                        <div className={styles.itemAmPm} ref={endAmpmWrapperRef}>
-                        <HeadlessSelect
-                            placeholder="오전/오후"
-                            value={form.endAmpm}
-                            options={AMPM_OPTIONS}
-                            isOpen={isEndAmpmOpen}
-                            setIsOpen={setIsEndAmpmOpen}
-                            onSelect={(opt) =>
-                            setForm((p) => ({ ...p, endAmpm: opt.label as "오전" | "오후" }))
-                            }
-                            scrollRef={endAmpmScrollRef}
-                            trackRef={endAmpmTrackRef}
-                            thumbRef={endAmpmThumbRef}
-                        />
+                        <div ref={endHourWrapperRef} className={`${styles.selecteWrapper} ${styles.selecteCompact}`}>
+                          <div
+                            className={`${styles.selecte} ${styles.selecteCompact} ${styles.timeSelecte}`}
+                            onClick={() => setIsEndHourOpen((v) => !v)}
+                          >
+                            <span>{String(form.endHour).padStart(2, "0")}</span>
+                            <img src={isEndHourOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                          </div>
+                          {isEndHourOpen && (
+                            <div className={`${styles.selectebox} ${styles.selecteboxCompact}`}>
+                              <div ref={endHourScrollRef} className={styles.selecteInner} role="listbox">
+                                {HOUR_OPTIONS.map((opt) => (
+                                  <div
+                                    key={opt.id}
+                                    className={`${styles.selecteOption} ${String(form.endHour).padStart(2, "0") === opt.label ? styles.selecteOptionActive : ""}`.trim()}
+                                    onClick={() => {
+                                      setForm((p) => ({ ...p, endHour: Number(opt.label) }));
+                                      setIsEndHourOpen(false);
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                              {shouldShowEndHourScroll && (
+                              <div ref={endHourTrackRef} className={styles.selecteScrollTrack}>
+                                <div ref={endHourThumbRef} className={styles.selecteScrollThumb} />
+                              </div>
+                            )}
+                            </div>
+                          )}
                         </div>
 
-                        {/* ✅ 시 */}
-                        <div className={styles.itemHour} ref={endHourWrapperRef}>
-                        <HeadlessSelect
-                            placeholder="시"
-                            value={String(form.endHour).padStart(2, "0")}
-                            options={HOUR_OPTIONS}
-                            isOpen={isEndHourOpen}
-                            setIsOpen={setIsEndHourOpen}
-                            onSelect={(opt) =>
-                            setForm((p) => ({ ...p, endHour: Number(opt.label) }))
-                            }
-                            scrollRef={endHourScrollRef}
-                            trackRef={endHourTrackRef}
-                            thumbRef={endHourThumbRef}
-                        />
-                        </div>
-
-                        {/* ✅ 분 */}
-                        <div className={styles.itemMinute} ref={endMinWrapperRef}>
-                        <HeadlessSelect
-                            placeholder="분"
-                            value={String(form.endMin).padStart(2, "0")}
-                            options={MINUTE_OPTIONS}
-                            isOpen={isEndMinOpen}
-                            setIsOpen={setIsEndMinOpen}
-                            onSelect={(opt) =>
-                            setForm((p) => ({ ...p, endMin: Number(opt.label) }))
-                            }
-                            scrollRef={endMinScrollRef}
-                            trackRef={endMinTrackRef}
-                            thumbRef={endMinThumbRef}
-                        />
+                        <div ref={endMinWrapperRef} className={`${styles.selecteWrapper} ${styles.selecteCompact}`}>
+                          <div
+                            className={`${styles.selecte} ${styles.selecteCompact} ${styles.timeSelecte}`}
+                            onClick={() => setIsEndMinOpen((v) => !v)}
+                          >
+                            <span>{String(form.endMin).padStart(2, "0")}</span>
+                            <img src={isEndMinOpen ? "/icon/arrow_up.png" : "/icon/arrow_down.png"} alt="" />
+                          </div>
+                          {isEndMinOpen && (
+                            <div className={`${styles.selectebox} ${styles.selecteboxCompact}`}>
+                              <div ref={endMinScrollRef} className={styles.selecteInner} role="listbox">
+                                {MINUTE_OPTIONS.map((opt) => (
+                                  <div
+                                    key={opt.id}
+                                    className={`${styles.selecteOption} ${String(form.endMin).padStart(2, "0") === opt.label ? styles.selecteOptionActive : ""}`.trim()}
+                                    onClick={() => {
+                                      setForm((p) => ({ ...p, endMin: Number(opt.label) }));
+                                      setIsEndMinOpen(false);
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </div>
+                                ))}
+                              </div>
+                              {shouldShowEndMinScroll && (
+                              <div ref={endMinTrackRef} className={styles.selecteScrollTrack}>
+                                <div ref={endMinThumbRef} className={styles.selecteScrollThumb} />
+                              </div>
+                            )}
+                            </div>
+                          )}
                         </div>
                     </div>
                     </div>
@@ -931,7 +1200,10 @@ export default function ScheduleDetail({
                             className={styles.radioBtnBox}
                             role="button"
                             tabIndex={0}
-                            onClick={() => setForm((p) => ({ ...p, repeatEndType: "none" }))}
+                            onClick={() => {
+                              setForm((p) => ({ ...p, repeatEndType: "none" }));
+                              setIsRepeatEndDateOpen(false);
+                            }}
                             >
                             <img
                                 src={form.repeatEndType === "none" ? "/icon/place_chk.png" : "/icon/place_none_chk.png"}
@@ -954,12 +1226,38 @@ export default function ScheduleDetail({
                             <span>종료 날짜</span>
 
                             <div
+                                ref={repeatEndDateWrapperRef}
                                 className={`${styles.repeatEndDateBox} ${
                                 form.repeatEndType !== "date" ? styles.repeatEndDateBoxDisabled : ""
                                 }`}
                             >
                                 <span className={styles.repeatEndDateText}>{form.repeatEndDate}</span>
-                                <img src="/icon/search_calendar.png" alt="" />
+                                <img
+                                    src="/icon/search_calendar.png"
+                                    alt=""
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (form.repeatEndType === "date") {
+                                            setIsRepeatEndDateOpen((v) => !v);
+                                        }
+                                    }}
+                                />
+                                {form.repeatEndType === "date" && isRepeatEndDateOpen && (
+                                    <div
+                                        className={styles.calendarPopover}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <MiniCalendar
+                                            value={parseDateText(form.repeatEndDate)}
+                                            showTodayButton
+                                            size="modal"
+                                            onPickDate={(date) => {
+                                                setForm((p) => ({ ...p, repeatEndDate: formatDate(date) }));
+                                                setIsRepeatEndDateOpen(false);
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             </div>
                         </div>
@@ -1000,36 +1298,30 @@ export default function ScheduleDetail({
                 )}
                 </FieldRow>
 
-            <div className={styles.itemPathBox}>
+            <div className={`${styles.itemPathBox} ${isEditMode ? styles.itemPathBoxEdit : ""}`}>
               <div className={styles.itemtitle}>경로순서</div>
-              {isEditMode ? (
-                <div className={styles.itemPath}>
-                  <textarea
-                    value={form.pathOrder}
-                    onChange={(e) => setForm((p) => ({ ...p, pathOrder: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      resize: 'none',
-                      border: 'none',
-                      outline: 'none',
-                      background: 'transparent',
-                      color: '#fff',
-                      lineHeight: '150%',
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className={styles.itemPath}>
-                  <div className={styles.itemScroll}>{form.pathOrder}</div>
+              <div className={styles.itemPath}>
+                <div className={styles.itemScroll}>{form.pathOrder}</div>
+              </div>
+              {isEditMode && (
+                <div className={styles.itemPathAction}>
+                  <button
+                    type="button"
+                    className={styles.itemBoxBtn}
+                    onClick={() => router.push('/robots?tab=path')}
+                  >
+                    작업경로 등록 화면 →
+                  </button>
                 </div>
               )}
             </div>
 
 
-            <FieldRow label="수정 일시">
+            {!isEditMode && (
+              <FieldRow label="수정 일시">
                 <ViewText value={modifiedAtText} />
-            </FieldRow>
+              </FieldRow>
+            )}
           </div>
 
           {/* 하단 버튼 */}
@@ -1087,6 +1379,18 @@ export default function ScheduleDetail({
           message="해당 작업일정을 삭제하시겠습니까?"
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
+        />
+      )}
+
+      {/* 반복 작업 수정/삭제 범위 선택 모달 */}
+      {repeatConfirmOpen && (
+        <RepeatConfirmModal
+          isOpen={repeatConfirmOpen}
+          mode={repeatConfirmMode}
+          defaultScope={repeatConfirmMode === "edit" ? "thisAndFuture" : "this"}
+          onClose={handleRepeatConfirmCancel}
+          onCancel={handleRepeatConfirmCancel}
+          onConfirm={handleRepeatConfirmOk}
         />
       )}
     </>

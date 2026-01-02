@@ -9,12 +9,16 @@ type MiniCalendarProps = {
   /** 날짜 선택 시 WorkSchedule에 알려주기 */
   onPickDate?: (date: Date) => void;
   todayResetKey?: number;
+  showTodayButton?: boolean;
+  size?: "page" | "modal";
 };
 
 export default function MiniCalendar({ 
   value = null,
   onPickDate,
-  todayResetKey = 0
+  todayResetKey = 0,
+  showTodayButton = false,
+  size = "page"
  }: MiniCalendarProps) {
   
   const today = useMemo(() => {
@@ -125,6 +129,15 @@ export default function MiniCalendar({
     setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
+  const moveToday = () => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    setViewDate(new Date(t.getFullYear(), t.getMonth(), 1));
+    setTempDate(t);
+    setHasPicked(true);
+    onPickDate?.(t);
+  };
+
   useEffect(() => {
     const t = new Date();
     t.setHours(0, 0, 0, 0);
@@ -137,7 +150,13 @@ export default function MiniCalendar({
 
 
   return (
-    <div ref={wrapperRef} className={styles.calendarModal}>
+    <div
+      ref={wrapperRef}
+      className={[
+        styles.calendarModal,
+        size === "modal" ? styles.calendarModalModal : styles.calendarModalPage,
+      ].join(" ")}
+    >
     
       {/* 헤더 */}
       <div className={styles.header}>
@@ -218,6 +237,13 @@ export default function MiniCalendar({
           );
         })}
       </div>
+      {showTodayButton && (
+        <div className={styles.calendarFooter}>
+        <button type="button" className={styles.todayBtn} onClick={moveToday}>
+          오늘
+        </button>
+        </div>
+      )}
     </div>
   );
 }

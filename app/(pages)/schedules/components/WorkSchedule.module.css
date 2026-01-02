@@ -551,6 +551,8 @@
   padding: 6px;
   box-sizing: border-box;
   min-height: 0; /* 중요: 셀 내부 overflow 계산 안정화 */
+
+  position: relative;
 }
 
 .monthCell:nth-child(7n) {
@@ -594,15 +596,281 @@
 }
 
 .cellEvent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 2px 4px;
   border-radius: 4px;
   font-size: 10px;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border: none;
+  background: transparent;
+}
+
+.cellEventDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50px;
+  background: #92D050;
+  flex: 0 0 auto;
+}
+
+.cellEventText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .more {
   font-size: 10px;
   opacity: 0.7;
+}
+
+
+/* ===== 월간 초과(+N개) 버튼 ===== */
+.moreBtn {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+}
+.moreBtn:hover {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+}
+
+/* 주간 */
+/* ===== 주간: 상단 리스트 레인 ===== */
+.weekLaneSpacer {
+  width: 100%;
+}
+
+.weekLane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  z-index: 4;
+  pointer-events: auto;
+  background: rgba(32, 35, 52, 0.35);
+  border-bottom: 1px solid #8894AD;
+}
+
+.weekLaneCol {
+  border-left: 1px solid #8894AD;
+  padding: 6px 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.weekLaneCol:first-child {
+  border-left: none;
+}
+
+.weekLaneRow {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #e8ebf2;
+  text-align: left;
+}
+
+.weekLaneRow:hover {
+  background: rgba(33, 71, 102, 0.35);
+}
+
+.weekLaneDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50px;
+  background: #92D050;
+  flex: 0 0 auto;
+}
+
+.weekLaneText {
+  font-size: 11px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.weekLaneMore,
+.weekLaneFold {
+  border: none;
+  background: transparent;
+  padding: 0 4px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  text-align: left;
+}
+
+.weekLaneMore:hover,
+.weekLaneFold:hover {
+  color: rgba(255,255,255,0.9);
+  text-decoration: underline;
+}
+
+.statusWaiting {
+  background-color: #FFC635;
+}
+
+.statusWorking {
+  background-color: #00B0EE;
+}
+
+.statusError {
+  background-color: #FF0000;
+}
+
+.statusCompleted {
+  background-color: #92D050;
+}
+
+
+/* 더보기 모달 */
+.monthOverflowOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+
+  /* 배경 딤 */
+  background: rgba(0, 0, 0, 0.45);
+
+  /* ✅ 중앙 정렬 핵심 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* 바깥 여백(작은 화면 대응) */
+  padding: 16px;
+}
+
+.monthOverflowModal {
+  width: 427px;
+  max-width: 100%;
+  background: #292D43;
+  padding: 30px 20px;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.monthOverflowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.monthOverflowClose {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* 리스트 아이템(이미지처럼 클릭 가능한 라인) */
+.monthOverflowItem {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 8px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: left;
+}
+
+.monthOverflowItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.monthOverflowText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* 상태 점(좌측 컬러 도트) */
+.monthOverflowDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: 0 0 8px;
+}
+
+/* 상태별 색상(프로젝트에서 쓰는 status에 맞게 class 매핑해서 사용) */
+.dotGreen { background: #32c36c; }
+.dotRed { background: #ff4d4f; }
+.dotGray { background: rgba(255, 255, 255, 0.35); }
+
+.monthOverflowInner {
+  border-radius: 12px;
+
+  background: #3B415F;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+/* (보강) 리스트 스크롤바 - 디자인 톤 유지 */
+.monthOverflowList {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 10px 12px 14px;
+  scrollbar-width: thin; /* firefox */
+}
+
+/* webkit */
+.monthOverflowList::-webkit-scrollbar {
+  width: 6px;
+}
+.monthOverflowList::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+}
+.monthOverflowList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* (보강) 타이틀 좌측 정렬감(이미지와 유사) */
+.monthOverflowTitle {
+  text-align: left;
+  line-height: 1.2;
+  font-size: 20px;
 }

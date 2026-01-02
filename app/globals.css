@@ -14,6 +14,8 @@ html, body {
     margin-top: 141px;     /* Header 높이 */
     margin-left: 240px;   /* Sidebar 너비 */    
 
+    min-width: 1550px;
+
     padding: 0 30px 30px;
 }
 

@@ -363,6 +363,88 @@
 
 
 
+.camSelectWrapper {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 10;
+}
+
+.camSelectButton {
+  width: 101px;
+  height: 27px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #8F909D;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.camSelectButton img {
+  width: 14px;
+  height: auto;
+}
+
+.camSelectMenu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  width: 102px;
+  max-height: 120px;
+  border-radius: 5px;
+  background: #8F909D;
+  padding: 4px 8px;
+  overflow: hidden;
+}
+
+.camSelectInner {
+  max-height: 120px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.camSelectInner::-webkit-scrollbar {
+  display: none;
+}
+
+.camOption {
+  width: 100%;
+  line-height: 21px;
+  border-radius: 3px;
+  font-size: 13px;
+  margin: 4px 0;
+  padding-left: 6px;
+  cursor: pointer;
+}
+
+.camOption:hover,
+.camOptionActive {
+  background: #B9C0CA;
+}
+
+.camScrollTrack {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  right: 4px;
+  width: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.camScrollThumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  border-radius: 999px;
+  background: #eaeaed;
+}
+
 /* selectBox */
 .selecteWrapper {
     position: relative;
@@ -396,10 +478,20 @@
     top: 45px;
     cursor: pointer;
     z-index: 20;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
-.selectebox div {
+.selecteInner {
+    max-height: 175px;
+    overflow-y: scroll;
+    scrollbar-width: none;
+}
+
+.selecteInner::-webkit-scrollbar {
+    display: none;
+}
+
+.selecteInner div {
     width: 100%;
     height: 35px;
     line-height: 35px;
@@ -408,7 +500,7 @@
     font-size: 13px;
 }
 
-.selectebox div:hover {
+.selecteInner div:hover {
     background: #d2d3d7;
     border-radius: 4px;
     width: 100%;
@@ -416,6 +508,26 @@
     padding: 0 10px;
     line-height: 35px;
     color: #16192c;
+}
+
+.selecteScrollTrack {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    right: 4px;
+    width: 6px;
+    border-radius: 999px;
+    background: transparent;
+}
+
+.selecteScrollThumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    border-radius: 999px;
+    background: #eaeaed;
 }
 
 .place,
@@ -506,7 +618,8 @@
 
 /* 맵 카드: 기존 commonBox 톤을 기반으로 스크린샷 형태에 맞춤 */
 .placeMapCard {
-  width: 928px;
+  width: 100%;
+  max-width: 928px;
   height: 522px;
 
   border-radius: 18px;
@@ -687,4 +800,102 @@
   margin: 0 6px;
   font-size: 12px;
   color: #cfd6e6;
+}
+
+/* =========================
+   ✅ 경로 관리(Path) 탭
+========================= */
+
+.pathWrap {
+  width: 100%;
+  height: 730px;
+  background: #282d43;
+  border-radius: 10px;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pathTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+}
+
+.pathTopBar h2 {
+  font-weight: 500;
+  margin: 0;
+  color: #92d4f4;
+}
+
+.pathFilters {
+  display: flex;
+  gap: 10px;
+}
+
+.pathListBox {
+  height: 565px; /* 이미지 테이블 영역 톤 맞춤 */
+}
+
+.pathPagination {
+  justify-items: center;
+  margin-bottom: 8px;
+}
+
+.pathBottomBar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 좌측 "경로 등록" 버튼 (이미지 톤) */
+.pathPrimaryBtn {
+  width: 120px;
+  height: 35px;
+  border-radius: 8px;
+  padding: 8px 14px;
+
+  background: #284A68;
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+.pathPrimaryBtn img {
+  width: 11px;
+  height: 11px;
+}
+
+/* 경로 테이블 컬럼 폭 (이미지 기준) */
+.pathTable th:nth-child(1) { width: 5%; }   /* 체크 */
+.pathTable th:nth-child(2) { width: 10%; }  /* 로봇명 */
+.pathTable th:nth-child(3) { width: 12%; }  /* 작업유형 */
+.pathTable th:nth-child(4) { width: 12%; }  /* 경로명 */
+.pathTable th:nth-child(5) { width: 46%; }  /* 경로순서 */
+.pathTable th:nth-child(6) { width: 15%; }  /* 변경일시 */
+
+/* 경로순서 셀: 한 줄로 길게 + 넘치면 ... */
+.pathOrderCell {
+  text-align: left;
+  padding: 0 10px !important;
+}
+
+.pathOrderText {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

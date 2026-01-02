@@ -5,7 +5,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 80;
+  z-index: 100;
 }
 
 
@@ -103,6 +103,7 @@
 
     font-size: 16px;
     color: #FFFFFF;
+    overflow: visible;
 }
 
 .repeatDateFlex {
@@ -236,6 +237,146 @@
   overflow: hidden;
 }
 
+/* custom select (robot list style) */
+.selecteWrapper {
+  position: relative;
+  width: 373px;
+  height: 35px;
+}
+
+.selecte {
+  width: 100%;
+  height: 35px;
+  background: #454B67;
+  border-radius: 5px;
+  border: 1px solid #8AACC7;
+  padding: 5px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.selecte img {
+  height: 40%;
+}
+
+.timeSelecte img {
+  height: 25%;
+}
+
+.selectebox {
+  width: 100%;
+  height: auto;
+  padding: 10px;
+  background: #202334;
+  border-radius: 5px;
+  position: absolute;
+  top: 45px;
+  cursor: pointer;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.selecteInner {
+  max-height: 175px;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.selecteInner::-webkit-scrollbar {
+  display: none;
+}
+
+.selecteOption {
+  width: 100%;
+  height: 35px;
+  line-height: 35px;
+  padding: 0 10px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.selecteOption:hover {
+  background: #d2d3d7;
+  color: #16192c;
+  border-radius: 4px;
+}
+
+.selecteScrollTrack {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: 4px;
+  width: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.selecteScrollThumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  border-radius: 999px;
+  background: #eaeaed;
+}
+
+.selecteCompact {
+  width: 63px;
+}
+
+.selecte.selecteCompact {
+  padding: 0 7px;
+  font-size: 12px;
+}
+
+.selecteboxCompact {
+  width: 63px;
+}
+
+.inner {
+  max-height: 175px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.innerScroll {
+  max-height: 160px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.inner::-webkit-scrollbar {
+  display: none;
+}
+
+.innerScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollTrack {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  right: 4px;
+  width: 6px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.scrollThumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  border-radius: 999px;
+  background: #eaeaed;
+}
+
 .radioBtnFlex {
     display: flex;
     gap: 32px;
@@ -283,7 +424,16 @@
     justify-content: space-between;
 
     cursor: pointer;
+    position: relative;
 }
+
+.calendarPopover {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  z-index: 30;
+}
+
 
 .itemDateBox .createitemAmPm,
 .itemDateBox .createitemHour,
@@ -357,6 +507,10 @@
 
     padding: 0 17px;
     margin-left: 100px;
+}
+
+.itemPathBoxEdit .itemBoxBtn {
+  margin-left: 0;
 }
 
 
@@ -488,12 +642,25 @@
     color: #FFFFFF;
 }
 
+.itemPathBoxEdit {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: auto;
+  gap: 8px;
+  margin-left: 100px;
+}
+
+.itemPathAction {
+  margin-top: 4px;
+}
+
 .itemPath {
     width: 373px;
     height: 85px;
 
     border: 1px solid #D9DAE0;
-    border-radius: 2px ;
+    border-radius: 5px ;
     
     background: #454B67;
 
@@ -544,7 +711,7 @@
   gap: 6px;
   margin-left: 8px;
   font-size: 12px;
-  color: #ffffff;
+  color: #ffffff;;
 }
 
 /* 기본 체크박스는 숨기고 아이콘으로 표현하려면(선택) */
@@ -554,6 +721,8 @@
 
   background: transparent;
   border: none;
+
+  cursor: pointer;
 }
 
 /* ====== (추가) 수정모드: 반복종료 '종료 날짜' 박스 ====== */
@@ -573,6 +742,9 @@
 
   font-size: 12px;
   color: #ffffff;
+
+  position: relative;
+  z-index: 2;
 }
 
 .repeatEndDateBoxDisabled {

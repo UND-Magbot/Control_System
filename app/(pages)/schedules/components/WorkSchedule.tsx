@@ -7,6 +7,7 @@ import MiniCalendar from './MiniCalendar';
 import ScheduleInsert from './ScheduleInsert';
 import ScheduleDetail from './ScheduleDetail';
 import type { RobotRowData } from '@/app/type';
+import { mockScheduleRows, type ScheduleStatus } from "@/app/mock/schedule_data";
 
 
 // 주간
@@ -46,19 +47,110 @@ function ymd(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
+function parseYmdDate(value: string) {
+  const parts = value.split("-");
+  if (parts.length !== 3) return new Date(value);
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  if (!year || !month || !day) return new Date(value);
+
+  const date = new Date(year, month - 1, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function clampMinutes(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  if (value <= 0) return 0;
+  if (value >= 24 * 60) return 24 * 60;
+  return Math.round(value);
+}
+
+type ParsedMinutes = {
+  value: number | null;
+  isMinutesOfDay: boolean;
+};
+
+function parseMinuteValue(input: number | string): ParsedMinutes {
+  if (typeof input === "number") {
+    if (!Number.isFinite(input)) return { value: null, isMinutesOfDay: false };
+    if (input >= 60) return { value: input, isMinutesOfDay: true };
+    return { value: input, isMinutesOfDay: false };
+  }
+
+  const raw = input.trim();
+  if (!raw) return { value: null, isMinutesOfDay: false };
+
+  const hhmmMatch = raw.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+  if (hhmmMatch) {
+    const h = Number(hhmmMatch[1]);
+    const m = Number(hhmmMatch[2]);
+    if (Number.isFinite(h) && Number.isFinite(m)) {
+      return { value: h * 60 + m, isMinutesOfDay: true };
+    }
+  }
+
+  const exprMatch = raw.match(/^\s*(\d{1,2})\s*\*\s*60\s*\+\s*(\d{1,2})\s*$/);
+  if (exprMatch) {
+    const h = Number(exprMatch[1]);
+    const m = Number(exprMatch[2]);
+    if (Number.isFinite(h) && Number.isFinite(m)) {
+      return { value: h * 60 + m, isMinutesOfDay: true };
+    }
+  }
+
+  const num = Number(raw);
+  if (Number.isFinite(num)) {
+    return { value: num, isMinutesOfDay: num >= 60 };
+  }
+
+  const looseNumbers = raw.match(/\d+/g);
+  if (looseNumbers && looseNumbers.length >= 2) {
+    const h = Number(looseNumbers[0]);
+    const m = Number(looseNumbers[1]);
+    if (Number.isFinite(h) && Number.isFinite(m)) {
+      return { value: h * 60 + m, isMinutesOfDay: true };
+    }
+  } else if (looseNumbers && looseNumbers.length === 1) {
+    const only = Number(looseNumbers[0]);
+    if (Number.isFinite(only)) {
+      return { value: only, isMinutesOfDay: only >= 60 };
+    }
+  }
+
+  return { value: null, isMinutesOfDay: false };
+}
+
+function normalizeMinuteRange(startValue: number | string, endValue: number | string) {
+  const startParsed = parseMinuteValue(startValue);
+  const endParsed = parseMinuteValue(endValue);
+
+  if (!Number.isFinite(startParsed.value ?? NaN) || !Number.isFinite(endParsed.value ?? NaN)) {
+    return { startMin: 0, endMin: 0 };
+  }
+
+  const startNum = startParsed.value as number;
+  const endNum = endParsed.value as number;
+  const treatAsHours = !startParsed.isMinutesOfDay && !endParsed.isMinutesOfDay && startNum <= 24 && endNum <= 24;
+  const factor = treatAsHours ? 60 : 1;
+
+  return {
+    startMin: clampMinutes(startNum * factor),
+    endMin: clampMinutes(endNum * factor),
+  };
+}
+
 type MonthEvent = {
   id: string;
   title: string;
   date: string; // "2025-01-09"
   color?: "green" | "yellow" | "blue" | "red";
+  status?: ScheduleStatus;
 };
 
-
-const monthEvents: MonthEvent[] = [
-  { id: "m1", title: "[완] Robot 3, 1층 순찰", date: "2025-01-09", color: "green" },
-  { id: "m2", title: "[진] Robot 4, 103호 환자", date: "2025-01-09", color: "red" },
-  { id: "m3", title: "[완] Robot 1, 303호", date: "2025-01-12", color: "yellow" },
-];
 
 function buildMonthCells(viewDate: Date) {
 
@@ -111,12 +203,25 @@ const monthColorClass: Record<NonNullable<MonthEvent["color"]>, string> = {
   red: styles.evRed,
 };
 
+const MONTH_MAX_VISIBLE = 3;
+
+const statusDotClass = (status?: ScheduleStatus) => {
+  switch (status) {
+    case "대기":
+      return styles.statusWaiting;
+    case "진행":
+      return styles.statusWorking;
+    case "오류":
+      return styles.statusError;
+    case "완료":
+      return styles.statusCompleted;
+    default:
+      return styles.statusCompleted;
+  }
+};
+
 interface RobotScheduleProps {
   robots: RobotRowData[];
-}
-
-function monthEventsForDay(dateKey: string) {
-  return monthEvents.filter(ev => ev.date === dateKey);
 }
 
 export default function Page({ robots }: RobotScheduleProps) {
@@ -145,35 +250,6 @@ export default function Page({ robots }: RobotScheduleProps) {
 
     const isTypeFilterOn = selectedRobotTypes.length > 0;
     const isNameFilterOn = selectedRobotNames.length > 0;
-
-    const mockEvents: WeekEvent[] = useMemo(() => {
-        return [
-            {
-            id: "e1",
-            title: "[완] Robot 3, 1층 순찰...",
-            robotNo: "Robot 3",
-            robotType: "순찰/보안",
-            dayIndex: 2,
-            startMin: 4 * 60 + 10,
-            endMin: 4 * 60 + 40,
-            color: "green",
-            },
-        ];
-    }, []);
-
-    /** ✅ 조건 1/2/3 실시간 반영 필터 */
-    const filteredWeekEvents = useMemo(() => {
-        // 필터가 하나도 없으면 전체 표시
-        if (!isTypeFilterOn && !isNameFilterOn) return mockEvents;
-
-        return mockEvents.filter((ev) => {
-            const typeOk = !isTypeFilterOn || selectedRobotTypes.includes(ev.robotType);
-            const nameOk = !isNameFilterOn || selectedRobotNames.includes(ev.robotNo);
-
-            // ✅ 조건3: 둘 다 선택된 경우 교집합(type AND name)
-            return typeOk && nameOk;
-        });
-    }, [mockEvents, isTypeFilterOn, isNameFilterOn, selectedRobotTypes, selectedRobotNames]);
 
     const robotNameOptions = robots;
 
@@ -223,6 +299,61 @@ export default function Page({ robots }: RobotScheduleProps) {
     const year = displayDate.getFullYear();
     const month = displayDate.getMonth(); // 0~11
 
+      /* =========================
+        📌 월간 이벤트 계산
+    ========================= */
+    const monthEvents: MonthEvent[] = useMemo(() => {
+        const y = viewDate.getFullYear();
+        const m = viewDate.getMonth();
+
+        return mockScheduleRows
+        .filter((s) => {
+            const d = parseYmdDate(s.date);
+            return d.getFullYear() === y && d.getMonth() === m;
+        })
+        .map((s) => ({
+            id: s.id,
+            title: s.title,
+            date: s.date,
+            color: s.color,
+            status: s.status,
+        }));
+    }, [viewDate]);
+
+    const monthEventsForDay = (dateKey: string) =>
+        monthEvents.filter((ev) => ev.date === dateKey);
+
+    /* =========================
+        📌 주간 이벤트 계산
+    ========================= */
+    const mockEvents: WeekEvent[] = useMemo(() => {
+        const start = new Date(weekStart);
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date(start);
+        end.setDate(start.getDate() + 7);
+
+        return mockScheduleRows
+        .filter((s) => {
+            const d = parseYmdDate(s.date);
+            return d >= start && d < end;
+        })
+        .map((s) => {
+            const d = parseYmdDate(s.date);
+            const range = normalizeMinuteRange(s.startMin, s.endMin);
+            return {
+            id: s.id,
+            title: s.title,
+            robotNo: s.robotNo,
+            robotType: s.workType,
+            dayIndex: d.getDay(),
+            startMin: range.startMin,
+            endMin: range.endMin,
+            color: s.color,
+            } as WeekEvent;
+        });
+    }, [weekStart]);
+
     const weekDates = useMemo(() => {
         return Array.from({ length: 7 }, (_, i) => {
             const dt = new Date(weekStart);
@@ -230,6 +361,20 @@ export default function Page({ robots }: RobotScheduleProps) {
             return dt;
         });
     }, [weekStart]);
+
+        /** ✅ 조건 1/2/3 실시간 반영 필터 */
+    const filteredWeekEvents = useMemo(() => {
+        // 필터가 하나도 없으면 전체 표시
+        if (!isTypeFilterOn && !isNameFilterOn) return mockEvents;
+
+        return mockEvents.filter((ev) => {
+            const typeOk = !isTypeFilterOn || selectedRobotTypes.includes(ev.robotType);
+            const nameOk = !isNameFilterOn || selectedRobotNames.includes(ev.robotNo);
+
+            // ✅ 조건3: 둘 다 선택된 경우 교집합(type AND name)
+            return typeOk && nameOk;
+        });
+    }, [mockEvents, isTypeFilterOn, isNameFilterOn, selectedRobotTypes, selectedRobotNames]);
 
     // Header의 이전/다음 버튼 처리
     const addDays = (base: Date, days: number) => {
@@ -467,6 +612,146 @@ export default function Page({ robots }: RobotScheduleProps) {
         setIsDetailModalOpen(true);
     };
 
+    const handleCloseDetail = () => {
+        setIsDetailModalOpen(false);
+        setSelectedWeekEvent(null);
+    };
+
+    const DOW_KR = ["일", "월", "화", "수", "목", "금", "토"];
+    // 월간: 셀에서 노출 가능한 row 수(리사이즈 반영)
+    const monthBodyRef = useRef<HTMLDivElement>(null);
+    const [monthMaxVisibleRows, setMonthMaxVisibleRows] = useState(1);
+
+    // 월간: “초과 팝업” 상태
+    const [monthOverflowOpen, setMonthOverflowOpen] = useState(false);
+    const [monthOverflowDateKey, setMonthOverflowDateKey] = useState<string>("");
+    const [monthOverflowDateObj, setMonthOverflowDateObj] = useState<Date | null>(null);
+
+    const toDetailEventFromMonth = (ev: MonthEvent): WeekEvent => {
+    const full = mockScheduleRows.find((s) => s.id === ev.id);
+    if (!full) {
+        throw new Error("Schedule not found for month event");
+    }
+
+    const d = parseYmdDate(full.date);
+
+    const range = normalizeMinuteRange(full.startMin, full.endMin);
+    return {
+        id: full.id,
+        title: full.title,
+        robotNo: full.robotNo,
+        robotType: full.workType,
+        dayIndex: d.getDay(),
+        startMin: range.startMin,
+        endMin: range.endMin,
+        color: full.color,
+    };
+    };
+
+    useEffect(() => {
+  if (viewType !== "month") return;
+
+  const el = monthBodyRef.current;
+  if (!el) return;
+
+  const calc = () => {
+    // monthContainer(630) - header(40) 영역 = monthBody 높이
+    // 이 높이를 weeks로 나누면 셀 높이
+    const bodyH = el.clientHeight;
+    const cellH = weeks > 0 ? bodyH / weeks : bodyH;
+
+    // 대략값(디자인 기준): date 라인/패딩 영역 확보
+    const reserved = 24;     // 날짜 표시 + 상단 여백
+    const gap = 2;           // row 간격(gap)
+    const rowH = 16;         // event row 높이(폰트/패딩 감안)
+    const usable = Math.max(0, cellH - reserved);
+
+    // 표시 가능 row 수 계산
+    const rows = Math.max(1, Math.floor((usable + gap) / (rowH + gap)));
+
+    // 과도하게 많아지는 건 UX상 제한(원하면 제거 가능)
+    setMonthMaxVisibleRows(Math.min(rows, 6));
+  };
+
+  calc();
+  const ro = new ResizeObserver(calc);
+  ro.observe(el);
+  window.addEventListener("resize", calc);
+
+  return () => {
+    ro.disconnect();
+    window.removeEventListener("resize", calc);
+  };
+}, [viewType, weeks]);
+
+// 주간
+// 주간: 요일별 접기/펼치기
+const WEEK_ROW_LIMIT = 4;
+const [expandedWeekDays, setExpandedWeekDays] = useState<Set<number>>(new Set());
+
+// 주간 이벤트: 요일별 그룹
+const weekEventsByDay = useMemo(() => {
+  const map = new Map<number, WeekEvent[]>();
+  for (let i = 0; i < 7; i++) map.set(i, []);
+  filteredWeekEvents.forEach((ev) => {
+    map.get(ev.dayIndex)?.push(ev);
+  });
+
+  // 시간순 정렬(선택)
+  for (let i = 0; i < 7; i++) {
+    map.get(i)!.sort((a, b) => a.startMin - b.startMin);
+  }
+  return map;
+}, [filteredWeekEvents]);
+
+// “레인 높이”는 확장 상태를 반영해 최대 row 수로 결정
+const weekLaneRowH = 18;
+const weekLanePad = 8;
+const weekLaneHeaderH = 0; // 필요하면 18 정도로 올려도 됨
+
+const maxLaneRows = useMemo(() => {
+  let max = 0;
+  for (let i = 0; i < 7; i++) {
+    const list = weekEventsByDay.get(i) ?? [];
+    const expanded = expandedWeekDays.has(i);
+    const visibleCount = expanded ? list.length : Math.min(list.length, WEEK_ROW_LIMIT);
+    max = Math.max(max, visibleCount);
+  }
+  return max;
+}, [weekEventsByDay, expandedWeekDays]);
+
+const weekLaneHeight = useMemo(() => {
+  // row가 0이면 레인 자체를 최소 높이로
+  if (maxLaneRows <= 0) return 0;
+  return weekLanePad * 2 + weekLaneHeaderH + maxLaneRows * weekLaneRowH;
+}, [maxLaneRows]);
+
+const toggleWeekDayExpand = (dayIdx: number) => {
+  setExpandedWeekDays((prev) => {
+    const next = new Set(prev);
+    if (next.has(dayIdx)) next.delete(dayIdx);
+    else next.add(dayIdx);
+    return next;
+  });
+};
+
+useEffect(() => {
+  if (!monthOverflowOpen) return;
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") setMonthOverflowOpen(false);
+  };
+
+  document.addEventListener("keydown", onKeyDown);
+  document.body.style.overflow = "hidden";
+
+  return () => {
+    document.removeEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "unset";
+  };
+}, [monthOverflowOpen]);
+
+
     return (
       <>
         <div className={styles.ScheduleContainer}>
@@ -633,6 +918,7 @@ export default function Page({ robots }: RobotScheduleProps) {
                                 {/* 7일 그리드 */}
                                 <div className={styles.daysCol}>
                                     <div className={styles.daysGrid} style={{ height: gridHeight }}>
+                                    
                                     {/* 가로 라인(시간) */}
                                     {hours.map((h) => (
                                         <div
@@ -691,16 +977,53 @@ export default function Page({ robots }: RobotScheduleProps) {
                                     })}
                                     </div>
                                 </div>
-                                {isDetailModalOpen && selectedWeekEvent && (
-                                    <ScheduleDetail
-                                        isOpen={isDetailModalOpen}
-                                        onClose={() => {
-                                        setIsDetailModalOpen(false);
-                                        setSelectedWeekEvent(null);
-                                        }}
-                                        event={selectedWeekEvent}
-                                    />
-                                )}
+                                {monthOverflowOpen && monthOverflowDateObj && (
+                                    <div
+                                        className={styles.monthOverflowOverlay}
+                                        onClick={() => setMonthOverflowOpen(false)}
+                                    >
+                                        <div
+                                        className={styles.monthOverflowModal}
+                                        onClick={(e) => e.stopPropagation()}
+                                        >
+                                        <div className={styles.monthOverflowHeader}>
+                                            <div className={styles.monthOverflowTitle}>
+                                            {monthOverflowDateObj.getFullYear()}년{" "}
+                                            {monthOverflowDateObj.getMonth() + 1}월{" "}
+                                            {monthOverflowDateObj.getDate()}일 ({DOW_KR[monthOverflowDateObj.getDay()]})
+                                            </div>
+                                            <button
+                                            type="button"
+                                            className={styles.monthOverflowClose}
+                                            onClick={() => setMonthOverflowOpen(false)}
+                                            aria-label="close"
+                                            >
+                                            ✕
+                                            </button>
+                                        </div>
+
+                                        <div className={styles.monthOverflowList}>
+                                            {monthEventsForDay(monthOverflowDateKey)
+                                              .slice(MONTH_MAX_VISIBLE)
+                                              .map((ev) => (
+                                            <button
+                                                key={ev.id}
+                                                type="button"
+                                                className={styles.monthOverflowItem}
+                                                onClick={() => {
+                                                setSelectedWeekEvent(toDetailEventFromMonth(ev));
+                                                setIsDetailModalOpen(true);
+                                                }}
+                                                title={ev.title}
+                                            >
+                                                <span className={`${styles.monthOverflowDot} ${statusDotClass(ev.status)}`.trim()} />
+                                                <span className={styles.monthOverflowText}>{ev.title}</span>
+                                            </button>
+                                            ))}
+                                        </div>
+                                        </div>
+                                    </div>
+                                    )}
 
                                 <div className={styles.scrollGutter}>
                                     <div ref={trackRef} className={styles.scrollTrack}>
@@ -711,6 +1034,14 @@ export default function Page({ robots }: RobotScheduleProps) {
                         </div>
                     </div>
                 </section>
+                )}
+
+                {isDetailModalOpen && selectedWeekEvent && (
+                    <ScheduleDetail
+                        isOpen={isDetailModalOpen}
+                        onClose={handleCloseDetail}
+                        event={selectedWeekEvent}
+                    />
                 )}
 
                 {viewType === "month" && (
@@ -731,6 +1062,7 @@ export default function Page({ robots }: RobotScheduleProps) {
 
                     {/* 바디: 컨테이너(630) - 헤더(40) */}
                     <div
+                    ref={monthBodyRef}
                     className={styles.monthBody}
                     style={{ height: `calc(${heightPx}px - ${MONTH_HEADER_H}px)` }}
                     >
@@ -740,7 +1072,7 @@ export default function Page({ robots }: RobotScheduleProps) {
                         >
                             {monthCells.map((cell) => {
                                 const events = monthEventsForDay(cell.key);
-                                const maxVisible = weeks >= 6 ? 1 : 2;
+                                const maxVisible = MONTH_MAX_VISIBLE;
 
                                 const visible = events.slice(0, maxVisible);
                                 const remain = events.length - visible.length;
@@ -756,17 +1088,35 @@ export default function Page({ robots }: RobotScheduleProps) {
 
                                         <div className={styles.cellEvents}>
                                             {visible.map((ev) => (
-                                            <div
-                                                key={ev.id}
-                                                className={`${styles.cellEvent} ${
-                                                ev.color ? monthColorClass[ev.color] : styles.evGreen
-                                                }`}
-                                            >
-                                                {ev.title}
-                                            </div>
+                                                <button
+                                                    key={ev.id}
+                                                    type="button"
+                                                    className={`${styles.cellEvent} ${ev.color ? monthColorClass[ev.color] : styles.evGreen}`}
+                                                    onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedWeekEvent(toDetailEventFromMonth(ev));
+                                                    setIsDetailModalOpen(true);
+                                                    }}
+                                                >
+                                                    <span className={`${styles.cellEventDot} ${statusDotClass(ev.status)}`.trim()} />
+                                                    <span className={styles.cellEventText}>{ev.title}</span>
+                                                </button>
                                             ))}
 
-                                            {remain > 0 && <div className={styles.more}>+{remain}개</div>}
+                                            {remain > 0 && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.moreBtn}
+                                                    onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setMonthOverflowDateKey(cell.key);
+                                                    setMonthOverflowDateObj(cell.date);
+                                                    setMonthOverflowOpen(true);
+                                                    }}
+                                                >
+                                                    +{remain}개 일정 더보기
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -777,6 +1127,61 @@ export default function Page({ robots }: RobotScheduleProps) {
                 )}
             </div>
         </div>
+
+        {/* ✅ 월간: 초과 이벤트 모달 (viewType과 무관하게 전역 렌더) */}
+            {monthOverflowOpen && monthOverflowDateObj && (
+            <div
+                className={styles.monthOverflowOverlay}
+                onClick={() => setMonthOverflowOpen(false)}
+            >
+                <div
+                className={styles.monthOverflowModal}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                >
+                    <div className={styles.monthOverflowHeader}>
+                        <div className={styles.monthOverflowTitle}>
+                        {monthOverflowDateObj.getFullYear()}년{" "}
+                        {monthOverflowDateObj.getMonth() + 1}월{" "}
+                        {monthOverflowDateObj.getDate()}일 ({DOW_KR[monthOverflowDateObj.getDay()]})
+                        </div>
+
+                        <button
+                        type="button"
+                        className={styles.monthOverflowClose}
+                        onClick={() => setMonthOverflowOpen(false)}
+                        aria-label="close"
+                        >
+                        ✕
+                        </button>
+                    </div>
+                    
+                    <div className={styles.monthOverflowInner}>
+                                        <div className={styles.monthOverflowList}>
+                                            {monthEventsForDay(monthOverflowDateKey)
+                                              .slice(MONTH_MAX_VISIBLE)
+                                              .map((ev) => (
+                                            <button
+                                                key={ev.id}
+                                                type="button"
+                                className={styles.monthOverflowItem}
+                                onClick={() => {
+                                setSelectedWeekEvent(toDetailEventFromMonth(ev));
+                                setIsDetailModalOpen(true);
+                                }}
+                                title={ev.title}
+                            >
+                                <span className={`${styles.monthOverflowDot} ${statusDotClass(ev.status)}`.trim()} />
+                                <span className={styles.monthOverflowText}>{ev.title}</span>
+                            </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            )}
+
       </>
     )
 }

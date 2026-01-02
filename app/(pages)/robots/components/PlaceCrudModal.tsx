@@ -56,6 +56,9 @@ export default function PlaceCrudModal({
   const [x, setX] = useState<string>("");
   const [y, setY] = useState<string>("");
   const [desc, setDesc] = useState<string>("");
+  const [isPinMode, setIsPinMode] = useState(false);
+  const [pinHoverPos, setPinHoverPos] = useState<{ x: number; y: number } | null>(null);
+  const [pinPlaced, setPinPlaced] = useState(false);
 
   const nowText = useMemo(() => {
     const d = new Date();
@@ -95,9 +98,7 @@ export default function PlaceCrudModal({
     // 층: 사용자가 직접 고르지 않았다면 로봇 위치층으로 자동 세팅
     if (!floorDirty) setFloor(latestRobotPose.floor);
 
-    // 좌표: 사용자가 직접 입력하지 않았다면 자동 세팅
-    if (!xDirty) setX(String(latestRobotPose.x.toFixed(2)));
-    if (!yDirty) setY(String(latestRobotPose.y.toFixed(2)));
+    // 좌표는 맵에서만 설정
   }, [latestRobotPose, floorDirty, xDirty, yDirty]);
 
   // open/close lifecycle
@@ -111,6 +112,7 @@ export default function PlaceCrudModal({
       setX(initial.x ?? "");
       setY(initial.y ?? "");
       setDesc(initial.desc ?? "");
+      setPinPlaced(false);
     } else {
       setRobotNo("");
       setFloor("");
@@ -118,7 +120,10 @@ export default function PlaceCrudModal({
       setX("");
       setY("");
       setDesc("");
+      setPinPlaced(false);
     }
+    setIsPinMode(false);
+    setPinHoverPos(null);
 
     // ✅ 핵심: edit로 열릴 때는 initial 값을 보호해야 하므로 dirty=true
     // create로 열릴 때는 자동 채움이 필요하므로 dirty=false
@@ -256,6 +261,14 @@ export default function PlaceCrudModal({
       };
   };
 
+  const pixelToWorld = (px: number, py: number) => {
+      const worldX = mapOriginX + (px / (mapSize.w / mapPixelWidth)) * mapResolution;
+      const worldY =
+        mapOriginY + ((mapSize.h - py) / (mapSize.h / mapPixelHeight)) * mapResolution;
+
+      return { x: worldX, y: worldY };
+  };
+
   const robotScreenPos = useMemo(() => {
       if (mapSize.w === 0 || mapSize.h === 0) return { x: -9999, y: -9999 };
       return worldToPixel(robotPos.x, robotPos.y);
@@ -328,18 +341,23 @@ export default function PlaceCrudModal({
       setTranslate(prev => clampTranslate(prev.x, prev.y));
   }, [scale]);
 
-  const pinStyle = useMemo(() => {
+  useEffect(() => {
+    if (!latestRobotPose) return;
+    setRobotPos({ x: latestRobotPose.x, y: latestRobotPose.y, yaw: 0 });
+  }, [latestRobotPose]);
+
+  const pinScreenPos = useMemo(() => {
     const px = Number(x);
     const py = Number(y);
     if (Number.isNaN(px) || Number.isNaN(py)) return null;
+    if (mapSize.w === 0 || mapSize.h === 0) return null;
 
-    const clamp = (n: number) => Math.max(0, Math.min(100, n));
+    const pos = worldToPixel(px, py);
     return {
-      left: `${clamp(px)}%`,
-      top: `${clamp(py)}%`,
-      transform: "translate(-50%, -50%)",
+      left: `${pos.x}px`,
+      top: `${pos.y}px`,
     } as React.CSSProperties;
-  }, [x, y]);
+  }, [x, y, mapSize]);
 
   useEffect(() => {
     if (!latestRobotPose) return;
@@ -348,12 +366,59 @@ export default function PlaceCrudModal({
     if (mode === "edit" && initial) return;
 
     if (!floorDirty) setFloor(latestRobotPose.floor);
-    if (!xDirty) setX(String(latestRobotPose.x.toFixed(2)));
-    if (!yDirty) setY(String(latestRobotPose.y.toFixed(2)));
+    // 좌표는 맵에서만 설정
   }, [latestRobotPose, mode, initial, floorDirty, xDirty, yDirty]);
 
   const title = isEdit ? "장소 수정" : "장소 등록";
   const mapCurrentImage = "/map/map_test_6_800x450.png";
+  const getMapPixelFromEvent = (e: React.MouseEvent) => {
+    const wrap = wrapperRef.current;
+    if (!wrap || mapSize.w === 0 || mapSize.h === 0) return null;
+
+    const rect = wrap.getBoundingClientRect();
+    const localX = e.clientX - rect.left;
+    const localY = e.clientY - rect.top;
+
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const x1 = localX - translate.x;
+    const y1 = localY - translate.y;
+    const x2 = (x1 - cx) / scale + cx;
+    const y2 = (y1 - cy) / scale + cy;
+
+    const clampedX = Math.max(0, Math.min(rect.width, x2));
+    const clampedY = Math.max(0, Math.min(rect.height, y2));
+
+    return { x: clampedX, y: clampedY };
+  };
+
+  const handleMapClick = (e: React.MouseEvent) => {
+    if (!isPinMode || isPanning) return;
+    const mapPixel = getMapPixelFromEvent(e);
+    if (!mapPixel) return;
+
+    const world = pixelToWorld(mapPixel.x, mapPixel.y);
+
+    setXDirty(true);
+    setYDirty(true);
+    setX(world.x.toFixed(2));
+    setY(world.y.toFixed(2));
+    setPinHoverPos(null);
+    setPinPlaced(true);
+  };
+
+  const handleMapMouseMove = (e: React.MouseEvent) => {
+    onMouseMove(e);
+    if (!isPinMode || isPanning || pinPlaced) return;
+    const mapPixel = getMapPixelFromEvent(e);
+    if (!mapPixel) return;
+    setPinHoverPos(mapPixel);
+  };
+
+  const handleMapMouseLeave = () => {
+    endPan();
+    setPinHoverPos(null);
+  };
 
   if (!isOpen) return null;
 
@@ -466,11 +531,8 @@ export default function PlaceCrudModal({
                 <input
                   className={`${styles.input} ${styles.edit}`}
                   value={x}
-                  onChange={(e) => {
-                    setXDirty(true);
-                    setX(e.target.value)
-                  }}
-                  placeholder="좌표값을 직접 입력하거나 지도에서 클릭하세요"
+                  readOnly
+                  placeholder="좌표값을 지도에서 선택해 주세요."
                 />
               </div>
               <div className={styles.xyRow}>
@@ -478,24 +540,50 @@ export default function PlaceCrudModal({
                 <input
                   className={`${styles.input} ${styles.edit}`}
                   value={y}
-                  onChange={(e) => {
-                    setYDirty(true);
-                    setY(e.target.value)
-                  }}
-                  placeholder="좌표값을 직접 입력하거나 지도에서 클릭하세요"
+                  readOnly
+                  placeholder="좌표값을 지도에서 선택해 주세요."
                 />
               </div>
             </div>
           </div>
 
-          {/* 맵 프리뷰(목업) */}
+          {/* 맵 프리뷰 */}
           <div className={styles.mapBox}>
             <div className={styles.mapTopLeft}>
               <div className={styles.floorChip}>{floor || "1F"}</div>
             </div>
             <div className={styles.mapTopRight}>
-              <div className={styles.pinBtn} title="pin">
-                <img src="/icon/robot_place_w.png" alt="" />
+              <div
+                className={`${styles.pinBtn} ${isPinMode ? styles.pinBtnActive : ""}`}
+                title="pin"
+                onClick={() => {
+                  setIsPinMode((v) => {
+                    const next = !v;
+                    if (next) {
+                      setPinHoverPos(null);
+                      setPinPlaced(false);
+                    } else {
+                      setPinHoverPos(null);
+                      if (isEdit && initial) {
+                        setX(initial.x ?? "");
+                        setY(initial.y ?? "");
+                        setXDirty(true);
+                        setYDirty(true);
+                      } else {
+                        setX("");
+                        setY("");
+                        setXDirty(false);
+                        setYDirty(false);
+                      }
+                      setPinPlaced(false);
+                    }
+                    return next;
+                  });
+                }}
+                role="button"
+                aria-pressed={isPinMode}
+              >
+                <img src={"/icon/robot_place_w.png"} alt="" />
               </div>
             </div>
 
@@ -507,12 +595,15 @@ export default function PlaceCrudModal({
                     userSelect: "none",
                     background: "rgb(128, 128, 128)",
                     touchAction: "none",
-                    cursor: scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",
+                    cursor: isPinMode
+                      ? "none"
+                      : scale > 1 ? (isPanning ? "grabbing" : "grab") : "default",
                 }}
                 onMouseDown={onMouseDown}
-                onMouseMove={onMouseMove}
+                onMouseMove={handleMapMouseMove}
                 onMouseUp={endPan}
-                onMouseLeave={endPan}
+                onMouseLeave={handleMapMouseLeave}
+                onClick={handleMapClick}
             >
                 <div
                     ref={innerRef}
@@ -539,18 +630,43 @@ export default function PlaceCrudModal({
                     />
 
                     {/* ROBOT MARKER */}
-                    <img
-                        src="/icon/robot_location(1).png"
+                    {latestRobotPose && (
+                      <img
+                          src="/icon/robot_location(1).png"
+                          style={{
+                          position: "absolute",
+                          left: `${robotScreenPos.x}px`,
+                          top: `${robotScreenPos.y}px`,
+                          height: "38px",
+                          transform: "translate(-50%, -50%)",
+                          pointerEvents: "none",
+                          zIndex: 50,
+                          }}
+                      />
+                    )}
+                    {isPinMode && !pinPlaced && pinHoverPos && (
+                      <img
+                        src="/icon/place_point.png"
+                        alt=""
+                        className={styles.pinMarkerGhost}
                         style={{
-                        position: "absolute",
-                        left: `${robotScreenPos.x}px`,
-                        top: `${robotScreenPos.y}px`,
-                        height: "38px",
-                        transform: "translate(-50%, -50%)",
-                        pointerEvents: "none",
-                        zIndex: 50,
+                          left: `${pinHoverPos.x}px`,
+                          top: `${pinHoverPos.y}px`,
+                          transform: "translate(-50%, -100%)",
                         }}
-                    />
+                      />
+                    )}
+                    {isPinMode && pinPlaced && pinScreenPos && (
+                      <img
+                        src="/icon/place_point.png"
+                        alt=""
+                        className={styles.pinMarker}
+                        style={{
+                          ...pinScreenPos,
+                          transform: "translate(-50%, -100%)",
+                        }}
+                      />
+                    )}
                 </div>
             </div>
 
@@ -562,6 +678,9 @@ export default function PlaceCrudModal({
                 <img src="/icon/zoom-out-w.png" alt="-" />
               </div>
             </div>
+          </div>
+          <div className={styles.mapHint}>
+            *우측 상단 핀 버튼으로 좌표 선택 모드를 켜거나 끌 수 있습니다.
           </div>
 
           {/* 장소설명 */}
@@ -577,8 +696,8 @@ export default function PlaceCrudModal({
           </div>
 
           {isEdit && (
-            <div className={styles.updatedAtRow}>
-              <div className={styles.updatedAtLabel}>수정일시</div>
+            <div className={styles.updateRow}>
+              <div className={styles.label}>수정일시</div>
               <div className={styles.updatedAtValue}>
                 {initial?.updatedAt ?? nowText}
               </div>
