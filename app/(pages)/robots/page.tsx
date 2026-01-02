@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import styles from './robots.module.css';
 import RobotList from './components/RobotList';
 import RobotInfo from "@/app/lib/robotInfo";
@@ -99,16 +100,18 @@ export default async function Page() {
                     </div>
                 </div>
             </div>
-            <RobotList 
-                robots={robots} 
-                cameras={cameras} 
-                floors={floors} 
-                video={videoStatus} 
-                batteryStatus={batteryStatus} 
-                networkStatus={networkStatus}
-                powerStatus={powerStatus} 
-                locationStatus={locationStatus}
-            />
+            <Suspense fallback={null /* 또는 스켈레톤/로딩 */}>
+                <RobotList 
+                    robots={robots} 
+                    cameras={cameras} 
+                    floors={floors} 
+                    video={videoStatus} 
+                    batteryStatus={batteryStatus} 
+                    networkStatus={networkStatus}
+                    powerStatus={powerStatus} 
+                    locationStatus={locationStatus}
+                />
+            </Suspense>
         </div>
         </>
     )
