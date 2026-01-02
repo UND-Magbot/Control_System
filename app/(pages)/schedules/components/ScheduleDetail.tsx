@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import DeleteConfirmModal from '@/app/components/modal/CancelConfirmModal';
 import { useCustomScrollbar } from "@/app/hooks/useCustomScrollbar";
-import RepeatConfirmModal, { type RepeatConfirmMode, type RepeatConfirmScope } from '@/app/(pages)/schedules/components/RepeatConfirmModal';
+import RepeatConfirmModal, { type RepeatConfirmMode, type RepeatConfirmScope } from '@/app/(pages)/schedules/components/RepeatConfirmModals';
 import MiniCalendar from './MiniCalendar';
 
 
